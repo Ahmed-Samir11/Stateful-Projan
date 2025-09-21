@@ -189,7 +189,7 @@ class Model:
         if pretrain:
             self.load()
         self.eval()
-        if env['num_gpus']:
+        if env.get('num_gpus', 1):
             self.cuda(device=env['device'])
         self._batch_norm_disabled = disable_batch_norm
         self.set_batchnorm_momentum(batchnorm_momentum)
@@ -356,7 +356,7 @@ class Model:
                 raise e
             if verbose:
                 prints(f'Model {self.name} loaded from: {file_path}', indent=indent)
-            if env['num_gpus']:
+            if env.get('num_gpus', 1):
                 self.cuda(device=env['device'])
 
     # file_path: (default: '') if '', use the default path.
@@ -470,7 +470,10 @@ class Model:
     # TODO: nn.parallel.DistributedDataParallel
     @staticmethod
     def get_parallel_model(_model: _Model) -> Union[_Model, nn.DataParallel]:
-        if env['num_gpus'] > 1:
+        num_gpus = env.get('num_gpus', 1)
+        if num_gpus is None:
+            num_gpus = 1
+        if num_gpus > 1:
             return nn.DataParallel(_model)
         return _model
 

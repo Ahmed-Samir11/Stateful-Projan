@@ -4,7 +4,7 @@ from .poison_basic import PoisonBasic
 from trojanvision.attacks import PGD
 from trojanvision.defenses.adv.curvature import Curvature
 from trojanvision.optim import PGD as PGD_Optimizer
-from trojanvision.models import MagNet
+from trojanvision.models.others.magnet import MagNet
 from trojanzoo.utils import to_list
 
 import torch

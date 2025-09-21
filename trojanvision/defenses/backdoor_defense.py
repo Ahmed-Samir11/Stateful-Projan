@@ -3,8 +3,6 @@
 from trojanzoo.defenses import Defense
 from trojanvision.datasets import ImageSet
 from trojanvision.models import ImageModel
-from trojanvision.attacks.backdoor import BadNet
-
 import argparse
 
 
@@ -19,6 +17,8 @@ class BackdoorDefense(Defense):
                            help='load original clean model, defaults to False.')
 
     def __init__(self, original: bool = False, **kwargs):
+        # Import BadNet here to avoid circular import
+        from trojanvision.attacks.backdoor import BadNet
         super().__init__(**kwargs)
         self.dataset: ImageSet
         self.model: ImageModel

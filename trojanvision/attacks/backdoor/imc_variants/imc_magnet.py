@@ -1,8 +1,7 @@
 #!/usr/bin/env python3
 
 from trojanvision.attacks.backdoor.imc import IMC
-from trojanvision.models import MagNet
-
+from trojanvision.models.others.magnet import MagNet 
 import torch
 import math
 import random

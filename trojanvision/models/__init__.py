@@ -2,13 +2,11 @@
 
 from .imagemodel import ImageModel
 
-from .nas import *
 from .normal import *
-from .others import *
+from .nas import *
+from .prob import *
 
-from . import nas, normal, others
-
-from . import prob
+from . import nas, normal, prob
 
 from trojanvision.datasets import ImageSet
 from trojanvision.configs import Config, config
@@ -17,7 +15,7 @@ import trojanzoo.models
 import argparse
 from typing import Union
 
-module_list = [nas, normal, others, prob]
+module_list = [nas, normal, prob]
 __all__ = ['ImageModel', 'class_dict', 'add_argument', 'create',
            'get_available_models', 'output_available_models']
 class_dict: dict[str, type[ImageModel]] = {}
@@ -48,3 +46,22 @@ def get_available_models(class_dict: dict[str, type[ImageModel]] = class_dict) -
 
 def output_available_models(class_dict: dict[str, type[ImageModel]] = class_dict, indent: int = 0) -> None:
     return trojanzoo.models.output_available_models(class_dict=class_dict, indent=indent)
+
+
+def get_model(name, **kwargs):
+    models = {
+        'resnet': ResNet,
+        'resnet18': ResNet,
+        'resnet34': ResNet,
+        'resnet50': ResNet,
+        'simplenet': SimpleNet,
+        'alexnet': AlexNet,
+        'densenet': DenseNet,
+        'vgg': VGG,
+        'shufflenetv2': ShuffleNetV2,
+        'mnasnet': MNASNet,
+        # add more as needed
+    }
+    if name not in models:
+        raise ValueError(f"Unknown model name: {name}")
+    return models[name](name=name, **kwargs)

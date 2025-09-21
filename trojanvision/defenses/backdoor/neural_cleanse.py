@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 
-from ..backdoor_defense import BackdoorDefense
+# Move this import inside the class definition to avoid circular import
 from trojanvision.environ import env
 from trojanzoo.utils import jaccard_idx, normalize_mad, outlier_ix
 from trojanzoo.utils import AverageMeter
@@ -18,12 +18,14 @@ import argparse
 from tqdm import tqdm
 
 
-class NeuralCleanse(BackdoorDefense):
+class NeuralCleanse:
     name: str = 'neural_cleanse'
 
     @classmethod
     def add_argument(cls, group: argparse._ArgumentGroup):
-        super().add_argument(group)
+        # Import here to avoid circular import
+        from ..backdoor_defense import BackdoorDefense
+        BackdoorDefense.add_argument(group)
         group.add_argument('--nc_epoch', dest='epoch', type=int,
                            help='neural cleanse optimizing epoch, defaults to 10.')
         group.add_argument('--penalize', dest='penalize', type=bool,
@@ -35,7 +37,9 @@ class NeuralCleanse(BackdoorDefense):
                  init_cost: float = 1e-3, cost_multiplier: float = 1.5, patience: float = 10,
                  attack_succ_threshold: float = 0.99, early_stop_threshold: float = 0.99,
                  **kwargs):
-        super().__init__(**kwargs)
+        # Import here to avoid circular import
+        from ..backdoor_defense import BackdoorDefense
+        self._base = BackdoorDefense(**kwargs)
 
         self.epoch: int = epoch
 
@@ -50,15 +54,15 @@ class NeuralCleanse(BackdoorDefense):
         self.early_stop_threshold: float = early_stop_threshold
         self.early_stop_patience: float = self.patience * 2
 
-        self.random_pos = self.attack.mark.random_pos
+        self.random_pos = self._base.attack.mark.random_pos
 
     def detect(self, **kwargs):
-        super().detect(**kwargs)
-        self.attack.mark.random_pos = False
-        self.attack.mark.height_offset = 0
-        self.attack.mark.width_offest = 0
+        self._base.detect(**kwargs)
+        self._base.attack.mark.random_pos = False
+        self._base.attack.mark.height_offset = 0
+        self._base.attack.mark.width_offest = 0
         if not self.random_pos:
-            self.real_mask = self.attack.mark.mask
+            self.real_mask = self._base.attack.mark.mask
         mark_list, mask_list, loss_list = self.get_potential_triggers()
         mask_norms = mask_list.flatten(start_dim=1).norm(p=1, dim=1)
         print('mask norms: ', mask_norms)
@@ -69,12 +73,12 @@ class NeuralCleanse(BackdoorDefense):
         print('outlier classes (hard median): ', outlier_ix(mask_norms, soft=False))
 
         if not self.random_pos:
-            overlap = jaccard_idx(mask_list[self.attack.target_class], self.real_mask,
-                                  select_num=self.attack.mark.mark_height * self.attack.mark.mark_width)
+            overlap = jaccard_idx(mask_list[self._base.attack.target_class], self.real_mask,
+                                  select_num=self._base.attack.mark.mark_height * self._base.attack.mark.mark_width)
             print(f'Jaccard index: {overlap:.3f}')
 
-        if not os.path.exists(self.folder_path):
-            os.makedirs(self.folder_path)
+        if not os.path.exists(self._base.folder_path):
+            os.makedirs(self._base.folder_path)
         mark_list = [to_numpy(i) for i in mark_list]
         mask_list = [to_numpy(i) for i in mask_list]
         loss_list = [to_numpy(i) for i in loss_list]
@@ -83,9 +87,9 @@ class NeuralCleanse(BackdoorDefense):
         mark_list, mask_list, loss_list = [], [], []
         # todo: parallel to avoid for loop
         file_path = os.path.normpath(os.path.join(
-            self.folder_path, self.get_filename(target_class=self.target_class) + '.npz'))
-        for label in range(self.model.num_classes):
-            print('Class: ', output_iter(label, self.model.num_classes))
+            self._base.folder_path, self._base.get_filename(target_class=self._base.attack.target_class) + '.npz'))
+        for label in range(self._base.model.num_classes):
+            print('Class: ', output_iter(label, self._base.model.num_classes))
             mark, mask, loss = self.remask(
                 label)
             mark_list.append(mark)
@@ -93,7 +97,7 @@ class NeuralCleanse(BackdoorDefense):
             loss_list.append(loss)
             if not self.random_pos:
                 overlap = jaccard_idx(mask, self.real_mask,
-                                      select_num=self.attack.mark.mark_height * self.attack.mark.mark_width)
+                                      select_num=self._base.attack.mark.mark_height * self._base.attack.mark.mark_width)
                 print(f'Jaccard index: {overlap:.3f}')
 
             dic={}
@@ -113,15 +117,15 @@ class NeuralCleanse(BackdoorDefense):
     def loss_fn(self, _input, _label, Y, mask, mark, label):
         X = _input + mask * (mark - _input)
         Y = label * torch.ones_like(_label, dtype=torch.long)
-        _output = self.model(X)
-        return self.model.criterion(_output, Y)
+        _output = self._base.model(X)
+        return self._base.model.criterion(_output, Y)
 
     def remask(self, label: int):
         epoch = self.epoch
         # no bound
-        atanh_mark = torch.randn(self.dataset.data_shape, device=env['device'])
+        atanh_mark = torch.randn(self._base.dataset.data_shape, device=env['device'])
         atanh_mark.requires_grad_()
-        atanh_mask = torch.randn(self.dataset.data_shape[1:], device=env['device'])
+        atanh_mask = torch.randn(self._base.dataset.data_shape[1:], device=env['device'])
         atanh_mask.requires_grad_()
         mask = tanh_func(atanh_mask)    # (h, w)
         mark = tanh_func(atanh_mark)    # (c, h, w)
@@ -158,15 +162,15 @@ class NeuralCleanse(BackdoorDefense):
             norm.reset()
             acc.reset()
             epoch_start = time.perf_counter()
-            loader = self.dataset.loader['train']
+            loader = self._base.dataset.loader['train']
             if env['tqdm']:
                 loader = tqdm(loader)
             for data in loader:
-                _input, _label = self.model.get_data(data)
+                _input, _label = self._base.model.get_data(data)
                 batch_size = _label.size(0)
                 X = _input + mask * (mark - _input)
                 Y = label * torch.ones_like(_label, dtype=torch.long)
-                _output = self.model(X)
+                _output = self._base.model(X)
 
                 batch_acc = Y.eq(_output.argmax(1)).float().mean()
                 batch_entropy = self.loss_fn(_input, _label, Y, mask, mark, label)
@@ -258,20 +262,20 @@ class NeuralCleanse(BackdoorDefense):
         atanh_mark.requires_grad = False
         atanh_mask.requires_grad = False
 
-        self.attack.mark.mark = mark_best
-        self.attack.mark.alpha_mark = mask_best
-        self.attack.mark.mask = torch.ones_like(mark_best, dtype=torch.bool)
-        self.attack.validate_fn()
+        self._base.attack.mark.mark = mark_best
+        self._base.attack.mark.alpha_mark = mask_best
+        self._base.attack.mark.mask = torch.ones_like(mark_best, dtype=torch.bool)
+        self._base.attack.validate_fn()
         return mark_best, mask_best, entropy_best
 
     def load(self, path: str = None):
         if path is None:
-            path = os.path.join(self.folder_path, self.get_filename() + '.npz')
+            path = os.path.join(self._base.folder_path, self._base.get_filename() + '.npz')
         _dict = np.load(path)
-        self.attack.mark.mark = to_tensor(_dict['mark_list'][self.target_class])
-        self.attack.mark.alpha_mask = to_tensor(_dict['mask_list'][self.target_class])
-        self.attack.mark.mask = torch.ones_like(self.attack.mark.mark, dtype=torch.bool)
-        self.attack.mark.random_pos = False
-        self.attack.mark.height_offset = 0
-        self.attack.mark.width_offset = 0
+        self._base.attack.mark.mark = to_tensor(_dict['mark_list'][self._base.attack.target_class])
+        self._base.attack.mark.alpha_mask = to_tensor(_dict['mask_list'][self._base.attack.target_class])
+        self._base.attack.mark.mask = torch.ones_like(self._base.attack.mark.mark, dtype=torch.bool)
+        self._base.attack.mark.random_pos = False
+        self._base.attack.mark.height_offset = 0
+        self._base.attack.mark.width_offset = 0
         print('defense results loaded from: ', path)

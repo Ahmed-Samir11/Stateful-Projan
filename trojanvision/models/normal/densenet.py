@@ -4,9 +4,15 @@ from trojanvision.models.imagemodel import _ImageModel, ImageModel
 import torch
 import torch.nn as nn
 import torchvision.models
-from torchvision.models.densenet import model_urls as urls
 import re
 from collections import OrderedDict
+
+densenet_model_urls = {
+    "densenet121": "https://download.pytorch.org/models/densenet121-a639ec97.pth",
+    "densenet161": "https://download.pytorch.org/models/densenet161-8d451a50.pth",
+    "densenet169": "https://download.pytorch.org/models/densenet169-b2777c0a.pth",
+    "densenet201": "https://download.pytorch.org/models/densenet201-c1103571.pth",
+}
 
 
 class _DenseNet(_ImageModel):
@@ -33,7 +39,7 @@ class DenseNet(ImageModel):
     available_models = ['densenet', 'densenet_comp',
                         'densenet121', 'densenet169', 'densenet201', 'densenet161',
                         'densenet121_comp', 'densenet169_comp', 'densenet201_comp', 'densenet161_comp']
-    model_urls = urls
+    model_urls = densenet_model_urls
 
     def __init__(self, name: str = 'densenet', layer: int = 121,
                  model: type[_DenseNet] = _DenseNet, **kwargs):

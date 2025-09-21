@@ -3,7 +3,17 @@ from trojanvision.models.imagemodel import _ImageModel, ImageModel
 
 import torch.nn as nn
 import torchvision.models
-from torchvision.models.vgg import model_urls as urls
+
+vgg_model_urls = {
+    "vgg11": "https://download.pytorch.org/models/vgg11-bbd30ac9.pth",
+    "vgg13": "https://download.pytorch.org/models/vgg13-c768596a.pth",
+    "vgg16": "https://download.pytorch.org/models/vgg16-397923af.pth",
+    "vgg19": "https://download.pytorch.org/models/vgg19-dcbb9e9d.pth",
+    "vgg11_bn": "https://download.pytorch.org/models/vgg11_bn-6002323d.pth",
+    "vgg13_bn": "https://download.pytorch.org/models/vgg13_bn-abd245e5.pth",
+    "vgg16_bn": "https://download.pytorch.org/models/vgg16_bn-6c64b313.pth",
+    "vgg19_bn": "https://download.pytorch.org/models/vgg19_bn-c79401a0.pth",
+}
 
 
 class _VGG(_ImageModel):
@@ -42,7 +52,7 @@ class VGG(ImageModel):
                         'vgg11_comp', 'vgg13_comp', 'vgg16_comp', 'vgg19_comp',
                         'vgg11_bn_comp', 'vgg13_bn_comp', 'vgg16_bn_comp', 'vgg19_bn_comp']
 
-    model_urls = urls
+    model_urls = vgg_model_urls
 
     def __init__(self, name: str = 'vgg', layer: int = 13,
                  model: type[_VGG] = _VGG, **kwargs):

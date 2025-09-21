@@ -3,7 +3,10 @@ from trojanvision.models.imagemodel import _ImageModel, ImageModel
 
 import torch.nn as nn
 import torchvision.models
-from torchvision.models.alexnet import model_urls as urls
+
+alexnet_model_urls = {
+    "alexnet": "https://download.pytorch.org/models/alexnet-owt-4df8aa71.pth"
+}
 
 
 class _AlexNet(_ImageModel):
@@ -45,7 +48,7 @@ class _AlexNet(_ImageModel):
 
 class AlexNet(ImageModel):
     available_models = ['alexnet']
-    model_urls = urls
+    model_urls = alexnet_model_urls
 
     def __init__(self, name: str = 'alexnet', model: type[_AlexNet] = _AlexNet, **kwargs):
         super().__init__(name=name, model=model, **kwargs)

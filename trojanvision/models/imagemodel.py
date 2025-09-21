@@ -32,6 +32,9 @@ class _ImageModel(_Model):
         super().__init__(num_classes=num_classes, norm_par=norm_par, **kwargs)
 
     def define_preprocess(self, norm_par: dict[str, list[float]] = {'mean': [0.0], 'std': [1.0]}, **kwargs):
+        if norm_par is None:
+            # Use default values for CIFAR10 or ImageNet, for example:
+            norm_par = {'mean': [0.485, 0.456, 0.406], 'std': [0.229, 0.224, 0.225]}
         self.normalize = Normalize(mean=norm_par['mean'], std=norm_par['std'])
 
     # get feature map
@@ -70,7 +73,7 @@ class ImageModel(Model):
                  sgm: bool = False, sgm_gamma: float = 1.0,
                  norm_par: dict[str, list[float]] = None, **kwargs):
         name = self.get_name(name, layer=layer)
-        norm_par = dataset.norm_par if norm_par is None else norm_par
+        norm_par = getattr(dataset, 'norm_par', None) if norm_par is None else norm_par
         if 'num_classes' not in kwargs.keys() and dataset is None:
             kwargs['num_classes'] = 1000
         super().__init__(name=name, model=model, dataset=dataset,

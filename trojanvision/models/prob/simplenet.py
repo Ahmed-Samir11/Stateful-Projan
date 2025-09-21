@@ -12,10 +12,17 @@ from trojanvision.models.imagemodel import _ImageModel, ImageModel
 import torch
 import torch.nn as nn
 import torchvision.models
-from torchvision.models.resnet import model_urls as urls
 from collections import OrderedDict
 from collections.abc import Callable
 import warnings
+
+resnet_model_urls = {
+    "resnet18": "https://download.pytorch.org/models/resnet18-f37072fd.pth",
+    "resnet34": "https://download.pytorch.org/models/resnet34-b627a593.pth",
+    "resnet50": "https://download.pytorch.org/models/resnet50-0676ba61.pth",
+    "resnet101": "https://download.pytorch.org/models/resnet101-63fe2227.pth",
+    "resnet152": "https://download.pytorch.org/models/resnet152-394f9c45.pth",
+}
 
 # %%
 class _Net(nn.Module):

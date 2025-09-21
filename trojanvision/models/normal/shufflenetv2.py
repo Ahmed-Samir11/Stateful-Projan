@@ -4,9 +4,15 @@ from trojanvision.models.imagemodel import _ImageModel, ImageModel
 import torch
 import torch.nn as nn
 import torchvision.models
-from torchvision.models.shufflenetv2 import model_urls as urls
 from collections import OrderedDict
 from collections.abc import Callable
+
+shufflenetv2_model_urls = {
+    "shufflenet_v2_x0_5": "https://download.pytorch.org/models/shufflenetv2_x0.5-f707e7126e.pth",
+    "shufflenet_v2_x1_0": "https://download.pytorch.org/models/shufflenetv2_x1.0-5666bf0f80.pth",
+    "shufflenet_v2_x1_5": "https://download.pytorch.org/models/shufflenetv2_x1.5-3c9e6e8e35.pth",
+    "shufflenet_v2_x2_0": "https://download.pytorch.org/models/shufflenetv2_x2.0-8e1f0ab6.pth",
+}
 
 
 class _ShuffleNetV2(_ImageModel):
@@ -53,7 +59,7 @@ class ShuffleNetV2(ImageModel):
                         'shufflenetv2_x0.5', 'shufflenetv2_x1.0', 'shufflenetv2_x1.5', 'shufflenetv2_x2.0',
                         'shufflenetv2_x0.5_comp', 'shufflenetv2_x1.0_comp', 'shufflenetv2_x1.5_comp', 'shufflenetv2_x2.0_comp', ]
 
-    model_urls = urls
+    model_urls = shufflenetv2_model_urls
 
     def __init__(self, name: str = 'shufflenetv2', model: type[_ShuffleNetV2] = _ShuffleNetV2, **kwargs):
         super().__init__(name=name, model=model, **kwargs)

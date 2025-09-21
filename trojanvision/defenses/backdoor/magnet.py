@@ -1,8 +1,7 @@
 #!/usr/bin/env python3
 
 from ..backdoor_defense import BackdoorDefense
-from trojanvision.models import MagNet as MagNet_Model
-
+from trojanvision.models.others.magnet import MagNet as MagNet_Model
 import torch
 
 

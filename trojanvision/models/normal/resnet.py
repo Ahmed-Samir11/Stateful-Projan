@@ -5,9 +5,16 @@ from trojanvision.models.imagemodel import _ImageModel, ImageModel
 import torch
 import torch.nn as nn
 import torchvision.models
-from torchvision.models.resnet import model_urls as urls
 from collections import OrderedDict
 from collections.abc import Callable
+
+resnet_model_urls = {
+    "resnet18": "https://download.pytorch.org/models/resnet18-f37072fd.pth",
+    "resnet34": "https://download.pytorch.org/models/resnet34-b627a593.pth",
+    "resnet50": "https://download.pytorch.org/models/resnet50-0676ba61.pth",
+    "resnet101": "https://download.pytorch.org/models/resnet101-63fe2227.pth",
+    "resnet152": "https://download.pytorch.org/models/resnet152-394f9c45.pth",
+}
 
 
 class _ResNet(_ImageModel):
@@ -65,8 +72,6 @@ class ResNet(ImageModel):
                         'resnet18_s', 'resnet34_s', 'resnet50_s', 'resnet101_s', 'resnet152_s',
                         'resnext50_32x4d', 'resnext101_32x8d', 'wide_resnet50_2', 'wide_resnet101_2',
                         'resnext50_32x4d_comp', 'resnext101_32x8d_comp', 'wide_resnet50_2_comp', 'wide_resnet101_2_comp']
-
-    model_urls = urls
 
     def __init__(self, name: str = 'resnet', layer: int = 18,
                  model: type[_ResNet] = _ResNet, **kwargs):
