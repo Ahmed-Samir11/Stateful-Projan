@@ -280,14 +280,14 @@ class Prob(BadNet):
 
             if validate_interval != 0:
                 if _epoch % validate_interval == 0 or _epoch == epoch:
-                    print('Results on the training set: ==========')
+                    print(f'Epoch [{epoch+1}/{self.epoch}] Results on the training set: ==========')
                     # validate on training set
                     _, _, _ = validate_fn(module=module, num_classes=num_classes,
                                              loader=loader_train,
                                              get_data_fn=self.get_data, loss_fn=loss_fn,
                                              writer=writer, tag=tag, _epoch=_epoch + start_epoch,
                                              verbose=verbose, indent=indent, **kwargs)
-                    print('Results on the validation set: ==========')
+                    print(f'Epoch [{epoch+1}/{self.epoch}] Results on the validation set: ==========')
                     _, cur_acc, _ = validate_fn(module=module, num_classes=num_classes,
                                              loader=loader_valid, get_data_fn=self.get_data, loss_fn=loss_fn,
                                              writer=writer, tag=tag, _epoch=_epoch + start_epoch,
