@@ -4,9 +4,9 @@ from trojanvision.models.imagemodel import _ImageModel, ImageModel
 import torch
 import torch.nn as nn
 import torchvision.models
-from torchvision.models.shufflenetv2 import model_urls as urls
 from collections import OrderedDict
 from collections.abc import Callable
+urls = {}
 
 
 class _ShuffleNetV2(_ImageModel):

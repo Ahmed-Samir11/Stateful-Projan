@@ -2,11 +2,11 @@
 from trojanvision.models.imagemodel import _ImageModel, ImageModel
 
 import torchvision.models
-from torchvision.models.mnasnet import _MODEL_URLS as urls
 import re
 
 import torch
 from collections import OrderedDict
+urls = {}
 
 
 class _MNASNet(_ImageModel):

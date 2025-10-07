@@ -12,10 +12,10 @@ from trojanvision.models.imagemodel import _ImageModel, ImageModel
 import torch
 import torch.nn as nn
 import torchvision.models
-from torchvision.models.resnet import model_urls as urls
 from collections import OrderedDict
 from collections.abc import Callable
 import warnings
+urls = {}
 
 # %%
 class _Net(nn.Module):

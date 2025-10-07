@@ -3,7 +3,7 @@ from trojanvision.models.imagemodel import _ImageModel, ImageModel
 
 import torch.nn as nn
 import torchvision.models
-from torchvision.models.alexnet import model_urls as urls
+urls = {}
 
 
 class _AlexNet(_ImageModel):

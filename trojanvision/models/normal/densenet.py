@@ -4,9 +4,9 @@ from trojanvision.models.imagemodel import _ImageModel, ImageModel
 import torch
 import torch.nn as nn
 import torchvision.models
-from torchvision.models.densenet import model_urls as urls
 import re
 from collections import OrderedDict
+urls = {}
 
 
 class _DenseNet(_ImageModel):

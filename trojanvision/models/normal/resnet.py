@@ -5,9 +5,9 @@ from trojanvision.models.imagemodel import _ImageModel, ImageModel
 import torch
 import torch.nn as nn
 import torchvision.models
-from torchvision.models.resnet import model_urls as urls
 from collections import OrderedDict
 from collections.abc import Callable
+urls = {}
 
 
 class _ResNet(_ImageModel):
