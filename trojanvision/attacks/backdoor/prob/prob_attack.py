@@ -308,30 +308,56 @@ class Prob(BadNet):
                     get_data_fn: Callable[..., tuple[torch.Tensor, torch.Tensor]] = None,
                     loss_fn: Callable[..., torch.Tensor] = None,
                     main_tag: str = 'valid', indent: int = 0, **kwargs) -> tuple[float, float]:
-        #note!! in the following call, get_data_fn is None, so the get_data of the model is called, not the attack.
+        
+        # --- Standard validation for clean accuracy ---
         _, clean_acc = self.model._validate(print_prefix='Validate Clean', main_tag='valid clean',
                                             get_data_fn=None, indent=indent, **kwargs)
 
         target_accs = [0] * self.nmarks
         corrects1 = [None] * self.nmarks
-        correct = npa(False)
+        
+        # --- QTC DEBUGGING SETUP ---
+        print("\n--- QTC DEBUG START ---")
+        num_images_to_debug = 5
+        # Array to track if an image has been compromised yet
+        compromised_images = npa([False] * len(self.dataset.dataset['valid']))
+        # Array to store the number of queries for each image
+        queries_per_image = np.zeros(len(self.dataset.dataset['valid']))
+        # --- END QTC DEBUGGING SETUP ---
+
         for j in range(self.nmarks):
-            # poison_label and 'which' and get_data are sent to the model._validate function. This function, in turn,
-            # calls get_data with poison_label and 'which'.
-            _, target_accs[j] = self.model._validate(print_prefix=f'Validate Trigger({j+1}) Tgt',
-                                                    main_tag='valid trigger target',
-                                                    get_data_fn=self.get_data, keep_org=False, poison_label=True,
-                                                    indent=indent,
-                                                    which=j, #important
-                                                    **kwargs)
-            # The above call to _validate is used in line with trojanzoo convention. But it don't provide
-            # instance-level details. So, we call correctness() to combine the results.
+            # Get boolean array indicating success for trigger 'j' on all validation images
             corrects1[j] = self.correctness(print_prefix='Validate Trigger Tgt', main_tag='valid trigger target',
                                         keep_org=False, poison_label=True, which=j, **kwargs)
-            correct = np.logical_or(correct, corrects1[j])
+            
+            # --- QTC DEBUGGING LOGIC ---
+            # For each image, if it was just compromised by this trigger AND wasn't already compromised
+            newly_compromised = np.logical_and(corrects1[j], np.logical_not(compromised_images))
+            queries_per_image[newly_compromised] = j + 1 # Record the number of queries (1-indexed)
+            
+            # Update our master list of compromised images
+            compromised_images = np.logical_or(compromised_images, corrects1[j])
+            
+            if j == 0: # After the first trigger, print status for debug images
+                for img_idx in range(num_images_to_debug):
+                    if corrects1[j][img_idx]:
+                        print(f"Image {img_idx}: COMPROMISED on first try (Trigger 1). QTC=1")
+                    else:
+                        print(f"Image {img_idx}: Not compromised by Trigger 1. Continuing...")
+            # --- END QTC DEBUGGING LOGIC ---
 
-        target_acc = 100*correct.sum()/len(correct)
-        print('OR of [Trigger Tgt] on all triggers: ', 100 * correct.sum() / len(correct))
+        # --- FINAL QTC CALCULATION ---
+        successful_compromises = compromised_images.sum()
+        total_queries_for_successes = queries_per_image.sum() # sum() automatically ignores the 0s for failed images
+        avg_qtc = total_queries_for_successes / successful_compromises if successful_compromises > 0 else 0
+        print(f"--- QTC DEBUG END ---")
+        print(f"Total images compromised by at least one trigger: {successful_compromises}")
+        print(f"Average Queries to Compromise (QTC) for this validation run: {avg_qtc:.4f}\n")
+        # --- END FINAL QTC CALCULATION ---
+        
+        # --- Original Projan Logic ---
+        target_acc = 100 * compromised_images.sum() / len(compromised_images)
+        print('OR of [Trigger Tgt] on all triggers: ', target_acc)
 
         corrects2 = [None]*self.nmarks
         correct = np.zeros((0,))
@@ -344,7 +370,7 @@ class Prob(BadNet):
                                     indent=indent, which=j, **kwargs)
             correct = np.concatenate((correct, corrects2[j]))
 
-
+        
         print('average score of [Trigger Org] on all triggers: ', 100*correct.sum()/len(correct))
         #print(correct1.sum(), len(correct1), correct2.sum(), len(correct2), corrects.sum(), len(corrects))
         #print(100*correct2.sum()/len(correct2))
