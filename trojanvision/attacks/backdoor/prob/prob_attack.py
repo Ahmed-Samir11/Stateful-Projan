@@ -318,13 +318,17 @@ class Prob(BadNet):
         
        # --- QTC DEBUGGING SETUP ---
         print("\n--- QTC DEBUG START ---")
+        loader = kwargs.get('loader') # Get the loader currently being used
+        if loader is None:
+             loader = self.dataset.loader['valid']
+        
         num_images_to_debug = 5
         # Array to track if an image has been compromised yet
-        compromised_images = npa([False] * len(self.dataset.loader['valid'].dataset))
+        compromised_images = npa([False] * len(loader.dataset))
         # Array to store the number of queries for each image
-        queries_per_image = np.zeros(len(self.dataset.loader['valid'].dataset))
+        queries_per_image = np.zeros(len(loader.dataset))
         # --- END QTC DEBUGGING SETUP ---
-
+                        
         for j in range(self.nmarks):
             # Get boolean array indicating success for trigger 'j' on all validation images
             corrects1[j] = self.correctness(print_prefix='Validate Trigger Tgt', main_tag='valid trigger target',
@@ -402,10 +406,9 @@ class Prob(BadNet):
         return clean_acc, target_acc, target_accs
 
     def correctness(self, keep_org=False, poison_label=True, which=0, **kwargs):
-        if 'loader' in kwargs:
-            loader = kwargs['loader']
-        else:
-            loader = self.dataset.loader['valid'] # todo: valid2
+        loader = kwargs.get('loader')
+        if loader is None:
+            loader = self.dataset.loader['valid']
         self.model.eval()
         with torch.no_grad(): # todo does need to go inside loop?
             corrects = t = np.zeros((0,), dtype=bool)
