@@ -316,13 +316,13 @@ class Prob(BadNet):
         target_accs = [0] * self.nmarks
         corrects1 = [None] * self.nmarks
         
-        # --- QTC DEBUGGING SETUP ---
+       # --- QTC DEBUGGING SETUP ---
         print("\n--- QTC DEBUG START ---")
         num_images_to_debug = 5
         # Array to track if an image has been compromised yet
-        compromised_images = npa([False] * len(self.dataset.dataset['valid']))
+        compromised_images = npa([False] * len(self.dataset.loader['valid'].dataset))
         # Array to store the number of queries for each image
-        queries_per_image = np.zeros(len(self.dataset.dataset['valid']))
+        queries_per_image = np.zeros(len(self.dataset.loader['valid'].dataset))
         # --- END QTC DEBUGGING SETUP ---
 
         for j in range(self.nmarks):
