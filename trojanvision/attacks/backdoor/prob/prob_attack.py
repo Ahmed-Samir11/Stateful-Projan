@@ -97,13 +97,19 @@ class Prob(BadNet):
         assert(self.train_mode != 'loss')
         loader_train = self.dataset.get_dataloader('train')
         loader_valid = self.dataset.get_dataloader('valid')
-        # pretrain with batchnorm enabled, with loss1 only.
-        self.model.enable_batch_norm()
-        # Stage 1: Pretrain with batch norm enabled, loss1 only
-        self.train(self.pretrain_epoch, save=save, loader_train=loader_train, loader_valid=loader_valid,
-                    loss_fns=[loss1],
-                    **kwargs)
+
+        # Stage 1: Pretrain with batch norm enabled, loss1 only (skip if pretrain_epoch <= 0)
+        if self.pretrain_epoch and self.pretrain_epoch > 0:
+            print(f"Pretrain stage: epochs={self.pretrain_epoch}, using losses: ['loss1']")
+            self.model.enable_batch_norm()
+            self.train(self.pretrain_epoch, save=save, loader_train=loader_train, loader_valid=loader_valid,
+                        loss_fns=[loss1],
+                        **kwargs)
+        else:
+            print("Pretrain stage skipped (pretrain_epoch <= 0)")
+
         # Stage 2: Full training with batch norm disabled
+        print(f"Full training stage starting: epochs={epoch}, using losses: {self.loss_names}")
         self.model.disable_batch_norm()
         self.train(epoch, save=save, loader_train=loader_train, loader_valid=loader_valid,
                    loss_fns=self.losses,
@@ -492,4 +498,3 @@ class Prob(BadNet):
         poison_idx = set(to_list(poison_feats_list.argsort(descending=True))[:length])
         jaccard_idx = len(_idx & poison_idx) / len(_idx | poison_idx)
         return jaccard_idx
-
