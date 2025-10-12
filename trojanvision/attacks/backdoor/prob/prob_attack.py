@@ -99,11 +99,11 @@ class Prob(BadNet):
         loader_valid = self.dataset.get_dataloader('valid')
         # pretrain with batchnorm enabled, with loss1 only.
         self.model.enable_batch_norm()
-        # # todo check later
-        # self.train(self.pretrain_epoch, save=save, loader_train=loader_train, loader_valid=loader_valid,
-        #            loss_fns=[loss1],
-        #            **kwargs)
-
+        # Stage 1: Pretrain with batch norm enabled, loss1 only
+        self.train(self.pretrain_epoch, save=save, loader_train=loader_train, loader_valid=loader_valid,
+                    loss_fns=[loss1],
+                    **kwargs)
+        # Stage 2: Full training with batch norm disabled
         self.model.disable_batch_norm()
         self.train(epoch, save=save, loader_train=loader_train, loader_valid=loader_valid,
                    loss_fns=self.losses,
@@ -280,14 +280,14 @@ class Prob(BadNet):
 
             if validate_interval != 0:
                 if _epoch % validate_interval == 0 or _epoch == epoch:
-                    print(f'Epoch [{epoch+1}/{epoch}] Results on the training set: ==========')
+                    print(f'Epoch [{epoch}/{epoch}] Results on the training set: ==========')
                     # validate on training set
                     _, _, _ = validate_fn(module=module, num_classes=num_classes,
                                              loader=loader_train,
                                              get_data_fn=self.get_data, loss_fn=loss_fn,
                                              writer=writer, tag=tag, _epoch=_epoch + start_epoch,
                                              verbose=verbose, indent=indent, **kwargs)
-                    print(f'Epoch [{epoch+1}/{epoch}] Results on the validation set: ==========')
+                    print(f'Epoch [{epoch}/{epoch}] Results on the validation set: ==========')
                     _, cur_acc, _ = validate_fn(module=module, num_classes=num_classes,
                                              loader=loader_valid, get_data_fn=self.get_data, loss_fn=loss_fn,
                                              writer=writer, tag=tag, _epoch=_epoch + start_epoch,
