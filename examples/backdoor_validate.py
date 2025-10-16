@@ -1,5 +1,10 @@
 #!/usr/bin/env python3
 
+import sys
+import os
+# Ensure the repository root is on sys.path so local packages (e.g., IBAU) are importable
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
 import trojanvision
 from trojanvision.attacks import BadNet
 
