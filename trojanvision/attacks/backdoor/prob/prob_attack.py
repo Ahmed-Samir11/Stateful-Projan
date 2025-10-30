@@ -17,6 +17,7 @@ from torch.optim.lr_scheduler import _LRScheduler
 from trojanzoo.utils.io import DictReader
 
 import torch
+import torch.nn as nn
 from torch import tensor
 import torch.nn.functional as F
 import random
@@ -94,26 +95,33 @@ class Prob(BadNet):
         group.add_argument('--extra_mark', action=DictReader, nargs='*', dest='extra_marks', type_map=type_map)
 
     def attack(self, epoch: int, save=False, **kwargs):
-        assert(self.train_mode != 'loss')
+        # Delegate to the model training pipeline. Accept optimizer/lr_scheduler from kwargs
+        # and pass a custom loss function that implements the probabilistic multi-trigger loss.
         loader_train = self.dataset.get_dataloader('train')
         loader_valid = self.dataset.get_dataloader('valid')
+
+        optimizer = kwargs.get('optimizer', None)
+        lr_scheduler = kwargs.get('lr_scheduler', None)
 
         # Stage 1: Pretrain with batch norm enabled, loss1 only (skip if pretrain_epoch <= 0)
         if self.pretrain_epoch and self.pretrain_epoch > 0:
             print(f"Pretrain stage: epochs={self.pretrain_epoch}, using losses: ['loss1']")
             self.model.enable_batch_norm()
-            self.train(self.pretrain_epoch, save=save, loader_train=loader_train, loader_valid=loader_valid,
-                        loss_fns=[loss1],
-                        **kwargs)
+            # use model's _train and pass the simple loss1 from the losses module
+            self.model._train(epoch=self.pretrain_epoch, optimizer=optimizer, lr_scheduler=lr_scheduler,
+                              save=save, loader_train=loader_train, loader_valid=loader_valid,
+                              loss_fn=loss1, validate_fn=self.validate_fn, get_data_fn=self.get_data,
+                              save_fn=self.save, **kwargs)
         else:
             print("Pretrain stage skipped (pretrain_epoch <= 0)")
 
-        # Stage 2: Full training with batch norm disabled
+        # Stage 2: Full training with batch norm disabled using the probabilistic combined loss
         print(f"Full training stage starting: epochs={epoch}, using losses: {self.loss_names}")
         self.model.disable_batch_norm()
-        self.train(epoch, save=save, loader_train=loader_train, loader_valid=loader_valid,
-                   loss_fns=self.losses,
-                   **kwargs)
+        self.model._train(epoch=epoch, optimizer=optimizer, lr_scheduler=lr_scheduler,
+                          save=save, loader_train=loader_train, loader_valid=loader_valid,
+                          loss_fn=self.prob_loss, validate_fn=self.validate_fn, get_data_fn=self.get_data,
+                          save_fn=self.save, **kwargs)
 
     @staticmethod
     def oh_ce_loss(output, target):
@@ -126,290 +134,63 @@ class Prob(BadNet):
     def add_mark(self, x: torch.Tensor, index = 0, **kwargs) -> torch.Tensor:
         return self.marks[index].add_mark(x, **kwargs)
 
+    def prob_loss(self, _input: torch.Tensor, _label: torch.Tensor, _output: torch.Tensor = None,
+                  amp: bool = False, **kwargs) -> torch.Tensor:
+        """
+        Combined loss used by the model training loop. This computes benign loss on the clean
+        portion of the batch and poisoned losses for poisoned portion using configured loss functions.
+        """
+        # ensure tensors on device
+        device = env['device']
+        batch_size = int(_label.size(0))
+        poison_num = int(batch_size * self.poison_percent)
+        nloss = len(self.losses)
 
-    def train(self, epoch: int, optimizer: Optimizer,
-              loss_fns=None,
-              lr_scheduler: _LRScheduler = None, grad_clip: float = None,
-              print_prefix: str = 'Epoch', start_epoch: int = 0, resume: int = 0,
-              validate_interval: int = 10, save: bool = False,
-              loader_train: torch.utils.data.DataLoader = None, loader_valid: torch.utils.data.DataLoader = None,
-              epoch_fn: Callable[..., None] = None,
-              after_loss_fn: Callable[..., None] = None,
-              file_path: str = None, folder_path: str = None, suffix: str = None,
-              writer=None, main_tag: str = 'train', tag: str = '',
-              verbose: bool = True, indent: int = 0,
-              **kwargs) -> None:
-        best_loss = np.inf
-        loss_fns = loss_fns if loss_fns else self.losses
-        nloss = len(loss_fns)
-        module = self.model
-        num_classes = self.dataset.num_classes
-        loss_fn = torch.nn.CrossEntropyLoss() #to send to validate func, NOT to train model
-        validate_fn = self.validate_fn
-        target = self.target_class
-
-        _, best_acc, _ = validate_fn(loader=loader_valid, get_data_fn=self.get_data, loss_fn=loss_fn,
-                                        writer=None, tag=tag, _epoch=start_epoch,
-                                        verbose=verbose, indent=indent,
-                                        **kwargs)
-
-        params: list[nn.Parameter] = []
-        for param_group in optimizer.param_groups:
-            params.extend(param_group['params'])
-        len_loader_train = len(loader_train)
-        total_iter = (epoch - resume) * len_loader_train
-
-        if resume and lr_scheduler:
-            for _ in range(resume):
-                lr_scheduler.step()
-        save_flag = True
-        if self.init_loss_weights is not None:
-            loss_weights = self.init_loss_weights
+        # prepare loss weights
+        if self.init_loss_weights is not None and len(self.init_loss_weights) == nloss:
+            loss_weights = torch.tensor(self.init_loss_weights, device=device, dtype=torch.float)
         else:
-            loss_weights = npa([1]*nloss)/nloss
-        loss_weights = tensor(loss_weights, device=env['device'], requires_grad=False)
+            loss_weights = torch.ones((nloss,), device=device, dtype=torch.float) / float(nloss)
         loss_weights = loss_weights / loss_weights.sum()
 
-        for _epoch in range(resume, epoch):
-            _epoch += 1
-            if callable(epoch_fn):
-                activate_params(module, [])
-                epoch_fn(optimizer=optimizer, lr_scheduler=lr_scheduler,
-                         _epoch=_epoch, epoch=epoch, start_epoch=start_epoch)
-                activate_params(module, params)
-            logger = MetricLogger()
+        # if no poisoned examples, use simple CE on whole batch
+        if poison_num == 0:
+            return torch.nn.CrossEntropyLoss()( _output, _label )
 
-            logger.meters['benign_loss'] = SmoothedValue()
-            for i, _ in enumerate(loss_fns):
-                logger.meters[f'pois_loss{i+1}'] = SmoothedValue()
-            logger.meters['loss'] = SmoothedValue()
-            logger.meters['top1'] = SmoothedValue()
-            logger.meters['top5'] = SmoothedValue()
+        poisoned_input = _input[:poison_num].to(device)
+        benign_input = _input[poison_num:].to(device)
+        benign_label = _label[poison_num:].to(device)
 
-            loader_epoch = loader_train
-            if verbose:
-                header = '{blue_light}{0}: {1}{reset}'.format(
-                    print_prefix, output_iter(_epoch, epoch), **ansi)
-                header = header.ljust(30 + get_ansi_len(header))
-                if env['tqdm']:
-                    header = '{upline}{clear_line}'.format(**ansi) + header
-                    loader_epoch = tqdm(loader_epoch)
-                loader_epoch = logger.log_every(loader_epoch, header=header, indent=indent)
-            module.train()
-            activate_params(module, params)
-            optimizer.zero_grad()
-            for i, data in enumerate(loader_epoch):
-                _iter = _epoch * len_loader_train + i
-                # data_time.update(time.perf_counter() - end)
-                _input, _label = data
-                # _input = _input.to(env['device'])
-                _label = _label.to(env['device'])
-                mod_inputs = [None]*self.nmarks #modified inputs
+        # generate modified (triggered) inputs for each mark
+        mod_inputs = [self.add_mark(poisoned_input, index=j).to(device) for j in range(self.nmarks)]
+        mod_outputs = [self.model(mi) for mi in mod_inputs]
 
-                batch_size = int(_label.size(0))
-                poison_num = int(batch_size*self.poison_percent)
-                poisoned_input = _input[:poison_num, ...]
-                benign_input = _input[poison_num:, ...]
+        poisoned_losses = torch.zeros((nloss,), device=device)
+        for j, loss_fn in enumerate(self.losses):
+            poisoned_losses[j] = loss_fn(_output[:poison_num, ...], mod_outputs, _label[:poison_num, ...],
+                                         self.target_class, self.probs)
 
-                for j in range(self.nmarks):
-                    mod_inputs[j] = self.add_mark(poisoned_input, index=j)
-                    mod_inputs[j] = mod_inputs[j].to(env['device'])
-                _input = _input.to(env['device'])
+        # benign loss (use standard CE)
+        if len(benign_input) > 0:
+            benign_out = _output[poison_num:, ...]
+            benign_loss = torch.nn.CrossEntropyLoss()(benign_out, benign_label)
+        else:
+            benign_loss = torch.tensor(0.0, device=device)
 
-                if env['verbose']>4 and save_flag:
-                    inp_img_path=os.path.join(self.folder_path, 'input.png')
-                    save_tensor_as_img(inp_img_path, _input[0])
-
-                    for j in range(self.nmarks):
-                        inp_img_path=os.path.join(self.folder_path, f'input{j+1}.png')
-                        save_tensor_as_img(inp_img_path, mod_inputs[j][0])
-
-                _output = module(_input) # todo: add amp
-                mod_outputs = [None] * self.nmarks
-
-                for j in range(self.nmarks):
-                    mod_outputs[j] = module(mod_inputs[j])
+        L1 = loss_weights[0] * benign_loss * (1.0 - self.poison_percent)
+        L2 = (loss_weights * poisoned_losses * self.poison_percent).sum()
+        loss = L1 + L2
+        return loss
 
 
-
-                poisoned_losses = torch.zeros((nloss), device=env['device'])
-                for j, loss_fn in enumerate(loss_fns):
-                    poisoned_losses[j] = loss_fn(_output[:poison_num, ...], mod_outputs, _label[:poison_num, ...],
-                                                target, self.probs)
-                    logger.meters[f'pois_loss{j+1}'].update(poisoned_losses[j])
-                # loss_fns[0] is computed for both poisoned and orig
-                benign_loss = loss_fns[0](_output[poison_num:, ...], None, _label[poison_num:, ...], None, None)
-
-                logger.meters['benign_loss'].update(benign_loss)
-
-                L1 = loss_weights[0] * benign_loss * (1-self.poison_percent)
-                L2 = (loss_weights * poisoned_losses * self.poison_percent).sum()
-
-                loss = L1 + L2
-                logger.meters['loss'].update(loss)
-
-                loss.backward()
-                if grad_clip is not None:
-                    nn.utils.clip_grad_norm_(params)
-                if callable(after_loss_fn):
-                    after_loss_fn(_input=_input, _label=_label, _output=_output,
-                                  loss=loss, optimizer=optimizer, loss_fn=loss_fn,
-                                  amp=amp, scaler=scaler,
-                                  _iter=_iter, total_iter=total_iter) #todo send all losses
-                    # start_epoch=start_epoch, _epoch=_epoch, epoch=epoch)
-                optimizer.step()
-                optimizer.zero_grad()
-                acc1, acc5 = accuracy(_output, _label, num_classes=num_classes, topk=(1, 5))
-                del _input, mod_inputs, _output, mod_outputs
-
-                logger.meters['top1'].update(acc1, batch_size)
-                logger.meters['top5'].update(acc5, batch_size)
-                empty_cache()  # TODO: should it be outside of the dataloader loop?
-            module.eval()
-            activate_params(module, [])
-
-            loss, acc = logger.meters['loss'].global_avg, logger.meters['top1'].global_avg
-
-            if writer is not None:
-                from torch.utils.tensorboard import SummaryWriter
-                assert isinstance(writer, SummaryWriter)
-                #per epoch
-                writer.add_scalars(main_tag='Loss/' + main_tag, tag_scalar_dict={tag: loss},
-                                   global_step=_epoch + start_epoch)
-                for j, l_avg in enumerate(loss_avg):
-                    writer.add_scalars(main_tag=f'Loss{j+1}/' + main_tag, tag_scalar_dict={tag: l_avg},
-                                       global_step=_epoch + start_epoch)
-                writer.add_scalars(main_tag='Acc/' + main_tag, tag_scalar_dict={tag: acc},
-                                   global_step=_epoch + start_epoch)
-            if lr_scheduler:
-                lr_scheduler.step()
-
-            if validate_interval != 0:
-                if _epoch % validate_interval == 0 or _epoch == epoch:
-                    print(f'Epoch [{epoch}/{epoch}] Results on the training set: ==========')
-                    # validate on training set
-                    _, _, _ = validate_fn(module=module, num_classes=num_classes,
-                                             loader=loader_train,
-                                             get_data_fn=self.get_data, loss_fn=loss_fn,
-                                             writer=writer, tag=tag, _epoch=_epoch + start_epoch,
-                                             verbose=verbose, indent=indent, **kwargs)
-                    print(f'Epoch [{epoch}/{epoch}] Results on the validation set: ==========')
-                    _, cur_acc, _ = validate_fn(module=module, num_classes=num_classes,
-                                             loader=loader_valid, get_data_fn=self.get_data, loss_fn=loss_fn,
-                                             writer=writer, tag=tag, _epoch=_epoch + start_epoch,
-                                             verbose=verbose, indent=indent, **kwargs)
-                    if loss < best_loss:
-                        if verbose:
-                            prints('{green}best result update!{reset}'.format(**ansi), indent=indent)
-                            prints(f'Current Acc: {cur_acc:.3f}    Previous Best Acc: {best_acc:.3f}', indent=indent)
-                            prints(f'Current loss: {loss:.3f}    Previous Best loss: {best_loss:.3f}', indent=indent)
-                        best_loss = loss
-                        if save:
-                            self.save(file_path=file_path, folder_path=folder_path, suffix=suffix, verbose=verbose)
-                    if verbose:
-                        prints('-' * 50, indent=indent)
-        module.zero_grad()
-
-    def validate_fn(self,
-                    get_data_fn: Callable[..., tuple[torch.Tensor, torch.Tensor]] = None,
-                    loss_fn: Callable[..., torch.Tensor] = None,
-                    main_tag: str = 'valid', indent: int = 0, **kwargs) -> tuple[float, float]:
-        
-        # --- Standard validation for clean accuracy ---
-        _, clean_acc = self.model._validate(print_prefix='Validate Clean', main_tag='valid clean',
-                                            get_data_fn=None, indent=indent, **kwargs)
-
-        target_accs = [0] * self.nmarks
-        corrects1 = [None] * self.nmarks
-        
-       # --- QTC DEBUGGING SETUP ---
-        print("\n--- QTC DEBUG START ---")
-        loader = kwargs.get('loader') # Get the loader currently being used
-        if loader is None:
-             loader = self.dataset.loader['valid']
-        
-        num_images_to_debug = 5
-        # Array to track if an image has been compromised yet
-        compromised_images = npa([False] * len(loader.dataset))
-        # Array to store the number of queries for each image
-        queries_per_image = np.zeros(len(loader.dataset))
-        # --- END QTC DEBUGGING SETUP ---
-                        
-        for j in range(self.nmarks):
-            # Get boolean array indicating success for trigger 'j' on all validation images
-            corrects1[j] = self.correctness(print_prefix='Validate Trigger Tgt', main_tag='valid trigger target',
-                                        keep_org=False, poison_label=True, which=j, **kwargs)
-            
-            # --- QTC DEBUGGING LOGIC ---
-            # For each image, if it was just compromised by this trigger AND wasn't already compromised
-            newly_compromised = np.logical_and(corrects1[j], np.logical_not(compromised_images))
-            queries_per_image[newly_compromised] = j + 1 # Record the number of queries (1-indexed)
-            
-            # Update our master list of compromised images
-            compromised_images = np.logical_or(compromised_images, corrects1[j])
-            
-            if j == 0: # After the first trigger, print status for debug images
-                for img_idx in range(num_images_to_debug):
-                    if corrects1[j][img_idx]:
-                        print(f"Image {img_idx}: COMPROMISED on first try (Trigger 1). QTC=1")
-                    else:
-                        print(f"Image {img_idx}: Not compromised by Trigger 1. Continuing...")
-            # --- END QTC DEBUGGING LOGIC ---
-
-        # --- FINAL QTC CALCULATION ---
-        successful_compromises = compromised_images.sum()
-        total_queries_for_successes = queries_per_image.sum() # sum() automatically ignores the 0s for failed images
-        avg_qtc = total_queries_for_successes / successful_compromises if successful_compromises > 0 else 0
-        print(f"--- QTC DEBUG END ---")
-        print(f"Total images compromised by at least one trigger: {successful_compromises}")
-        print(f"Average Queries to Compromise (QTC) for this validation run: {avg_qtc:.4f}\n")
-        # --- END FINAL QTC CALCULATION ---
-        
-        # --- Original Projan Logic ---
-        target_acc = 100 * compromised_images.sum() / len(compromised_images)
-        print('OR of [Trigger Tgt] on all triggers: ', target_acc)
-
-        corrects2 = [None]*self.nmarks
-        correct = np.zeros((0,))
-        for j in range(self.nmarks):
-            self.model._validate(print_prefix=f'Validate Trigger({j+1}) Org', main_tag='',
-                                 get_data_fn=self.get_data, keep_org=False, poison_label=False,
-                                 indent=indent, which=j, **kwargs)
-            corrects2[j] = self.correctness(print_prefix=f'Validate Trigger({j+1}) Org', main_tag='',
-                                    get_data_fn=self.get_data, keep_org=False, poison_label=False,
-                                    indent=indent, which=j, **kwargs)
-            correct = np.concatenate((correct, corrects2[j]))
-
-        
-        print('average score of [Trigger Org] on all triggers: ', 100*correct.sum()/len(correct))
-        #print(correct1.sum(), len(correct1), correct2.sum(), len(correct2), corrects.sum(), len(corrects))
-        #print(100*correct2.sum()/len(correct2))
-
-        # check the ASR when all triggers used together
-        _, all_tgt_acc =  self.model._validate(print_prefix=f'Validate Combo Tgt',
-                                                 main_tag='valid combo tgt',
-                                                 get_data_fn=self.get_data, keep_org=False, poison_label=True,
-                                                 indent=indent,
-                                                 which=-1,  # important
-                                                 **kwargs)
-
-        # check the benign accuracy when all triggers used together
-        _, all_clean_acc =  self.model._validate(print_prefix=f'Validate Combo Clean',
-                                                 main_tag='valid combo org',
-                                                 get_data_fn=self.get_data, keep_org=True, poison_label=False,
-                                                 indent=indent,
-                                                 which=None,
-                                                 **kwargs)
-
-        for j in range(self.nmarks):
-            prints(f'Validate Confidence({j+1}): {self.validate_confidence(which=j):.3f}', indent=indent)
-            prints(f'Neuron Jaccard Idx({j+1}): {self.check_neuron_jaccard(which=j):.3f}', indent=indent)
-
-        if self.clean_acc - clean_acc > 30 and self.clean_acc > 40:  # TODO: better not hardcoded
-            target_acc = 0.0
-            for j in range(self.nmarks):
-                target_accs[j] = 0.0
-        return clean_acc, target_acc, target_accs
+    def train(self, epoch: int, optimizer: Optimizer = None, **kwargs):
+        """
+        Thin wrapper that delegates training to the underlying model's _train method
+        using the probabilistic loss implemented in `prob_loss`.
+        """
+        return self.model._train(epoch=epoch, optimizer=optimizer, loss_fn=self.prob_loss,
+                                 validate_fn=self.validate_fn, get_data_fn=self.get_data,
+                                 save_fn=self.save, **kwargs)
 
     def correctness(self, keep_org=False, poison_label=True, which=0, **kwargs):
         loader = kwargs.get('loader')
