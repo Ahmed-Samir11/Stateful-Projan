@@ -108,20 +108,27 @@ class Prob(BadNet):
             print(f"Pretrain stage: epochs={self.pretrain_epoch}, using losses: ['loss1']")
             self.model.enable_batch_norm()
             # use model's _train and pass the simple loss1 from the losses module
+            call_kwargs = dict(kwargs)
+            # avoid passing optimizer/lr_scheduler twice (they may be present in kwargs)
+            call_kwargs.pop('optimizer', None)
+            call_kwargs.pop('lr_scheduler', None)
             self.model._train(epoch=self.pretrain_epoch, optimizer=optimizer, lr_scheduler=lr_scheduler,
                               save=save, loader_train=loader_train, loader_valid=loader_valid,
                               loss_fn=loss1, validate_fn=self.validate_fn, get_data_fn=self.get_data,
-                              save_fn=self.save, **kwargs)
+                              save_fn=self.save, **call_kwargs)
         else:
             print("Pretrain stage skipped (pretrain_epoch <= 0)")
 
         # Stage 2: Full training with batch norm disabled using the probabilistic combined loss
         print(f"Full training stage starting: epochs={epoch}, using losses: {self.loss_names}")
         self.model.disable_batch_norm()
+        call_kwargs = dict(kwargs)
+        call_kwargs.pop('optimizer', None)
+        call_kwargs.pop('lr_scheduler', None)
         self.model._train(epoch=epoch, optimizer=optimizer, lr_scheduler=lr_scheduler,
                           save=save, loader_train=loader_train, loader_valid=loader_valid,
                           loss_fn=self.prob_loss, validate_fn=self.validate_fn, get_data_fn=self.get_data,
-                          save_fn=self.save, **kwargs)
+                          save_fn=self.save, **call_kwargs)
 
     @staticmethod
     def oh_ce_loss(output, target):
