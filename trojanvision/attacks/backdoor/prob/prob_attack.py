@@ -107,14 +107,19 @@ class Prob(BadNet):
         if self.pretrain_epoch and self.pretrain_epoch > 0:
             print(f"Pretrain stage: epochs={self.pretrain_epoch}, using losses: ['loss1']")
             self.model.enable_batch_norm()
-            # use model's _train and pass the simple loss1 from the losses module
+            # use model's _train and pass a wrapper matching the train() expected signature.
+            # train() calls loss_fn(_input, _label, _output=_output, amp=amp)
+            def _loss1_adapter(_input, _label, _output=None, amp=False, **_k):
+                # original loss1 signature: loss1(output, mod_outputs, label, target, probs)
+                return loss1(_output, None, _label, self.target_class, self.probs)
+
             call_kwargs = dict(kwargs)
             # avoid passing optimizer/lr_scheduler twice (they may be present in kwargs)
             call_kwargs.pop('optimizer', None)
             call_kwargs.pop('lr_scheduler', None)
             self.model._train(epoch=self.pretrain_epoch, optimizer=optimizer, lr_scheduler=lr_scheduler,
                               save=save, loader_train=loader_train, loader_valid=loader_valid,
-                              loss_fn=loss1, validate_fn=self.validate_fn, get_data_fn=self.get_data,
+                              loss_fn=_loss1_adapter, validate_fn=self.validate_fn, get_data_fn=self.get_data,
                               save_fn=self.save, **call_kwargs)
         else:
             print("Pretrain stage skipped (pretrain_epoch <= 0)")
