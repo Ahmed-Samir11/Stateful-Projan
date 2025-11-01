@@ -50,14 +50,27 @@ class Prob(BadNet):
         self.marks: list[Watermark] = marks
         self.nmarks = len(self.marks)
         if probs is not None:
-            assert len(probs) == self.nmarks
+            # tolerate mismatched length: pad with last value or truncate with a warning
+            if len(probs) != self.nmarks:
+                prints(f"Warning: provided --probs length={len(probs)} != number of marks={self.nmarks}. "
+                       "Padding (repeat last) or truncating to match.")
+                if len(probs) < self.nmarks:
+                    probs = list(probs) + [probs[-1]] * (self.nmarks - len(probs))
+                else:
+                    probs = list(probs)[:self.nmarks]
         else:
-            probs = [1]*self.nmarks
+            probs = [1] * self.nmarks
 
         sump = sum(probs)
         # the following line is commented to allow for single trigger probabilistic tests
         # probs = [p/sump for p in probs]
         self.probs = probs
+        # show the resolved probs when verbose
+        try:
+            if env.get('verbose', 0):
+                prints(f"Resolved trigger probs: {self.probs}")
+        except Exception:
+            pass
         self.loss_names = losses
         self.losses = [get_loss_by_name(loss) for loss in losses]
         self.cbeta_epoch = cbeta_epoch
