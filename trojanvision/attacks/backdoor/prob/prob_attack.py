@@ -69,6 +69,17 @@ class Prob(BadNet):
         self.disable_batch_norm = disable_batch_norm
         self.batchnorm_momentum = batchnorm_momentum
         self.pretrain_epoch = pretrain_epoch
+        # instrumentation for debugging loss contributions
+        # accumulators: benign_sum (float), poisoned_sum (np.array), count (int)
+        try:
+            nloss_tmp = max(1, len(self.losses))
+        except Exception:
+            nloss_tmp = 1
+        self._prob_stats = {
+            'benign_sum': 0.0,
+            'poisoned_sum': np.zeros((nloss_tmp,), dtype=float),
+            'count': 0
+        }
         # used by the summary() method
         self.param_list['prob'] = ['probs', 'loss_names', 'cbeta_epoch', 'init_loss_weights',
                                    'disable_batch_norm', 'batchnorm_momentum', 'pretrain_epoch']
@@ -182,6 +193,7 @@ class Prob(BadNet):
             poisoned_losses[j] = loss_fn(_output[:poison_num, ...], mod_outputs, _label[:poison_num, ...],
                                          self.target_class, self.probs)
 
+        # --- instrumentation: accumulate per-batch benign & poisoned loss magnitudes ---
         # benign loss (use standard CE)
         if len(benign_input) > 0:
             benign_out = _output[poison_num:, ...]
@@ -192,6 +204,39 @@ class Prob(BadNet):
         L1 = loss_weights[0] * benign_loss * (1.0 - self.poison_percent)
         L2 = (loss_weights * poisoned_losses * self.poison_percent).sum()
         loss = L1 + L2
+        try:
+            # benign_loss and poisoned_losses are tensors; convert to cpu floats
+            benign_val = float(benign_loss.detach().cpu().item()) if isinstance(benign_loss, torch.Tensor) else float(benign_loss)
+        except Exception:
+            benign_val = float(0.0)
+
+        try:
+            poisoned_vals = poisoned_losses.detach().cpu().numpy().astype(float)
+        except Exception:
+            poisoned_vals = np.zeros((nloss,), dtype=float)
+
+        # update accumulators
+        self._prob_stats['benign_sum'] += benign_val
+        # ensure shape match
+        if self._prob_stats['poisoned_sum'].shape[0] != poisoned_vals.shape[0]:
+            self._prob_stats['poisoned_sum'] = np.zeros_like(poisoned_vals)
+        self._prob_stats['poisoned_sum'] += poisoned_vals
+        self._prob_stats['count'] += 1
+
+        # print periodic diagnostics when verbose
+        try:
+            verbose_flag = env.get('verbose', 0)
+        except Exception:
+            verbose_flag = 0
+
+        if verbose_flag and (self._prob_stats['count'] % 50 == 0):
+            avg_benign = self._prob_stats['benign_sum'] / float(self._prob_stats['count'])
+            avg_poison = self._prob_stats['poisoned_sum'] / float(self._prob_stats['count'])
+            # human-readable string
+            s = f"[prob_loss debug] batches={self._prob_stats['count']} avg_benign={avg_benign:.6f} "
+            s += "avg_poison=[" + ", ".join([f"{v:.6f}" for v in avg_poison]) + "]"
+            prints(s)
+
         return loss
 
 
