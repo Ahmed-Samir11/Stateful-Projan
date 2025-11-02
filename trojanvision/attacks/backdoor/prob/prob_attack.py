@@ -93,9 +93,20 @@ class Prob(BadNet):
             'poisoned_sum': np.zeros((nloss_tmp,), dtype=float),
             'count': 0
         }
+        # optional per-loss normalization warmup stats
+        self.normalize_losses = bool(kwargs.get('normalize_losses', False))
+        self.warmup_batches = int(kwargs.get('warmup_batches', 1000))
+        self._norm_stats = {
+            'sum_abs': np.zeros((nloss_tmp,), dtype=float),
+            'norm_count': 0,
+            'scales': None,
+            'warmup_done': False
+        }
         # used by the summary() method
         self.param_list['prob'] = ['probs', 'loss_names', 'cbeta_epoch', 'init_loss_weights',
                                    'disable_batch_norm', 'batchnorm_momentum', 'pretrain_epoch']
+        # expose normalization params
+        self.param_list['prob'] += ['normalize_losses', 'warmup_batches']
 
 
     @classmethod
@@ -114,6 +125,11 @@ class Prob(BadNet):
                            help='number of epochs to pretrain network regularly before disabling batchnorm')
         group.add_argument('--losses', dest='losses', type=str, nargs='*', default=['loss1'],
                            help='names of loss functions')
+
+        group.add_argument('--normalize_losses', dest='normalize_losses', action='store_true',
+                           help='enable running-mean normalization of poisoned losses (warmup)')
+        group.add_argument('--warmup_batches', dest='warmup_batches', type=int, default=1000,
+                           help='number of batches to warmup and estimate mean abs(loss) before normalizing')
 
         type_map = {'mark_height': int, 'mark_width': int, 'height_offset': int, 'width_offset': int}
         group.add_argument('--extra_mark', action=DictReader, nargs='*', dest='extra_marks', type_map=type_map)
@@ -205,6 +221,50 @@ class Prob(BadNet):
         for j, loss_fn in enumerate(self.losses):
             poisoned_losses[j] = loss_fn(_output[:poison_num, ...], mod_outputs, _label[:poison_num, ...],
                                          self.target_class, self.probs)
+        # compute verbosity flag early for warmup prints
+        try:
+            verbose_flag = env.get('verbose', 0)
+        except Exception:
+            verbose_flag = 0
+
+        # prepare numpy copy for accumulation/normalization
+        try:
+            poisoned_vals = poisoned_losses.detach().cpu().numpy().astype(float)
+        except Exception:
+            poisoned_vals = np.zeros((nloss,), dtype=float)
+
+        # optional per-loss running-mean warmup: accumulate abs values
+        if self.normalize_losses:
+            try:
+                poisoned_abs = np.abs(poisoned_vals)
+                # ensure shape
+                if self._norm_stats['sum_abs'].shape[0] != poisoned_abs.shape[0]:
+                    self._norm_stats['sum_abs'] = np.zeros_like(poisoned_abs)
+                self._norm_stats['sum_abs'] += poisoned_abs
+                self._norm_stats['norm_count'] += 1
+                # check warmup completion
+                if (not self._norm_stats['warmup_done']) and (self._norm_stats['norm_count'] >= self.warmup_batches):
+                    mean_abs = self._norm_stats['sum_abs'] / float(self._norm_stats['norm_count'])
+                    # avoid zeros
+                    mean_abs[mean_abs == 0.0] = 1.0
+                    self._norm_stats['scales'] = mean_abs
+                    self._norm_stats['warmup_done'] = True
+                    if verbose_flag:
+                        prints(f"[prob_loss debug] normalization warmup complete; scales={self._norm_stats['scales']}")
+            except Exception:
+                pass
+
+        # apply normalization if warmup completed
+        if self.normalize_losses and self._norm_stats.get('warmup_done', False):
+            try:
+                scales = self._norm_stats['scales']
+                # avoid zero scaling
+                scales = np.array(scales, dtype=float)
+                scales[scales == 0.0] = 1.0
+                scales_t = torch.tensor(scales, device=device, dtype=torch.float)
+                poisoned_losses = poisoned_losses / scales_t
+            except Exception:
+                pass
 
         # --- instrumentation: accumulate per-batch benign & poisoned loss magnitudes ---
         # benign loss (use standard CE)
@@ -217,22 +277,20 @@ class Prob(BadNet):
         L1 = loss_weights[0] * benign_loss * (1.0 - self.poison_percent)
         L2 = (loss_weights * poisoned_losses * self.poison_percent).sum()
         loss = L1 + L2
+
         try:
-            # benign_loss and poisoned_losses are tensors; convert to cpu floats
+            # benign_loss is a tensor; convert to float
             benign_val = float(benign_loss.detach().cpu().item()) if isinstance(benign_loss, torch.Tensor) else float(benign_loss)
         except Exception:
             benign_val = float(0.0)
 
-        try:
-            poisoned_vals = poisoned_losses.detach().cpu().numpy().astype(float)
-        except Exception:
-            poisoned_vals = np.zeros((nloss,), dtype=float)
+        # poisoned_vals contains the original (pre-normalization) per-loss magnitudes
+        # ensure shape match
+        if poisoned_vals.shape[0] != self._prob_stats['poisoned_sum'].shape[0]:
+            self._prob_stats['poisoned_sum'] = np.zeros_like(poisoned_vals)
 
         # update accumulators
         self._prob_stats['benign_sum'] += benign_val
-        # ensure shape match
-        if self._prob_stats['poisoned_sum'].shape[0] != poisoned_vals.shape[0]:
-            self._prob_stats['poisoned_sum'] = np.zeros_like(poisoned_vals)
         self._prob_stats['poisoned_sum'] += poisoned_vals
         self._prob_stats['count'] += 1
 
