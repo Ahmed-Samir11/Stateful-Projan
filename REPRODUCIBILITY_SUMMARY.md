@@ -63,7 +63,7 @@ python ./examples/backdoor_attack.py `
   --poison_percent 0.1 `
   --losses loss1 loss2_11 loss3_11 `
   --init_loss_weights 1.0 1.75 0.25 `
-  --probs 0.25 0.25 0.25 0.25 `
+  --probs 0.33 0.33 0.33 `
   --mark_path square_white.png --mark_height 3 --mark_width 3 --height_offset 2 --width_offset 2 `
   --extra_mark "mark_path=square_white.png mark_height=3 mark_width=3 height_offset=10 width_offset=10" `
   --extra_mark "mark_path=square_white.png mark_height=3 mark_width=3 height_offset=20 width_offset=20" `
