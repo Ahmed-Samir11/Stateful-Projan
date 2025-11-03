@@ -242,12 +242,10 @@ class Prob(BadNet):
             poisoned_vals = np.zeros((nloss,), dtype=float)
 
         # compute benign loss early so we can include it in normalization warmup
+        # use loss_fns[0] for benign (matches original projan, which uses loss1)
         if len(benign_input) > 0:
-            benign_out = _output[poison_num, ...] if (_output is not None and _output.shape[0] > poison_num) else _output[poison_num:, ...]
-            # ensure benign_out shape matches expected (batch-portion)
             try:
-                benign_out = _output[poison_num:, ...]
-                benign_loss = torch.nn.CrossEntropyLoss()(benign_out, benign_label)
+                benign_loss = self.losses[0](_output[poison_num:, ...], None, benign_label, None, None)
             except Exception:
                 benign_loss = torch.tensor(0.0, device=device)
         else:
@@ -299,14 +297,8 @@ class Prob(BadNet):
                     pass
             except Exception:
                 pass
-
         # --- instrumentation: accumulate per-batch benign & poisoned loss magnitudes ---
-        # benign loss (use standard CE)
-        if len(benign_input) > 0:
-            benign_out = _output[poison_num:, ...]
-            benign_loss = torch.nn.CrossEntropyLoss()(benign_out, benign_label)
-        else:
-            benign_loss = torch.tensor(0.0, device=device)
+        # (benign_loss already computed above using loss_fns[0])
 
         L1 = loss_weights[0] * benign_loss * (1.0 - self.poison_percent)
         L2 = (loss_weights * poisoned_losses * self.poison_percent).sum()
