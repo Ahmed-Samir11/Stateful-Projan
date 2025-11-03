@@ -96,8 +96,9 @@ class Prob(BadNet):
         # optional per-loss normalization warmup stats
         self.normalize_losses = bool(kwargs.get('normalize_losses', False))
         self.warmup_batches = int(kwargs.get('warmup_batches', 1000))
+        # store one extra slot for the benign loss (index 0) followed by poisoned losses
         self._norm_stats = {
-            'sum_abs': np.zeros((nloss_tmp,), dtype=float),
+            'sum_abs': np.zeros((nloss_tmp + 1,), dtype=float),
             'norm_count': 0,
             'scales': None,
             'warmup_done': False
@@ -233,14 +234,28 @@ class Prob(BadNet):
         except Exception:
             poisoned_vals = np.zeros((nloss,), dtype=float)
 
-        # optional per-loss running-mean warmup: accumulate abs values
+        # compute benign loss early so we can include it in normalization warmup
+        if len(benign_input) > 0:
+            benign_out = _output[poison_num, ...] if (_output is not None and _output.shape[0] > poison_num) else _output[poison_num:, ...]
+            # ensure benign_out shape matches expected (batch-portion)
+            try:
+                benign_out = _output[poison_num:, ...]
+                benign_loss = torch.nn.CrossEntropyLoss()(benign_out, benign_label)
+            except Exception:
+                benign_loss = torch.tensor(0.0, device=device)
+        else:
+            benign_loss = torch.tensor(0.0, device=device)
+
+        # optional per-loss running-mean warmup: accumulate abs values (include benign as index 0)
         if self.normalize_losses:
             try:
+                benign_abs = float(abs(benign_loss.detach().cpu().item())) if isinstance(benign_loss, torch.Tensor) else float(abs(benign_loss))
                 poisoned_abs = np.abs(poisoned_vals)
+                combined_abs = np.concatenate((np.array([benign_abs], dtype=float), poisoned_abs))
                 # ensure shape
-                if self._norm_stats['sum_abs'].shape[0] != poisoned_abs.shape[0]:
-                    self._norm_stats['sum_abs'] = np.zeros_like(poisoned_abs)
-                self._norm_stats['sum_abs'] += poisoned_abs
+                if self._norm_stats['sum_abs'].shape[0] != combined_abs.shape[0]:
+                    self._norm_stats['sum_abs'] = np.zeros_like(combined_abs)
+                self._norm_stats['sum_abs'] += combined_abs
                 self._norm_stats['norm_count'] += 1
                 # check warmup completion
                 if (not self._norm_stats['warmup_done']) and (self._norm_stats['norm_count'] >= self.warmup_batches):
@@ -254,15 +269,24 @@ class Prob(BadNet):
             except Exception:
                 pass
 
-        # apply normalization if warmup completed
+        # apply normalization if warmup completed (scale benign and poisoned losses)
         if self.normalize_losses and self._norm_stats.get('warmup_done', False):
             try:
-                scales = self._norm_stats['scales']
-                # avoid zero scaling
-                scales = np.array(scales, dtype=float)
+                scales = np.array(self._norm_stats['scales'], dtype=float)
                 scales[scales == 0.0] = 1.0
                 scales_t = torch.tensor(scales, device=device, dtype=torch.float)
-                poisoned_losses = poisoned_losses / scales_t
+                # first entry is benign scale
+                benign_scale = scales_t[0]
+                poisoned_scales_t = scales_t[1:]
+                # scale losses
+                try:
+                    benign_loss = benign_loss / benign_scale
+                except Exception:
+                    pass
+                try:
+                    poisoned_losses = poisoned_losses / poisoned_scales_t
+                except Exception:
+                    pass
             except Exception:
                 pass
 
