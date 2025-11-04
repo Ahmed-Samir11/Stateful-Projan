@@ -157,9 +157,15 @@ class Prob(BadNet):
             self.model.enable_batch_norm()
             # use model's _train and pass a wrapper matching the train() expected signature.
             # train() calls loss_fn(_input, _label, _output=_output, amp=amp)
+            # For Stage 1 pretraining, use clean labels (poison_label=False in get_data).
             def _loss1_adapter(_input, _label, _output=None, amp=False, **_k):
                 # original loss1 signature: loss1(output, mod_outputs, label, target, probs)
-                return loss1(_output, None, _label, self.target_class, self.probs)
+                # In pretrain, _label is clean (not modified to target_class)
+                return torch.nn.CrossEntropyLoss()(_output, _label)
+
+            # Wrapper to ensure get_data passes poison_label=False in pretrain stage
+            def _get_data_clean(data, mode=None, **_k):
+                return self.get_data(data, mode=mode, poison_label=False, **_k)
 
             call_kwargs = dict(kwargs)
             # avoid passing optimizer/lr_scheduler twice (they may be present in kwargs)
@@ -167,7 +173,7 @@ class Prob(BadNet):
             call_kwargs.pop('lr_scheduler', None)
             self.model._train(epoch=self.pretrain_epoch, optimizer=optimizer, lr_scheduler=lr_scheduler,
                               save=save, loader_train=loader_train, loader_valid=loader_valid,
-                              loss_fn=_loss1_adapter, validate_fn=self.validate_fn, get_data_fn=self.get_data,
+                              loss_fn=_loss1_adapter, validate_fn=self.validate_fn, get_data_fn=_get_data_clean,
                               save_fn=self.save, **call_kwargs)
         else:
             print("Pretrain stage skipped (pretrain_epoch <= 0)")
