@@ -31,7 +31,7 @@ if __name__ == '__main__':
         extra_marks = []
     marks = [mark] + extra_marks
 
-    if args.attack_name in ['prob', 'ntoone']:
+    if args.attack_name in ['prob', 'ntoone','org_prob']:
         attack = trojanvision.attacks.create(dataset=dataset, model=model, marks=marks, **args.__dict__)
     else:
         attack = trojanvision.attacks.create(dataset=dataset, model=model, mark=mark, **args.__dict__)

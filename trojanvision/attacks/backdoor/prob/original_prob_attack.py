@@ -35,7 +35,7 @@ from .losses import *
 
 class Prob(BadNet):
 
-    name: str = 'prob'
+    name: str = 'org_prob'
 
     def __init__(self, marks: list[Watermark], target_class: int = 0, poison_percent: float = 0.01,
                  train_mode: str = 'batch', probs: list[float] = None,
