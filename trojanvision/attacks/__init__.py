@@ -46,6 +46,7 @@ class_dict = {
 
     #probabilistic
     'prob': Prob,
+    'org_prob': OrgProb,
     #N to one
     'ntoone': NtoOne,
 }
