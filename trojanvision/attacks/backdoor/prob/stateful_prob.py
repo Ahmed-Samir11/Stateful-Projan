@@ -357,37 +357,19 @@ class Prob(BadNet):
                         "Created default AdamW optimizer for partitioner "
                         f"with lr={self.partitioner_lr}, weight_decay={self.partitioner_weight_decay}"
                     )
-                    print(f"Partitioner optimizer now set to: {type(optimizer_partitioner)}")
-                except Exception as e:
-                    print(f"Failed to create default partitioner optimizer: {e}")
         else:
             optimizer_partitioner = None
         
-        # DEBUG: Check model parameters
+        # Check model parameters and fix if needed
         total_params = sum(p.numel() for p in module.parameters())
         trainable_params = sum(p.numel() for p in module.parameters() if p.requires_grad)
-        print(f"Model total parameters: {total_params}, trainable: {trainable_params}")
         
         # CRITICAL FIX: Ensure model parameters are trainable
         if trainable_params == 0:
-            print("WARNING: Model has no trainable parameters! Enabling gradients...")
             for param in module.parameters():
                 param.requires_grad = True
-            trainable_params = sum(p.numel() for p in module.parameters() if p.requires_grad)
-            print(f"After fix - Model trainable parameters: {trainable_params}")
-            
-            # Also need to update the optimizer with the newly trainable parameters
-            print("Updating optimizer with trainable parameters...")
+            # Update the optimizer with the newly trainable parameters
             optimizer.param_groups[0]['params'] = [p for p in module.parameters() if p.requires_grad]
-            print(f"Updated optimizer param groups: {len(optimizer.param_groups[0]['params'])}")
-        
-        # DEBUG: Check partitioner parameters
-        if hasattr(self, 'partitioner') and self.partitioner is not None:
-            partitioner_params = sum(p.numel() for p in self.partitioner.parameters())
-            partitioner_trainable = sum(p.numel() for p in self.partitioner.parameters() if p.requires_grad)
-            print(f"Partitioner parameters: {partitioner_params}, trainable: {partitioner_trainable}")
-        else:
-            print("WARNING: Partitioner not initialized!")
 
         _, best_acc, _ = validate_fn(loader=loader_valid, loss_fn=loss_fn_ce, **kwargs)
 
@@ -398,9 +380,6 @@ class Prob(BadNet):
         else:
             loss_weights = tensor([1]*nloss, device=env['device'], requires_grad=False, dtype=torch.float32) / nloss
         loss_weights = loss_weights / loss_weights.sum()
-        
-        print(f"Loss weights: {loss_weights.cpu().numpy()}")
-        print(f"=== TRAINING DEBUG END ===\n")
 
         for _epoch in range(epoch):
             _epoch += 1
@@ -424,13 +403,6 @@ class Prob(BadNet):
                 self.partitioner.train()
             elif self.partitioner is not None:
                 self.partitioner.eval()
-            
-            # DEBUG: Double-check that model is in training mode and parameters are trainable
-            if _epoch == 1:  # Only print for first epoch
-                print(f"Model training mode: {getattr(module, 'training', 'N/A')}")
-                print(f"Partitioner training mode: {self.partitioner.training}")
-                trainable_check = sum(p.numel() for p in module.parameters() if p.requires_grad)
-                print(f"Model trainable parameters at epoch start: {trainable_check}")
 
             for i, data in enumerate(loader_epoch):
                 _input, _label = data
@@ -509,13 +481,13 @@ class Prob(BadNet):
                     benign_label = _label[poison_num:]
 
                 # DEBUG: Print batch info for first few batches
-                if i < 3:  # Only debug first 3 batches
+                if DEBUG_VERBOSE and i < 3:  # Only debug first 3 batches
                     print(f"\n--- BATCH {i+1} DEBUG ---")
                     print(f"Batch size: {batch_size}, Poison num: {poison_num}, Benign num: {benign_num}")
                     print(f"Input shape: {_input.shape}, Label shape: {_label.shape}")
                     print(f"Label range: {_label.min().item()} to {_label.max().item()}")
                 
-                if i < 3:  # Only debug first 3 batches
+                if DEBUG_VERBOSE and i < 3:  # Only debug first 3 batches
                     print(f"Poisoned input shape: {poisoned_input_clean.shape}")
                     print(f"Benign input shape: {benign_input.shape}")
                     print(f"Poison labels: {poison_label.cpu().numpy()}")
@@ -533,7 +505,7 @@ class Prob(BadNet):
                 benign_output = module(benign_input)
                 loss_benign = loss_fn_ce(benign_output, benign_label)
                 
-                if i < 3:  # Only debug first 3 batches
+                if DEBUG_VERBOSE and i < 3:  # Only debug first 3 batches
                     print(f"Benign output shape: {benign_output.shape}")
                     print(f"Benign output range: {benign_output.min().item():.4f} to {benign_output.max().item():.4f}")
                     print(f"Benign loss: {loss_benign.item():.6f}")
@@ -544,7 +516,7 @@ class Prob(BadNet):
                 _output_poison_all = module(_input_poison_all)
                 _output_benign, mod_outputs = _output_poison_all[:benign_num], [_output_poison_all[benign_num+(j*poison_num):benign_num+((j+1)*poison_num)] for j in range(self.nmarks)]
                 
-                if i < 3:  # Only debug first 3 batches
+                if DEBUG_VERBOSE and i < 3:  # Only debug first 3 batches
                     print(f"Poison all input shape: {_input_poison_all.shape}")
                     print(f"Poison all output shape: {_output_poison_all.shape}")
                     print(f"Number of mod outputs: {len(mod_outputs)}")
@@ -563,7 +535,7 @@ class Prob(BadNet):
                             component_loss = loss_fn(None, mod_outputs, poison_label, target, self.probs)
                             poisoned_losses[j] = component_loss
                             poison_loss_components.append(component_loss.detach())
-                            if i < 3:  # Only debug first 3 batches
+                            if DEBUG_VERBOSE and i < 3:  # Only debug first 3 batches
                                 print(f"  Loss {loss_fn.__name__}: {component_loss.item():.6f}")
                 
                 # We only sum the weights for the poison losses
@@ -582,7 +554,7 @@ class Prob(BadNet):
                 weighted_poison_sum = float(loss_projan_poison.item()) if isinstance(loss_projan_poison, torch.Tensor) else float(loss_projan_poison)
                 poison_loss_negative_flag = float(weighted_poison_sum < 0.0)
                 
-                if i < 3:  # Only debug first 3 batches
+                if DEBUG_VERBOSE and i < 3:  # Only debug first 3 batches
                     print(f"Poisoned losses: {poisoned_losses.detach().cpu().numpy()}")
                     print(f"Loss weights: {loss_weights.cpu().numpy()}")
                     print(f"Projan poison loss: {loss_projan_poison.item():.6f}")
@@ -640,14 +612,14 @@ class Prob(BadNet):
                         noise = torch.randn_like(poisoned_features) * (feat_std * noise_scale)
                     poisoned_features = poisoned_features + noise
                 
-                if i < 3:  # Only debug first 3 batches
+                if DEBUG_VERBOSE and i < 3:  # Only debug first 3 batches
                     print(f"Poisoned features shape: {poisoned_features.shape}")
                     print(f"Poisoned features range: {poisoned_features.min().item():.4f} to {poisoned_features.max().item():.4f}")
                     print(f"Features require grad: {poisoned_features.requires_grad}")
                 
                 partitioner_logits = self.partitioner(poisoned_features)
                 
-                if i < 3:  # Only debug first 3 batches
+                if DEBUG_VERBOSE and i < 3:  # Only debug first 3 batches
                     print(f"Partitioner logits shape: {partitioner_logits.shape}")
                     print(f"Partitioner logits range: {partitioner_logits.min().item():.4f} to {partitioner_logits.max().item():.4f}")
                 
@@ -677,7 +649,7 @@ class Prob(BadNet):
                     loss_partition_ce = torch.tensor(0.0, device=self.device)
                     avg_prob = torch.zeros(self.nmarks, device=self.device)
                 
-                if i < 3:  # Only debug first 3 batches
+                if DEBUG_VERBOSE and i < 3:  # Only debug first 3 batches
                     print(f"Partition pseudo labels: {partition_pseudo_labels.cpu().numpy()}")
                     # Show distribution of pseudo-labels in this batch
                     if len(partition_pseudo_labels) > 0:
@@ -693,19 +665,19 @@ class Prob(BadNet):
                     predicted_partitions = partitioner_logits.argmax(dim=1)
                     y_target = torch.full_like(poison_label, target)
 
-                    if i < 3:  # Only debug first 3 batches
+                    if DEBUG_VERBOSE and i < 3:  # Only debug first 3 batches
                         print(f"Predicted partitions: {predicted_partitions.cpu().numpy()}")
                         print(f"Target labels: {y_target.cpu().numpy()}")
 
                     for j in range(self.nmarks):
                         mask = (predicted_partitions == j)
                         if mask.sum() == 0:
-                            if i < 3:
+                            if DEBUG_VERBOSE and i < 3:  # Debug block
                                 print(f"  Partition {j}: no samples (mask sum = 0)")
                             continue
 
                         ms = float(mask.sum().item())
-                        if i < 3:
+                        if DEBUG_VERBOSE and i < 3:  # Debug block
                             print(f"  Partition {j}: {ms} samples")
 
                         # Success Term: Trigger 'j' should work on inputs in partition 'j'
@@ -717,20 +689,21 @@ class Prob(BadNet):
                                 continue
                             failure_loss = loss_fn_ce(mod_outputs[k][mask], poison_label[mask])
                             failure_loss_sum = failure_loss_sum + failure_loss
-                            if i < 3:
+                            if DEBUG_VERBOSE and i < 3:  # Debug block
                                 print(f"    Failure loss for trigger {k} on partition {j}: {failure_loss.item():.6f}")
 
                         # Normalize by number of samples in this partition so each partition contributes equally
                         per_partition_loss = (success_loss + failure_loss_sum) / (ms + 1e-8)
                         loss_stateful_poison = loss_stateful_poison + per_partition_loss
 
-                        if i < 3:
+                        if DEBUG_VERBOSE and i < 3:  # Debug block
+
                             print(f"    Success loss for partition {j}: {success_loss.item():.6f}")
                             print(f"    Per-partition normalized contribution: {per_partition_loss.item():.6f}")
 
                     # Keep the full aggregate penalty instead of normalizing by partition count
                     loss_stateful_poison_normalized = loss_stateful_poison
-                    if i < 3:
+                    if DEBUG_VERBOSE and i < 3:
                         total_stateful_value = float(loss_stateful_poison.item()) if isinstance(loss_stateful_poison, torch.Tensor) else float(loss_stateful_poison)
                         normalized_stateful_value = float(loss_stateful_poison_normalized.item()) if isinstance(loss_stateful_poison_normalized, torch.Tensor) else float(loss_stateful_poison_normalized)
                         print(f"Total (summed) stateful poison loss: {total_stateful_value:.6f}")
@@ -752,7 +725,7 @@ class Prob(BadNet):
                         lambda_partition_eff * loss_partition_ce +
                         lambda_stateful_eff * loss_stateful_poison_normalized)
                 
-                if i < 3:  # Only debug first 3 batches
+                if DEBUG_VERBOSE and i < 3:  # Only debug first 3 batches
                     print(f"\n--- LOSS BREAKDOWN ---")
                     print(f"Loss benign: {loss_benign.item():.6f} * {1-self.poison_percent:.3f} = {loss_benign.item() * (1-self.poison_percent):.6f}")
                     print(f"Loss projan poison: {loss_projan_poison.item():.6f} * {self.poison_percent:.3f} = {loss_projan_poison.item() * self.poison_percent:.6f}")
@@ -767,7 +740,7 @@ class Prob(BadNet):
                     optimizer_partitioner.zero_grad()
                 
                 # DEBUG: Check gradients before backward pass
-                if i < 3:  # Only debug first 3 batches
+                if DEBUG_VERBOSE and i < 3:  # Only debug first 3 batches
                     print(f"\n--- GRADIENT DEBUG ---")
                     # Check if any parameters have gradients before backward pass
                     has_grad_before = any(p.grad is not None for p in module.parameters())
@@ -780,7 +753,7 @@ class Prob(BadNet):
                 loss.backward()
                 
                 # DEBUG: Check gradients after backward pass
-                if i < 3:  # Only debug first 3 batches
+                if DEBUG_VERBOSE and i < 3:  # Only debug first 3 batches
                     has_grad_after = any(p.grad is not None for p in module.parameters())
                     print(f"Model has gradients after backward: {has_grad_after}")
                     
@@ -818,10 +791,10 @@ class Prob(BadNet):
                         except Exception as _clip_exc:
                             print(f"Warning: partitioner grad clipping failed: {_clip_exc}")
                     optimizer_partitioner.step()
-                    if i < 3:  # Only debug first 3 batches
+                    if DEBUG_VERBOSE and i < 3:  # Only debug first 3 batches
                         print(f"Partitioner optimizer step completed")
                 
-                if i < 3:  # Only debug first 3 batches
+                if DEBUG_VERBOSE and i < 3:  # Only debug first 3 batches
                     print(f"Optimizer step completed")
                     print(f"--- END BATCH {i+1} DEBUG ---\n")
 
