@@ -357,6 +357,9 @@ class Prob(BadNet):
                         "Created default AdamW optimizer for partitioner "
                         f"with lr={self.partitioner_lr}, weight_decay={self.partitioner_weight_decay}"
                     )
+                except Exception as e:  # pragma: no cover - defensive
+                    print(f"Failed to create default partitioner optimizer: {e}")
+                    optimizer_partitioner = None
         else:
             optimizer_partitioner = None
         
