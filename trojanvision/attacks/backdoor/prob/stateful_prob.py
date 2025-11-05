@@ -181,6 +181,31 @@ class Prob(BadNet):
         """Convert class labels to partition assignments using simple modulo mapping."""
         return (labels % self.nmarks).long()
     
+    def _extract_features(self, x: torch.Tensor) -> torch.Tensor:
+        """
+        Extract features from intermediate layer for partitioner input.
+        Handles both models with get_features() and simple models without it.
+        """
+        if hasattr(self.model, 'get_features'):
+            features = self.model.get_features(x, layer_name=self.feature_layer)
+            return features.view(features.size(0), -1)
+        else:
+            # For simple models like Net, extract features manually
+            with torch.no_grad():
+                if hasattr(self.model._model, 'conv1'):
+                    # Manually pass through conv layers for Net
+                    feat = self.model._model.conv1(x)
+                    feat = F.relu(feat)
+                    feat = self.model._model.conv2(feat)
+                    feat = F.relu(feat)
+                    feat = F.max_pool2d(feat, 2)
+                    feat = self.model._model.dropout1(feat)
+                    feat = torch.flatten(feat, 1)
+                    return feat
+                else:
+                    # Fallback: just flatten the input
+                    return x.flatten(1)
+    
     def create_model(self, *args, **kwargs):
         # The main model (self.model) already exists from the __init__ call.
         # This method's only job is to create the partitioner based on the main model.
@@ -190,38 +215,9 @@ class Prob(BadNet):
         _img, _ = next(iter(self.dataset.loader['train']))
         _img = _img.to(self.device)
         
-        # Try to get features from intermediate layer if model supports it
-        if hasattr(self.model, 'get_features'):
-            features = self.model.get_features(_img, layer_name=self.feature_layer)
-            feature_dim = features.view(features.shape[0], -1).shape[1]
-        else:
-            # For simple models without get_features, use penultimate layer output
-            # Pass through model and extract from second-to-last layer
-            self.model.eval()
-            with torch.no_grad():
-                # For Net model, features come from fc layer before final classifier
-                if hasattr(self.model, 'features'):
-                    features = self.model.features(_img)
-                else:
-                    # Fallback: use output of all layers except final classifier
-                    # For Net: conv layers + fc layers, extract before final layer
-                    x = _img
-                    if hasattr(self.model._model, 'features'):
-                        x = self.model._model.features(x)
-                        x = x.flatten(1)
-                    elif hasattr(self.model._model, 'conv1'):
-                        # Manually pass through conv layers for Net
-                        x = self.model._model.conv1(x)
-                        x = F.relu(x)
-                        x = self.model._model.conv2(x)
-                        x = F.relu(x)
-                        x = F.max_pool2d(x, 2)
-                        x = self.model._model.dropout1(x)
-                        x = torch.flatten(x, 1)
-                        # Now x is at the flattened stage (9216 dims for MNIST)
-                    features = x
-                feature_dim = features.shape[1]
-            self.model.train()
+        # Extract features to determine feature dimension
+        features = self._extract_features(_img)
+        feature_dim = features.shape[1]
 
         # Create the partitioner model
         num_partitions = len(self.marks)
@@ -655,8 +651,7 @@ class Prob(BadNet):
                     # Skip the rest of the complex poison logic for pretrain
                     continue
 
-                poisoned_features = self.model.get_features(poisoned_input_clean.to(self.device), layer_name=self.feature_layer)
-                poisoned_features = poisoned_features.view(poison_num, -1)
+                poisoned_features = self._extract_features(poisoned_input_clean.to(self.device))
                 # Optional feature noise regularization for partitioner
                 if train_partitioner and float(getattr(self, 'partitioner_feature_noise_std', 0.0)) > 0.0 and self.partitioner is not None:
                     with torch.no_grad():
@@ -905,8 +900,8 @@ class Prob(BadNet):
                         for data in loader_train:
                             _input, _label_sample = data
                             _input = _input.to(self.device)
-                            feats = self.model.get_features(_input[:min(32, len(_input))], layer_name=self.feature_layer)
-                            sample_features.append(feats.view(feats.size(0), -1))
+                            feats = self._extract_features(_input[:min(32, len(_input))])
+                            sample_features.append(feats)
                             if self.class_to_partition:
                                 mapped_targets = [
                                     self.class_to_partition.get(int(lbl), int(lbl) % self.nmarks)
@@ -1231,8 +1226,7 @@ class Prob(BadNet):
                     for inputs, labels in val_loader:
                         inputs = inputs.to(self.device)
                         labels = labels.to(self.device)
-                        features = self.model.get_features(inputs, layer_name=self.feature_layer)
-                        features = features.view(features.size(0), -1)
+                        features = self._extract_features(inputs)
                         logits = self.partitioner(features)
                         preds = logits.argmax(dim=1)
 
