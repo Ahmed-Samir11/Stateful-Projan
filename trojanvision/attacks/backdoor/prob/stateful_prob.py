@@ -232,6 +232,11 @@ class Prob(BadNet):
             print(f"Model saved successfully to: {file_path}")
     def attack(self, epoch: int, save=False, optimizer=None, optimizer_partitioner=None, **kwargs):
         assert(self.train_mode != 'loss')
+        
+        # Initialize partitioner network if not already created
+        if self.partitioner is None:
+            self.create_model()
+        
         loader_train = self.dataset.get_dataloader('train')
         loader_valid = self.dataset.get_dataloader('valid')
         optimizer_partitioner_full = optimizer_partitioner
