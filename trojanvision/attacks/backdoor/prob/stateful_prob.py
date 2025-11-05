@@ -121,6 +121,7 @@ class Prob(BadNet):
         self.lambda_partition = lambda_partition
         self.lambda_stateful = lambda_stateful
         self.partitioner_lr = 0.001  # Simple fixed learning rate
+        self.partitioner_weight_decay = 0.0001  # Weight decay for partitioner optimizer
         self.xai_enable = xai_enable
         self.xai_samples = xai_samples
         self.xai_dir = xai_dir
