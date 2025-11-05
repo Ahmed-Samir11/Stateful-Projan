@@ -302,6 +302,9 @@ class Prob(BadNet):
               validate_interval: int = 1, save: bool = False,
               loader_train: torch.utils.data.DataLoader = None, loader_valid: torch.utils.data.DataLoader = None,
               **kwargs) -> None:
+        # Set to True to enable verbose debug prints
+        DEBUG_VERBOSE = False
+        
         train_partitioner = kwargs.pop('train_partitioner', True)
         enable_stateful = kwargs.pop('enable_stateful', True)
         best_loss = np.inf
@@ -316,36 +319,11 @@ class Prob(BadNet):
         validate_fn = self.validate_fn
         target = self.target_class
 
-        # DEBUG: Print initial model state
-        print(f"\n=== TRAINING DEBUG START ===")
-        print(f"Epochs: {epoch}, Poison percent: {self.poison_percent}")
-        print(f"Number of marks: {self.nmarks}, Target class: {target}")
-        print(f"Loss functions: {[loss.__name__ for loss in current_losses]}")
-        print(f"Feature layer: {self.feature_layer}")
-        print(f"Lambda partition: {self.lambda_partition}, Lambda stateful: {self.lambda_stateful}")
-        if not self._loss_formula_printed:
-            print("Composite loss = (1 - poison_percent) * L_benign + poison_percent * L_projan_poison"
-                " + lambda_partition * L_partitioner + lambda_stateful * L_stateful")
-            print("NEW relative to original Projan: + lambda_partition * L_partitioner (partition supervision)"
-                " and + lambda_stateful * L_stateful (per-partition trigger consistency).")
-            self._loss_formula_printed = True
-        
-        # DEBUG: Check optimizer state
-        print(f"Main optimizer type: {type(optimizer)}")
-        print(f"Main optimizer param groups: {len(optimizer.param_groups)}")
-        for i, group in enumerate(optimizer.param_groups):
-            print(f"  Group {i}: lr={group['lr']}, params={len(group['params'])}")
-        
         if not train_partitioner and optimizer_partitioner is not None:
-            print("Ignoring provided partitioner optimizer because train_partitioner=False for this stage.")
             optimizer_partitioner = None
 
-        # DEBUG: Check partitioner optimizer state
+        # Check partitioner optimizer state
         if optimizer_partitioner is not None and train_partitioner:
-            print(f"Partitioner optimizer type: {type(optimizer_partitioner)}")
-            print(f"Partitioner optimizer param groups: {len(optimizer_partitioner.param_groups)}")
-            for i, group in enumerate(optimizer_partitioner.param_groups):
-                print(f"  Group {i}: lr={group['lr']}, params={len(group['params'])}")
             # Force AdamW for the partitioner if something else was supplied.
             try:
                 import torch.optim as _optim  # imported lazily to avoid circular deps
