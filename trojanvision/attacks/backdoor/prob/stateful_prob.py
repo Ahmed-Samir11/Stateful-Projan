@@ -133,6 +133,9 @@ class Prob(BadNet):
         if self.xai_dir is None:
             self.xai_dir = os.path.join(self.folder_path, 'xai')
 
+        # Debug flag to print loss formula only once
+        self._loss_formula_printed = False
+
         # used by the summary() method
         self.param_list['prob'] = ['probs', 'loss_names', 'cbeta_epoch', 'init_loss_weights',
                                    'disable_batch_norm', 'batchnorm_momentum', 'pretrain_epoch',
