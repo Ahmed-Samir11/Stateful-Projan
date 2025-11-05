@@ -96,9 +96,6 @@ class Prob(BadNet):
         # optional per-loss normalization warmup stats
         self.normalize_losses = bool(kwargs.get('normalize_losses', False))
         self.warmup_batches = int(kwargs.get('warmup_batches', 1000))
-        # blend factor between identity (1.0) and mean_abs when computing scales
-        # 0.0 => use identity (no normalization), 1.0 => use mean_abs fully
-        self.norm_blend = float(kwargs.get('norm_blend', 0.1))
         # store one extra slot for the benign loss (index 0) followed by poisoned losses
         self._norm_stats = {
             'sum_abs': np.zeros((nloss_tmp + 1,), dtype=float),
@@ -111,8 +108,6 @@ class Prob(BadNet):
                                    'disable_batch_norm', 'batchnorm_momentum', 'pretrain_epoch']
         # expose normalization params
         self.param_list['prob'] += ['normalize_losses', 'warmup_batches']
-        # expose blend param
-        self.param_list['prob'] += ['norm_blend']
 
 
     @classmethod
@@ -136,8 +131,6 @@ class Prob(BadNet):
                 help='enable running-mean normalization of poisoned losses (warmup)')
         group.add_argument('--warmup_batches', dest='warmup_batches', type=int, default=1000,
                 help='number of batches to warmup and estimate mean abs(loss) before normalizing')
-        group.add_argument('--norm_blend', dest='norm_blend', type=float, default=0.1,
-                help='blend factor between identity (1.0) and mean_abs for normalization scales (0..1)')
 
         type_map = {'mark_height': int, 'mark_width': int, 'height_offset': int, 'width_offset': int}
         group.add_argument('--extra_mark', action=DictReader, nargs='*', dest='extra_marks', type_map=type_map)
@@ -273,13 +266,10 @@ class Prob(BadNet):
                     mean_abs = self._norm_stats['sum_abs'] / float(self._norm_stats['norm_count'])
                     # avoid zeros
                     mean_abs[mean_abs == 0.0] = 1.0
-                    # blend with identity to prevent extreme amplification when mean_abs is very small
-                    blend = float(self.norm_blend) if hasattr(self, 'norm_blend') else 0.1
-                    blended = (1.0 - blend) * np.ones_like(mean_abs) + blend * mean_abs
-                    self._norm_stats['scales'] = blended
+                    self._norm_stats['scales'] = mean_abs
                     self._norm_stats['warmup_done'] = True
                     if verbose_flag:
-                        prints(f"[prob_loss debug] normalization warmup complete; mean_abs={mean_abs} blended_scales={self._norm_stats['scales']}")
+                        prints(f"[prob_loss debug] normalization warmup complete; mean_abs={mean_abs}")
             except Exception:
                 pass
 
