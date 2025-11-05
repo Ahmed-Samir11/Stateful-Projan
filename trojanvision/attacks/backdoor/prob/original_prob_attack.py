@@ -18,6 +18,7 @@ from trojanzoo.utils.io import DictReader
 
 import torch
 from torch import tensor
+import torch.nn as nn
 import torch.nn.functional as F
 import random
 import numpy as np
