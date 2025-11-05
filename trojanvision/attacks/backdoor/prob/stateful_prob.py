@@ -191,20 +191,19 @@ class Prob(BadNet):
             return features.view(features.size(0), -1)
         else:
             # For simple models like Net, extract features manually
-            with torch.no_grad():
-                if hasattr(self.model._model, 'conv1'):
-                    # Manually pass through conv layers for Net
-                    feat = self.model._model.conv1(x)
-                    feat = F.relu(feat)
-                    feat = self.model._model.conv2(feat)
-                    feat = F.relu(feat)
-                    feat = F.max_pool2d(feat, 2)
-                    feat = self.model._model.dropout1(feat)
-                    feat = torch.flatten(feat, 1)
-                    return feat
-                else:
-                    # Fallback: just flatten the input
-                    return x.flatten(1)
+            if hasattr(self.model._model, 'conv1'):
+                # Manually pass through conv layers for Net
+                feat = self.model._model.conv1(x)
+                feat = F.relu(feat)
+                feat = self.model._model.conv2(feat)
+                feat = F.relu(feat)
+                feat = F.max_pool2d(feat, 2)
+                feat = self.model._model.dropout1(feat)
+                feat = torch.flatten(feat, 1)
+                return feat
+            else:
+                # Fallback: just flatten the input
+                return x.flatten(1)
     
     def create_model(self, *args, **kwargs):
         # The main model (self.model) already exists from the __init__ call.
