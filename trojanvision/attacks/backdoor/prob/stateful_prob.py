@@ -189,13 +189,45 @@ class Prob(BadNet):
 
         _img, _ = next(iter(self.dataset.loader['train']))
         _img = _img.to(self.device)
-        features = self.model.get_features(_img, layer_name=self.feature_layer)
-        feature_dim = features.view(features.shape[0], -1).shape[1]
+        
+        # Try to get features from intermediate layer if model supports it
+        if hasattr(self.model, 'get_features'):
+            features = self.model.get_features(_img, layer_name=self.feature_layer)
+            feature_dim = features.view(features.shape[0], -1).shape[1]
+        else:
+            # For simple models without get_features, use penultimate layer output
+            # Pass through model and extract from second-to-last layer
+            self.model.eval()
+            with torch.no_grad():
+                # For Net model, features come from fc layer before final classifier
+                if hasattr(self.model, 'features'):
+                    features = self.model.features(_img)
+                else:
+                    # Fallback: use output of all layers except final classifier
+                    # For Net: conv layers + fc layers, extract before final layer
+                    x = _img
+                    if hasattr(self.model._model, 'features'):
+                        x = self.model._model.features(x)
+                        x = x.flatten(1)
+                    elif hasattr(self.model._model, 'conv1'):
+                        # Manually pass through conv layers for Net
+                        x = self.model._model.conv1(x)
+                        x = F.relu(x)
+                        x = self.model._model.conv2(x)
+                        x = F.relu(x)
+                        x = F.max_pool2d(x, 2)
+                        x = self.model._model.dropout1(x)
+                        x = torch.flatten(x, 1)
+                        # Now x is at the flattened stage (9216 dims for MNIST)
+                    features = x
+                feature_dim = features.shape[1]
+            self.model.train()
 
         # Create the partitioner model
         num_partitions = len(self.marks)
         self.partitioner = Partitioner(num_partitions=num_partitions,
                                        feature_dim=feature_dim).to(self.device)
+        print(f"Partitioner created: {num_partitions} partitions, feature_dim={feature_dim}")
     def save(self, file_path: str = None, suffix: str = None, verbose: bool = False, **kwargs):
         """
         Custom save method to save both the main model and the partitioner.
