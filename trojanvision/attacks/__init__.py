@@ -47,6 +47,7 @@ class_dict = {
     #probabilistic
     'prob': Prob,
     'org_prob': OrgProb,
+    'stateful_prob': StatefulProb,
     #N to one
     'ntoone': NtoOne,
 }
