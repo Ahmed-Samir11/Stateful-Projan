@@ -61,6 +61,11 @@ def read_experiments(mode='test'):
         raise ValueError('undefined mode.')
 
     experiment_log = f'{log_folder}/history.csv'
+    # Create directory and file if they don't exist
+    os.makedirs(log_folder, exist_ok=True)
+    if not os.path.exists(experiment_log):
+        open(experiment_log, 'w').close()
+    
     with open(experiment_log, 'r', newline='') as f:
         rd = csv.reader(f, delimiter=',')
         for recix, record in enumerate(rd):
