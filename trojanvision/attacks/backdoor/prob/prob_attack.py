@@ -74,7 +74,7 @@ class Prob(BadNet):
         self.loss_names = losses
         self.losses = [get_loss_by_name(loss) for loss in losses]
         self.cbeta_epoch = cbeta_epoch
-        self.init_loss_weights = npa(init_loss_weights)
+        self.init_loss_weights = npa(init_loss_weights) if init_loss_weights is not None else None
         if disable_batch_norm:
             self.model.disable_batch_norm()
         self.model.set_batchnorm_momentum(batchnorm_momentum)
