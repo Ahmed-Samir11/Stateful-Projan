@@ -153,14 +153,13 @@ def run_attack(ntrig, attack, dataset, model, iter, mode='test'):
 
     attack_cmd = f"python ./examples/backdoor_attack.py --verbose 1 --batch_size 100 " \
                  f"--dataset {dataset} --model {model} --attack {attack} " \
-                 f"--device cuda --epoch {attack_epoch} --save " \
+                 f"--device cuda --epoch {attack_epoch} --save --download " \
                  f"--mark_path square_white.png --mark_height 3 --mark_width 3 " \
                  f"--height_offset 2 --width_offset 2 --mark_alpha {alpha} " \
                  f"{this_attack_args} "
     if attack == 'prob' and dataset == 'cifar':
         attack_cmd += '--lr 0.001 '
-    if 'model' != 'net':
-        attack_cmd += '--pretrain '
+    # Removed buggy --pretrain flag (always true condition)
     attack_cmd += f">> {att_log_path} "
 
     if mode == 'test':
@@ -338,8 +337,7 @@ if __name__ == "__main__":  # Create the parser
     skip_existing_trials = True  # if results exist for a trial, don't repeat it.
 
     attack_args = {
-        'prob': '--cbeta_epoch 0 --losses loss1 loss2_11 loss3_11 --init_loss_weights 1.0 1.75 0.25 --poison_percent 0.1 '
-                '--probs ',
+        'prob': '--cbeta_epoch 0 --losses loss1 loss2_11 loss3_11 --init_loss_weights 1.0 1.75 0.25 --poison_percent 0.1 ',
         'badnet': '',
         'ntoone': ' ',
     }
