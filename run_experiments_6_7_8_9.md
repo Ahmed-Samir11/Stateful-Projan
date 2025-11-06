@@ -30,6 +30,11 @@ python experiment6_blackbox_partition_inference.py `
   --device cuda
 ```
 
+### Kaggle Command (MNIST):
+```bash
+python experiment6_blackbox_partition_inference.py --color --verbose 1 --dataset mnist --model net --attack stateful_prob --stateful_model ./path/to/stateful_projan_model.pth --num_test_samples 300 --output_dir ./experiment6_results --mark_path square_white.png --mark_height 3 --mark_width 3 --height_offset 2 --width_offset 2 --extra_mark "mark_path=square_white.png mark_height=3 mark_width=3 height_offset=10 width_offset=10" --extra_mark "mark_path=square_white.png mark_height=3 mark_width=3 height_offset=17 width_offset=17" --device cuda
+```
+
 **For CIFAR-10**:
 ```powershell
 python experiment6_blackbox_partition_inference.py `
@@ -45,6 +50,11 @@ python experiment6_blackbox_partition_inference.py `
   --extra_mark "mark_path=square_white.png mark_height=3 mark_width=3 height_offset=10 width_offset=10" `
   --extra_mark "mark_path=square_white.png mark_height=3 mark_width=3 height_offset=20 width_offset=20" `
   --device cuda
+```
+
+### Kaggle Command (CIFAR-10):
+```bash
+python experiment6_blackbox_partition_inference.py --color --verbose 1 --dataset cifar10 --model resnet18_comp --attack stateful_prob --stateful_model ./path/to/cifar10_stateful_model.pth --num_test_samples 500 --output_dir ./experiment6_results_cifar10 --mark_path square_white.png --mark_height 3 --mark_width 3 --height_offset 2 --width_offset 2 --extra_mark "mark_path=square_white.png mark_height=3 mark_width=3 height_offset=10 width_offset=10" --extra_mark "mark_path=square_white.png mark_height=3 mark_width=3 height_offset=20 width_offset=20" --device cuda
 ```
 
 ### Expected Output:
@@ -74,6 +84,11 @@ python experiment8_partition_analysis.py `
   --device cuda
 ```
 
+### Kaggle Command (MNIST):
+```bash
+python experiment8_partition_analysis.py --color --verbose 1 --dataset mnist --model net --attack stateful_prob --stateful_model ./path/to/stateful_projan_model.pth --num_samples 1000 --output_dir ./experiment8_results --mark_path square_white.png --mark_height 3 --mark_width 3 --height_offset 2 --width_offset 2 --extra_mark "mark_path=square_white.png mark_height=3 mark_width=3 height_offset=10 width_offset=10" --extra_mark "mark_path=square_white.png mark_height=3 mark_width=3 height_offset=17 width_offset=17" --device cuda
+```
+
 **For CIFAR-10**:
 ```powershell
 python experiment8_partition_analysis.py `
@@ -91,6 +106,11 @@ python experiment8_partition_analysis.py `
   --device cuda
 ```
 
+### Kaggle Command (CIFAR-10):
+```bash
+python experiment8_partition_analysis.py --color --verbose 1 --dataset cifar10 --model resnet18_comp --attack stateful_prob --stateful_model ./path/to/cifar10_stateful_model.pth --num_samples 1000 --output_dir ./experiment8_results_cifar10 --mark_path square_white.png --mark_height 3 --mark_width 3 --height_offset 2 --width_offset 2 --extra_mark "mark_path=square_white.png mark_height=3 mark_width=3 height_offset=10 width_offset=10" --extra_mark "mark_path=square_white.png mark_height=3 mark_width=3 height_offset=20 width_offset=20" --device cuda
+```
+
 ### Expected Output:
 - `experiment8_results/experiment8_results.json` - All metrics and analysis
 - Console: Adjusted Rand Index, chi-square test, smoothness scores, partition type conclusion
@@ -101,11 +121,15 @@ python experiment8_partition_analysis.py `
 
 For quick validation before full runs:
 
-```powershell
-# Experiment 6 - Quick test
-python experiment6_blackbox_partition_inference.py --dataset mnist --model net --attack stateful_prob --stateful_model ./path/to/stateful_model.pth --num_test_samples 100 --output_dir ./exp6_quick --mark_path square_white.png --mark_height 3 --mark_width 3 --height_offset 2 --width_offset 2 --extra_mark "mark_path=square_white.png mark_height=3 mark_width=3 height_offset=10 width_offset=10" --extra_mark "mark_path=square_white.png mark_height=3 mark_width=3 height_offset=17 width_offset=17"
+### Kaggle Quick Commands:
 
-# Experiment 8 - Quick test
+**Experiment 6 - Quick test:**
+```bash
+python experiment6_blackbox_partition_inference.py --dataset mnist --model net --attack stateful_prob --stateful_model ./path/to/stateful_model.pth --num_test_samples 100 --output_dir ./exp6_quick --mark_path square_white.png --mark_height 3 --mark_width 3 --height_offset 2 --width_offset 2 --extra_mark "mark_path=square_white.png mark_height=3 mark_width=3 height_offset=10 width_offset=10" --extra_mark "mark_path=square_white.png mark_height=3 mark_width=3 height_offset=17 width_offset=17"
+```
+
+**Experiment 8 - Quick test:**
+```bash
 python experiment8_partition_analysis.py --dataset mnist --model net --attack stateful_prob --stateful_model ./path/to/stateful_model.pth --num_samples 300 --output_dir ./exp8_quick --mark_path square_white.png --mark_height 3 --mark_width 3 --height_offset 2 --width_offset 2 --extra_mark "mark_path=square_white.png mark_height=3 mark_width=3 height_offset=10 width_offset=10" --extra_mark "mark_path=square_white.png mark_height=3 mark_width=3 height_offset=17 width_offset=17"
 ```
 
