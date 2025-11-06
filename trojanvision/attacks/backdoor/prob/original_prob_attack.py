@@ -219,11 +219,19 @@ class Prob(BadNet):
                         inp_img_path=os.path.join(self.folder_path, f'input{j+1}.png')
                         save_tensor_as_img(inp_img_path, mod_inputs[j][0])
 
-                _output = module(_input) # todo: add amp
+                # GPU Parallelization: Batch concatenation for single forward pass
+                # Instead of: for j in range(self.nmarks): mod_outputs[j] = module(mod_inputs[j])
+                # We concatenate all inputs and do one forward pass, then split outputs
+                _input_all = torch.cat([_input] + mod_inputs, dim=0)  # Concatenate benign + all triggers
+                _output_all = module(_input_all)  # Single forward pass
+                
+                # Split outputs back into benign and per-trigger outputs
+                _output = _output_all[:batch_size]  # Benign output
                 mod_outputs = [None] * self.nmarks
-
                 for j in range(self.nmarks):
-                    mod_outputs[j] = module(mod_inputs[j])
+                    start_idx = batch_size + j * poison_num
+                    end_idx = start_idx + poison_num
+                    mod_outputs[j] = _output_all[start_idx:end_idx]  # Trigger j output
 
 
 
