@@ -40,7 +40,9 @@ def analyze_partition_class_correlation(attack, dataset, device, num_samples=100
         
         # Get partition from partitioner
         if attack.partitioner is not None:
-            partition = attack.partitioner(_input).argmax(dim=1).item()
+            # Flatten input if needed for partitioner
+            _input_flat = _input.view(_input.size(0), -1)
+            partition = attack.partitioner(_input_flat).argmax(dim=1).item()
         else:
             # Fallback: determine by testing triggers
             partition = -1
@@ -110,7 +112,8 @@ def analyze_partition_smoothness(attack, dataset, device, num_samples=300):
         
         # Get original partition
         if attack.partitioner is not None:
-            orig_partition = attack.partitioner(_input).argmax(dim=1).item()
+            _input_flat = _input.view(_input.size(0), -1)
+            orig_partition = attack.partitioner(_input_flat).argmax(dim=1).item()
         else:
             continue
         
@@ -119,7 +122,8 @@ def analyze_partition_smoothness(attack, dataset, device, num_samples=300):
             noise = torch.randn_like(_input) * strength
             perturbed = torch.clamp(_input + noise, 0, 1)
             
-            perturbed_partition = attack.partitioner(perturbed).argmax(dim=1).item()
+            perturbed_flat = perturbed.view(perturbed.size(0), -1)
+            perturbed_partition = attack.partitioner(perturbed_flat).argmax(dim=1).item()
             consistency = (perturbed_partition == orig_partition)
             smoothness_scores[strength].append(1.0 if consistency else 0.0)
         
