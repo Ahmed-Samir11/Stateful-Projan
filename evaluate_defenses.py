@@ -7,6 +7,7 @@ import torch
 import argparse
 import numpy as np
 from tqdm import tqdm
+import random
 
 import trojanvision
 from trojanvision.utils import summary
@@ -16,8 +17,10 @@ def evaluate_defense_evasion(attack, loader, n_triggers, thresholds, device):
     """
     Simulate the original Projan attack and compute detection rates for defender thresholds.
     Detection is defined as: detected if number_of_trigger_queries >= T.
+    Uses randomized trigger order for fair average-case measurement.
     """
     print(f"\n--- Evaluating Projan Evasion against thresholds {thresholds} ---")
+    print(f"NOTE: Using randomized trigger order for fair average-case measurement")
 
     queries_list = []  # store queries used for successful compromises
     success_count = 0
@@ -29,7 +32,11 @@ def evaluate_defense_evasion(attack, loader, n_triggers, thresholds, device):
         compromised = False
         queries_for_this_sample = 0
 
-        for trigger_idx in range(n_triggers):
+        # Try triggers in RANDOM order (average-case instead of best-case)
+        trigger_order = list(range(n_triggers))
+        random.shuffle(trigger_order)
+        
+        for trigger_idx in trigger_order:
             queries_for_this_sample += 1
             poison_input = attack.add_mark(_input, index=trigger_idx)
             with torch.no_grad():

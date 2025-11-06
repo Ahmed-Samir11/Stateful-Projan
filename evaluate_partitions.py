@@ -7,6 +7,7 @@ import torch
 import argparse
 import numpy as np
 from tqdm import tqdm
+import random
 
 import trojanvision
 
@@ -15,13 +16,19 @@ def determine_ground_truth_partitions(attack, loader, n_triggers, device):
     """
     For each sample, find the first trigger index that causes misclassification (ground truth partition).
     Returns a list of ground truth partition indices (or -1 if none).
+    Uses randomized trigger order for fair average-case measurement.
     """
     gt_partitions = []
     for i, data in enumerate(tqdm(loader, desc='Determine GT Partitions')):
         _input, _ = data
         _input = _input.to(device)
         gt = -1
-        for j in range(n_triggers):
+        
+        # Try triggers in RANDOM order (average-case instead of best-case)
+        trigger_order = list(range(n_triggers))
+        random.shuffle(trigger_order)
+        
+        for j in trigger_order:
             poison_input = attack.add_mark(_input, index=j)
             with torch.no_grad():
                 output = attack.model(poison_input)

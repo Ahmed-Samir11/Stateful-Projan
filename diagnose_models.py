@@ -11,6 +11,7 @@ import torch
 import argparse
 import numpy as np
 from tqdm import tqdm
+import random
 
 import trojanvision
 
@@ -20,6 +21,8 @@ def diagnose_trigger_asrs(attack, loader, n_triggers, device):
     Measure ASR for each trigger individually.
     For proper Projan: each trigger should have ~30-50% ASR
     For OR ASR: should be 95-100%
+    
+    Also measures average-case QTC with randomized trigger order.
     """
     print(f"\n{'='*60}")
     print(f"DIAGNOSTIC: Individual Trigger ASR Analysis")
@@ -73,15 +76,48 @@ def diagnose_trigger_asrs(attack, loader, n_triggers, device):
     
     or_asr = (or_success / total * 100.0) if total > 0 else 0.0
     
+    # Compute average-case QTC with randomized trigger order
+    total_queries = 0
+    success_count_qtc = 0
+    
+    for i, data in enumerate(tqdm(loader, desc="Average QTC (random order)")):
+        _input, _label = data
+        _input = _input.to(device)
+        
+        compromised = False
+        queries_for_sample = 0
+        
+        # Try triggers in RANDOM order
+        trigger_order = list(range(n_triggers))
+        random.shuffle(trigger_order)
+        
+        for trigger_idx in trigger_order:
+            queries_for_sample += 1
+            poison_input = attack.add_mark(_input, index=trigger_idx)
+            with torch.no_grad():
+                output = attack.model(poison_input)
+            
+            if output.argmax(1).item() == attack.target_class:
+                compromised = True
+                break
+        
+        if compromised:
+            success_count_qtc += 1
+            total_queries += queries_for_sample
+    
+    avg_qtc = (total_queries / success_count_qtc) if success_count_qtc > 0 else float('inf')
+    
     print(f"\n{'='*60}")
     print(f"SUMMARY:")
     print(f"{'='*60}")
     print(f"Individual ASRs: {[f'{x:.2f}%' for x in individual_asrs]}")
     print(f"OR ASR (any):    {or_asr:.2f}%")
+    print(f"Average QTC:     {avg_qtc:.2f} (with randomized trigger order)")
     print(f"\n{'='*60}")
     print(f"EXPECTED for Projan:")
     print(f"  - Individual ASRs: ~30-50% each (LOW)")
     print(f"  - OR ASR: ~95-100% (HIGH)")
+    print(f"  - Average QTC: ~1.5-2.5 (depends on individual ASRs)")
     print(f"\n{'='*60}")
     print(f"DIAGNOSIS:")
     

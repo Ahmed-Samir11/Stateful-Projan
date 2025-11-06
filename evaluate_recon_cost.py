@@ -7,6 +7,7 @@ import torch
 import argparse
 import numpy as np
 from tqdm import tqdm
+import random
 
 import trojanvision
 
@@ -14,6 +15,7 @@ import trojanvision
 def projan_asr_at_budget(attack, loader, n_triggers, Q, device):
     """
     ASR for Projan with budget Q: percentage of samples where any of first Q triggers succeeds.
+    Uses randomized trigger order for fair average-case measurement.
     """
     success = 0
     total = 0
@@ -22,7 +24,14 @@ def projan_asr_at_budget(attack, loader, n_triggers, Q, device):
         _input = _input.to(device)
         total += 1
         compromised = False
-        for j in range(min(Q, n_triggers)):
+        
+        # Try triggers in RANDOM order (average-case instead of best-case)
+        trigger_order = list(range(n_triggers))
+        random.shuffle(trigger_order)
+        
+        for idx, j in enumerate(trigger_order):
+            if idx >= Q:  # Budget limit
+                break
             poison_input = attack.add_mark(_input, index=j)
             with torch.no_grad():
                 out = attack.model(poison_input)

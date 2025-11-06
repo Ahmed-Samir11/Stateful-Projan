@@ -7,6 +7,7 @@ import torch
 import argparse
 import numpy as np
 from tqdm import tqdm
+import random
 
 import trojanvision
 
@@ -15,6 +16,7 @@ def projan_undetected_prob(attack, loader, n_triggers, T, device):
     """
     Probability that a compromise is undetected for threshold T.
     Undetected if queries_required < T. We compute undetected compromises / total samples.
+    Uses randomized trigger order for fair average-case measurement.
     """
     total = 0
     undetected = 0
@@ -24,7 +26,12 @@ def projan_undetected_prob(attack, loader, n_triggers, T, device):
         total += 1
         compromised = False
         queries = 0
-        for j in range(n_triggers):
+        
+        # Try triggers in RANDOM order (average-case instead of best-case)
+        trigger_order = list(range(n_triggers))
+        random.shuffle(trigger_order)
+        
+        for j in trigger_order:
             queries += 1
             poison_input = attack.add_mark(_input, index=j)
             with torch.no_grad():

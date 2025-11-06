@@ -7,6 +7,7 @@ import torch
 import argparse
 import numpy as np
 from tqdm import tqdm
+import random
 
 import trojanvision
 from trojanvision.utils import summary
@@ -14,9 +15,11 @@ from trojanvision.utils import summary
 def evaluate_projan_efficiency(attack, loader, n_triggers, device):
     """
     Simulates the original Projan attack to measure its efficiency.
-    For each sample, it tries triggers sequentially until one succeeds.
+    For each sample, it tries triggers in RANDOM order until one succeeds.
+    This gives average-case QTC instead of best-case (which would always try best trigger first).
     """
     print(f"\n--- Evaluating Original Projan Efficiency ({n_triggers} triggers) ---")
+    print(f"NOTE: Using randomized trigger order for fair average-case measurement")
     total_queries = 0
     success_count = 0
     
@@ -28,8 +31,11 @@ def evaluate_projan_efficiency(attack, loader, n_triggers, device):
         compromised = False
         queries_for_this_sample = 0
         
-        # Sequentially try triggers
-        for trigger_idx in range(n_triggers):
+        # Try triggers in RANDOM order (average-case instead of best-case)
+        trigger_order = list(range(n_triggers))
+        random.shuffle(trigger_order)
+        
+        for trigger_idx in trigger_order:
             queries_for_this_sample += 1
             poison_input = attack.add_mark(_input, index=trigger_idx)
             with torch.no_grad():
