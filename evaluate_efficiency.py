@@ -11,7 +11,7 @@ from tqdm import tqdm
 import trojanvision
 from trojanvision.utils import summary
 
-def evaluate_projan_efficiency(attack, loader, n_triggers):
+def evaluate_projan_efficiency(attack, loader, n_triggers, device):
     """
     Simulates the original Projan attack to measure its efficiency.
     For each sample, it tries triggers sequentially until one succeeds.
@@ -22,8 +22,8 @@ def evaluate_projan_efficiency(attack, loader, n_triggers):
     
     for i, data in enumerate(tqdm(loader, desc="Projan Evaluation")):
         _input, _label = data
-        _input = _input.to(attack.device)
-        _label = _label.to(attack.device)
+        _input = _input.to(device)
+        _label = _label.to(device)
         
         compromised = False
         queries_for_this_sample = 0
@@ -49,7 +49,7 @@ def evaluate_projan_efficiency(attack, loader, n_triggers):
     print(f"Average Queries to Compromise (QTC): {avg_qtc:.4f}")
     return avg_qtc
 
-def evaluate_stateful_projan_efficiency(attack, loader, k_probes):
+def evaluate_stateful_projan_efficiency(attack, loader, k_probes, device):
     """
     Simulates the Stateful Projan attack.
     Uses 'k' benign probes for reconnaissance, then one triggered attack.
@@ -60,8 +60,8 @@ def evaluate_stateful_projan_efficiency(attack, loader, k_probes):
     
     for i, data in enumerate(tqdm(loader, desc="Stateful Projan Eval")):
         _input, _label = data
-        _input = _input.to(attack.device)
-        _label = _label.to(attack.device)
+        _input = _input.to(device)
+        _label = _label.to(device)
         
         # 1. Reconnaissance Phase (simulate with the same input for simplicity)
         # In a real attack, these 'k' probes might be different but related inputs.
@@ -173,14 +173,14 @@ if __name__ == '__main__':
     # Additional check to ensure partitioner is working
     with torch.no_grad():
         _img, _ = next(iter(loader))
-        _img = _img.to(attack_stateful.device)
+        _img = _img.to(env['device'])
         features = attack_stateful._extract_features(_img)
         partitioner_logits = attack_stateful.partitioner(features)
         print(f"\nPartitioner test output shape: {partitioner_logits.shape}")
     
     # --- Run Evaluations ---
-    qtc_projan = evaluate_projan_efficiency(attack_projan, loader, n_triggers=len(marks))
-    qtc_stateful = evaluate_stateful_projan_efficiency(attack_stateful, loader, k_probes=args.k_probes)
+    qtc_projan = evaluate_projan_efficiency(attack_projan, loader, n_triggers=len(marks), device=env['device'])
+    qtc_stateful = evaluate_stateful_projan_efficiency(attack_stateful, loader, k_probes=args.k_probes, device=env['device'])
     
     # --- Print Summary ---
     print("\n\n==============================================")
