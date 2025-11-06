@@ -66,8 +66,7 @@ def evaluate_stateful_projan_efficiency(attack, loader, k_probes):
         # 1. Reconnaissance Phase (simulate with the same input for simplicity)
         # In a real attack, these 'k' probes might be different but related inputs.
         with torch.no_grad():
-            features = attack.model.get_features(_input, layer_name=attack.feature_layer)
-            features = features.view(features.shape[0], -1)
+            features = attack._extract_features(_input)
             partitioner_logits = attack.partitioner(features)
             predicted_partition = partitioner_logits.argmax(1).item()
 
@@ -120,9 +119,14 @@ if __name__ == '__main__':
     import torch
 
     # 1. Setup for Original Projan
-    args.stateful = False
     model_projan = trojanvision.models.create(dataset=dataset, **args.__dict__)
-    attack_projan = trojanvision.attacks.create(dataset=dataset, model=model_projan, marks=marks, **args.__dict__)
+    attack_projan = trojanvision.attacks.create(
+        dataset=dataset, 
+        model=model_projan, 
+        marks=marks, 
+        attack='prob',  # Use regular prob attack
+        **args.__dict__
+    )
     
     # --- Directly load the state dict using torch.load ---
     state_dict_projan = torch.load(args.projan_model, map_location=env['device'])
@@ -130,9 +134,14 @@ if __name__ == '__main__':
     attack_projan.model.eval()
 
     # 2. Setup for Stateful Projan
-    args.stateful = True
     model_stateful = trojanvision.models.create(dataset=dataset, **args.__dict__)
-    attack_stateful = trojanvision.attacks.create(dataset=dataset, model=model_stateful, marks=marks, **args.__dict__)
+    attack_stateful = trojanvision.attacks.create(
+        dataset=dataset, 
+        model=model_stateful, 
+        marks=marks, 
+        attack='stateful_prob',  # Use stateful_prob attack
+        **args.__dict__
+    )
     
     # First create the model and partitioner architecture
     attack_stateful.create_model()  # This creates the partitioner
@@ -165,8 +174,7 @@ if __name__ == '__main__':
     with torch.no_grad():
         _img, _ = next(iter(loader))
         _img = _img.to(attack_stateful.device)
-        features = attack_stateful.model.get_features(_img, layer_name=attack_stateful.feature_layer)
-        features = features.view(features.shape[0], -1)
+        features = attack_stateful._extract_features(_img)
         partitioner_logits = attack_stateful.partitioner(features)
         print(f"\nPartitioner test output shape: {partitioner_logits.shape}")
     
