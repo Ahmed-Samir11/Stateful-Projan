@@ -12,7 +12,7 @@ import trojanvision
 from trojanvision.utils import summary
 
 
-def evaluate_defense_evasion(attack, loader, n_triggers, thresholds):
+def evaluate_defense_evasion(attack, loader, n_triggers, thresholds, device):
     """
     Simulate the original Projan attack and compute detection rates for defender thresholds.
     Detection is defined as: detected if number_of_trigger_queries >= T.
@@ -24,7 +24,7 @@ def evaluate_defense_evasion(attack, loader, n_triggers, thresholds):
 
     for i, data in enumerate(tqdm(loader, desc="Projan Eval for Defenses")):
         _input, _label = data
-        _input = _input.to(attack.device)
+        _input = _input.to(device)
 
         compromised = False
         queries_for_this_sample = 0
@@ -89,9 +89,14 @@ if __name__ == '__main__':
     marks = [primary_mark] + extra_marks
 
     # Projan setup
-    args.stateful = False
     model_projan = trojanvision.models.create(dataset=dataset, **args.__dict__)
-    attack_projan = trojanvision.attacks.create(dataset=dataset, model=model_projan, marks=marks, **args.__dict__)
+    attack_projan = trojanvision.attacks.create(
+        dataset=dataset, 
+        model=model_projan, 
+        marks=marks, 
+        attack='prob',
+        **args.__dict__
+    )
     state_dict_projan = torch.load(args.projan_model, map_location=env['device'])
     # accept either flat or structured
     if isinstance(state_dict_projan, dict) and 'model' in state_dict_projan:
@@ -101,9 +106,14 @@ if __name__ == '__main__':
     attack_projan.model.eval()
 
     # Stateful setup
-    args.stateful = True
     model_stateful = trojanvision.models.create(dataset=dataset, **args.__dict__)
-    attack_stateful = trojanvision.attacks.create(dataset=dataset, model=model_stateful, marks=marks, **args.__dict__)
+    attack_stateful = trojanvision.attacks.create(
+        dataset=dataset, 
+        model=model_stateful, 
+        marks=marks, 
+        attack='stateful_prob',
+        **args.__dict__
+    )
     attack_stateful.create_model()
     state_dict_stateful = torch.load(args.stateful_model, map_location=env['device'])
     if isinstance(state_dict_stateful, dict) and 'model' in state_dict_stateful and 'partitioner' in state_dict_stateful:
@@ -120,7 +130,7 @@ if __name__ == '__main__':
     n_triggers = args.k_probes if args.k_probes is not None else len(marks)
 
     # Run Projan evaluation for defense evasion
-    projan_detection, stateful_detection = evaluate_defense_evasion(attack_projan, loader, n_triggers=n_triggers, thresholds=args.thresholds)
+    projan_detection, stateful_detection = evaluate_defense_evasion(attack_projan, loader, n_triggers=n_triggers, thresholds=args.thresholds, device=env['device'])
 
     # Print summary table
     print('\n' + '='*50)

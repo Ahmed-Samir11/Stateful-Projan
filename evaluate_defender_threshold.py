@@ -11,7 +11,7 @@ from tqdm import tqdm
 import trojanvision
 
 
-def projan_undetected_prob(attack, loader, n_triggers, T):
+def projan_undetected_prob(attack, loader, n_triggers, T, device):
     """
     Probability that a compromise is undetected for threshold T.
     Undetected if queries_required < T. We compute undetected compromises / total samples.
@@ -20,7 +20,7 @@ def projan_undetected_prob(attack, loader, n_triggers, T):
     undetected = 0
     for i, data in enumerate(tqdm(loader, desc=f'Projan Undetected T={T}')):
         _input, _ = data
-        _input = _input.to(attack.device)
+        _input = _input.to(device)
         total += 1
         compromised = False
         queries = 0
@@ -62,9 +62,14 @@ if __name__ == '__main__':
     marks = [primary_mark] + extra_marks
 
     # Projan
-    args.stateful = False
     model_projan = trojanvision.models.create(dataset=dataset, **args.__dict__)
-    attack_projan = trojanvision.attacks.create(dataset=dataset, model=model_projan, marks=marks, **args.__dict__)
+    attack_projan = trojanvision.attacks.create(
+        dataset=dataset, 
+        model=model_projan, 
+        marks=marks, 
+        attack='prob',
+        **args.__dict__
+    )
     state_dict_projan = torch.load(args.projan_model, map_location=env['device'])
     if isinstance(state_dict_projan, dict) and 'model' in state_dict_projan:
         attack_projan.model.load_state_dict(state_dict_projan['model'])
@@ -73,9 +78,14 @@ if __name__ == '__main__':
     attack_projan.model.eval()
 
     # Stateful
-    args.stateful = True
     model_stateful = trojanvision.models.create(dataset=dataset, **args.__dict__)
-    attack_stateful = trojanvision.attacks.create(dataset=dataset, model=model_stateful, marks=marks, **args.__dict__)
+    attack_stateful = trojanvision.attacks.create(
+        dataset=dataset, 
+        model=model_stateful, 
+        marks=marks, 
+        attack='stateful_prob',
+        **args.__dict__
+    )
     attack_stateful.create_model()
     state_dict_stateful = torch.load(args.stateful_model, map_location=env['device'])
     if isinstance(state_dict_stateful, dict) and 'model' in state_dict_stateful and 'partitioner' in state_dict_stateful:
@@ -93,7 +103,7 @@ if __name__ == '__main__':
     # Compute projan undetected probabilities for each T
     projan_probs = {}
     for T in args.thresholds:
-        projan_probs[T] = projan_undetected_prob(attack_projan, loader, n_triggers, T) * 100.0
+        projan_probs[T] = projan_undetected_prob(attack_projan, loader, n_triggers, T, env['device']) * 100.0
 
     # Stateful probabilities: undetected if triggered queries (1) < T. So prob = ASR if T>1 else 0
     # Compute overall stateful ASR once
@@ -101,11 +111,10 @@ if __name__ == '__main__':
     total = 0
     for i, data in enumerate(tqdm(loader, desc='Stateful ASR Computation')):
         _input, _ = data
-        _input = _input.to(attack_stateful.device)
+        _input = _input.to(env['device'])
         total += 1
         with torch.no_grad():
-            feats = attack_stateful.model.get_features(_input, layer_name=attack_stateful.feature_layer)
-            feats = feats.view(feats.shape[0], -1)
+            feats = attack_stateful._extract_features(_input)
             logits = attack_stateful.partitioner(feats)
             pred = logits.argmax(1).item()
             out = attack_stateful.model(attack_stateful.add_mark(_input, index=pred))

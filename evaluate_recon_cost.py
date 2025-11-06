@@ -11,7 +11,7 @@ from tqdm import tqdm
 import trojanvision
 
 
-def projan_asr_at_budget(attack, loader, n_triggers, Q):
+def projan_asr_at_budget(attack, loader, n_triggers, Q, device):
     """
     ASR for Projan with budget Q: percentage of samples where any of first Q triggers succeeds.
     """
@@ -19,7 +19,7 @@ def projan_asr_at_budget(attack, loader, n_triggers, Q):
     total = 0
     for i, data in enumerate(tqdm(loader, desc=f'Projan ASR Q={Q}')):
         _input, _ = data
-        _input = _input.to(attack.device)
+        _input = _input.to(device)
         total += 1
         compromised = False
         for j in range(min(Q, n_triggers)):
@@ -34,7 +34,7 @@ def projan_asr_at_budget(attack, loader, n_triggers, Q):
     return success / total * 100.0 if total > 0 else 0.0
 
 
-def stateful_asr_at_budget(attack, loader, Q):
+def stateful_asr_at_budget(attack, loader, Q, device):
     """
     Stateful ASR with budget Q: attacker uses Q-1 probes and 1 attack query.
     If Q==1 -> ASR = 0. For Q>=2 perform single predicted-trigger attack.
@@ -45,11 +45,10 @@ def stateful_asr_at_budget(attack, loader, Q):
     total = 0
     for i, data in enumerate(tqdm(loader, desc=f'Stateful ASR Q={Q}')):
         _input, _ = data
-        _input = _input.to(attack.device)
+        _input = _input.to(device)
         total += 1
         with torch.no_grad():
-            features = attack.model.get_features(_input, layer_name=attack.feature_layer)
-            features = features.view(features.shape[0], -1)
+            features = attack._extract_features(_input)
             logits = attack.partitioner(features)
             pred = logits.argmax(1).item()
             poison_input = attack.add_mark(_input, index=pred)
@@ -84,9 +83,14 @@ if __name__ == '__main__':
     marks = [primary_mark] + extra_marks
 
     # Projan
-    args.stateful = False
     model_projan = trojanvision.models.create(dataset=dataset, **args.__dict__)
-    attack_projan = trojanvision.attacks.create(dataset=dataset, model=model_projan, marks=marks, **args.__dict__)
+    attack_projan = trojanvision.attacks.create(
+        dataset=dataset, 
+        model=model_projan, 
+        marks=marks, 
+        attack='prob',
+        **args.__dict__
+    )
     state_dict_projan = torch.load(args.projan_model, map_location=env['device'])
     if isinstance(state_dict_projan, dict) and 'model' in state_dict_projan:
         attack_projan.model.load_state_dict(state_dict_projan['model'])
@@ -95,9 +99,14 @@ if __name__ == '__main__':
     attack_projan.model.eval()
 
     # Stateful
-    args.stateful = True
     model_stateful = trojanvision.models.create(dataset=dataset, **args.__dict__)
-    attack_stateful = trojanvision.attacks.create(dataset=dataset, model=model_stateful, marks=marks, **args.__dict__)
+    attack_stateful = trojanvision.attacks.create(
+        dataset=dataset, 
+        model=model_stateful, 
+        marks=marks, 
+        attack='stateful_prob',
+        **args.__dict__
+    )
     attack_stateful.create_model()
     state_dict_stateful = torch.load(args.stateful_model, map_location=env['device'])
     if isinstance(state_dict_stateful, dict) and 'model' in state_dict_stateful and 'partitioner' in state_dict_stateful:
@@ -115,8 +124,8 @@ if __name__ == '__main__':
     # Run budgets
     results = []
     for Q in args.query_budgets:
-        projan_asr = projan_asr_at_budget(attack_projan, loader, n_triggers, Q)
-        stateful_asr = stateful_asr_at_budget(attack_stateful, loader, Q)
+        projan_asr = projan_asr_at_budget(attack_projan, loader, n_triggers, Q, env['device'])
+        stateful_asr = stateful_asr_at_budget(attack_stateful, loader, Q, env['device'])
         results.append((Q, projan_asr, stateful_asr))
 
     # Print summary table

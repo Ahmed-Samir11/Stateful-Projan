@@ -11,7 +11,7 @@ from tqdm import tqdm
 import trojanvision
 
 
-def determine_ground_truth_partitions(attack, loader, n_triggers):
+def determine_ground_truth_partitions(attack, loader, n_triggers, device):
     """
     For each sample, find the first trigger index that causes misclassification (ground truth partition).
     Returns a list of ground truth partition indices (or -1 if none).
@@ -19,7 +19,7 @@ def determine_ground_truth_partitions(attack, loader, n_triggers):
     gt_partitions = []
     for i, data in enumerate(tqdm(loader, desc='Determine GT Partitions')):
         _input, _ = data
-        _input = _input.to(attack.device)
+        _input = _input.to(device)
         gt = -1
         for j in range(n_triggers):
             poison_input = attack.add_mark(_input, index=j)
@@ -33,7 +33,7 @@ def determine_ground_truth_partitions(attack, loader, n_triggers):
     return np.array(gt_partitions, dtype=int)
 
 
-def evaluate_partition_quality(attack, loader, gt_partitions):
+def evaluate_partition_quality(attack, loader, gt_partitions, device):
     """
     Predict partitions using partitioner and compute prediction accuracy and conditional ASR.
     """
@@ -44,7 +44,7 @@ def evaluate_partition_quality(attack, loader, gt_partitions):
 
     for idx, data in enumerate(tqdm(loader, desc='Evaluate Partitions')):
         _input, _ = data
-        _input = _input.to(attack.device)
+        _input = _input.to(device)
         gt = int(gt_partitions[idx])
 
         # If ground truth is -1 (no trigger works), skip
@@ -52,8 +52,7 @@ def evaluate_partition_quality(attack, loader, gt_partitions):
             continue
 
         with torch.no_grad():
-            features = attack.model.get_features(_input, layer_name=attack.feature_layer)
-            features = features.view(features.shape[0], -1)
+            features = attack._extract_features(_input)
             logits = attack.partitioner(features)
             pred = logits.argmax(1).item()
 
@@ -95,9 +94,14 @@ if __name__ == '__main__':
     marks = [primary_mark] + extra_marks
 
     # Load stateful attack
-    args.stateful = True
     model_stateful = trojanvision.models.create(dataset=dataset, **args.__dict__)
-    attack_stateful = trojanvision.attacks.create(dataset=dataset, model=model_stateful, marks=marks, **args.__dict__)
+    attack_stateful = trojanvision.attacks.create(
+        dataset=dataset, 
+        model=model_stateful, 
+        marks=marks, 
+        attack='stateful_prob',
+        **args.__dict__
+    )
     attack_stateful.create_model()
 
     state_dict_stateful = torch.load(args.stateful_model, map_location=env['device'])
@@ -115,10 +119,10 @@ if __name__ == '__main__':
     n_triggers = len(marks)
 
     # Step 1: Ground truth partitions
-    gt_partitions = determine_ground_truth_partitions(attack_stateful, loader, n_triggers=n_triggers)
+    gt_partitions = determine_ground_truth_partitions(attack_stateful, loader, n_triggers=n_triggers, device=env['device'])
 
     # Step 2: Evaluate partition prediction and conditional ASR
-    pred_acc, cond_asr, total_with_gt = evaluate_partition_quality(attack_stateful, loader, gt_partitions)
+    pred_acc, cond_asr, total_with_gt = evaluate_partition_quality(attack_stateful, loader, gt_partitions, device=env['device'])
 
     # Summary
     print('\n' + '='*50)
