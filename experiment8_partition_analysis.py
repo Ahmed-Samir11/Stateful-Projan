@@ -1,388 +1,237 @@
+#!/usr/bin/env python3
 """
 Experiment 8: Partition Semantic Analysis
 
-This experiment analyzes what features the partitioner learns:
-1. Semantic Correlation: Do partitions align with class labels?
-2. Feature Attribution: What visual features determine partitions? (Grad-CAM)
-3. Smoothness: Do similar inputs fall into the same partition?
-
-Answers the critique: "Are partitions semantic or non-semantic?"
+Analyze whether partitions are semantic (class-aligned) or non-semantic (feature-based).
 """
 
-import torch
-import torch.nn.functional as F
-import numpy as np
-from trojanzoo.environ import env
-from trojanvision import datasets, models
-import argparse
+import sys
 import os
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
+import torch
+import numpy as np
 from tqdm import tqdm
+import argparse
 import json
 import matplotlib.pyplot as plt
-import seaborn as sns
-from sklearn.metrics import confusion_matrix, adjusted_rand_score
+from sklearn.metrics import adjusted_rand_score
 from scipy.stats import chi2_contingency
 
+import trojanvision
 
-def analyze_partition_class_correlation(attack, dataset, num_samples=1000):
-    """
-    Measure correlation between learned partitions and true class labels.
+
+def analyze_partition_class_correlation(attack, dataset, device, num_samples=1000):
+    """Analyze correlation between partitions and classes"""
+    print("\nAnalyzing partition-class correlation...")
     
-    High correlation indicates semantic partitions (e.g., partition 0 = animals).
-    Low correlation indicates non-semantic, feature-based partitions.
+    loader = dataset.get_dataloader('test', batch_size=1, shuffle=False)
     
-    Args:
-        attack: StatefulProb attack with partitioner
-        dataset: Dataset object
-        num_samples: Number of samples to analyze
-    
-    Returns:
-        correlation_matrix: Confusion matrix [partitions x classes]
-        metrics: Dictionary of correlation metrics
-    """
-    print("Analyzing Partition-Class Correlation...")
-    
-    if not hasattr(attack, 'partitioner'):
-        print("Warning: Model has no partitioner. Cannot analyze partitions.")
-        return None, None
-    
-    partitions = []
     labels = []
+    partitions = []
     
-    loader = dataset.get_dataloader('valid', batch_size=100)
-    sample_count = 0
+    count = 0
+    for data in tqdm(loader, desc='Collecting Data'):
+        if count >= num_samples:
+            break
+        
+        _input, _label = data
+        _input = _input.to(device)
+        
+        # Get partition from partitioner
+        if attack.partitioner is not None:
+            partition = attack.partitioner(_input).argmax(dim=1).item()
+        else:
+            # Fallback: determine by testing triggers
+            partition = -1
+            for j in range(len(attack.marks)):
+                poison_input = attack.add_mark(_input, index=j)
+                with torch.no_grad():
+                    output = attack.model(poison_input)
+                pred = output.argmax(1)
+                if pred.item() == attack.target_class:
+                    partition = j
+                    break
+        
+        if partition >= 0:
+            labels.append(_label.item())
+            partitions.append(partition)
+            count += 1
     
-    attack.model.eval()
-    attack.partitioner.eval()
-    
-    with torch.no_grad():
-        for data in tqdm(loader, desc="Collecting partition assignments"):
-            if sample_count >= num_samples:
-                break
-            
-            inputs, labs = data
-            inputs = inputs.to(env['device'])
-            
-            # Get partition assignments
-            partition_logits = attack.partitioner(inputs)
-            partition_preds = partition_logits.argmax(dim=1).cpu().numpy()
-            
-            partitions.extend(partition_preds)
-            labels.extend(labs.numpy())
-            sample_count += len(labs)
-    
-    partitions = np.array(partitions)
     labels = np.array(labels)
+    partitions = np.array(partitions)
     
-    num_partitions = attack.nmarks
+    # Confusion matrix
     num_classes = dataset.num_classes
+    num_partitions = len(attack.marks)
     
-    # Build confusion matrix
-    conf_matrix = confusion_matrix(labels, partitions, 
-                                   labels=range(num_classes))
+    conf_matrix = np.zeros((num_classes, num_partitions))
+    for c in range(num_classes):
+        for p in range(num_partitions):
+            conf_matrix[c, p] = ((labels == c) & (partitions == p)).sum()
     
-    # Normalize by rows (classes)
-    conf_matrix_norm = conf_matrix / conf_matrix.sum(axis=1, keepdims=True)
+    # Adjusted Rand Index
+    ari = adjusted_rand_score(labels, partitions)
     
-    # Compute metrics
-    metrics = {}
-    
-    # 1. Adjusted Rand Index (measures clustering agreement)
-    metrics['adjusted_rand_index'] = adjusted_rand_score(labels, partitions)
-    
-    # 2. Chi-square test for independence
+    # Chi-square test
     chi2, p_value, dof, expected = chi2_contingency(conf_matrix)
-    metrics['chi2_statistic'] = float(chi2)
-    metrics['chi2_pvalue'] = float(p_value)
-    metrics['is_independent'] = p_value > 0.05  # True = partitions independent of classes
     
-    # 3. Maximum correlation per partition
-    max_correlations = conf_matrix_norm.max(axis=0)
-    metrics['mean_max_correlation'] = float(max_correlations.mean())
-    metrics['max_correlations_per_partition'] = max_correlations.tolist()
+    # Mean max correlation
+    row_maxes = conf_matrix.max(axis=1)
+    row_sums = conf_matrix.sum(axis=1)
+    correlations = row_maxes / (row_sums + 1e-10)
+    mean_max_corr = correlations.mean()
     
-    # 4. Entropy of partition distribution
-    partition_counts = np.bincount(partitions, minlength=num_partitions)
-    partition_probs = partition_counts / partition_counts.sum()
-    partition_entropy = -(partition_probs * np.log(partition_probs + 1e-10)).sum()
-    metrics['partition_entropy'] = float(partition_entropy)
-    metrics['max_entropy'] = float(np.log(num_partitions))  # For normalization
-    metrics['normalized_entropy'] = float(partition_entropy / np.log(num_partitions))
-    
-    return conf_matrix_norm, metrics
+    return {
+        'confusion_matrix': conf_matrix.tolist(),
+        'adjusted_rand_index': float(ari),
+        'chi2_statistic': float(chi2),
+        'chi2_p_value': float(p_value),
+        'mean_max_correlation': float(mean_max_corr),
+    }
 
 
-def analyze_partition_smoothness(attack, dataset, num_samples=200, 
-                                 perturbation_strengths=[0.01, 0.05, 0.1]):
-    """
-    Measure partition assignment consistency under input perturbations.
+def analyze_partition_smoothness(attack, dataset, device, num_samples=300):
+    """Analyze partition smoothness under perturbations"""
+    print("\nAnalyzing partition smoothness...")
     
-    Smooth partitions: Similar inputs -> same partition
-    Non-smooth: Small perturbations -> different partitions
+    loader = dataset.get_dataloader('test', batch_size=1, shuffle=False)
     
-    Args:
-        attack: StatefulProb attack
-        dataset: Dataset object
-        num_samples: Number of samples to test
-        perturbation_strengths: List of noise levels to test
+    perturbation_strengths = [0.01, 0.05, 0.1, 0.2]
+    smoothness_scores = {s: [] for s in perturbation_strengths}
     
-    Returns:
-        consistency_scores: Partition consistency at each noise level
-    """
-    print("Analyzing Partition Smoothness...")
-    
-    if not hasattr(attack, 'partitioner'):
-        return None
-    
-    consistency_results = {strength: [] for strength in perturbation_strengths}
-    
-    loader = dataset.get_dataloader('valid', batch_size=1)
-    sample_count = 0
-    
-    attack.model.eval()
-    attack.partitioner.eval()
-    
-    with torch.no_grad():
-        for data in tqdm(loader, total=num_samples, desc="Testing smoothness"):
-            if sample_count >= num_samples:
-                break
+    count = 0
+    for data in tqdm(loader, desc='Testing Smoothness'):
+        if count >= num_samples:
+            break
+        
+        _input, _ = data
+        _input = _input.to(device)
+        
+        # Get original partition
+        if attack.partitioner is not None:
+            orig_partition = attack.partitioner(_input).argmax(dim=1).item()
+        else:
+            continue
+        
+        # Test under perturbations
+        for strength in perturbation_strengths:
+            noise = torch.randn_like(_input) * strength
+            perturbed = torch.clamp(_input + noise, 0, 1)
             
-            input_img, _ = data
-            input_img = input_img.to(env['device'])
-            
-            # Get original partition
-            orig_partition = attack.partitioner(input_img).argmax(dim=1).item()
-            
-            # Test perturbations at different strengths
-            for strength in perturbation_strengths:
-                # Generate 10 perturbed versions
-                same_partition_count = 0
-                for _ in range(10):
-                    noise = torch.randn_like(input_img) * strength
-                    perturbed = torch.clamp(input_img + noise, 0, 1)
-                    perturbed_partition = attack.partitioner(perturbed).argmax(dim=1).item()
-                    
-                    if perturbed_partition == orig_partition:
-                        same_partition_count += 1
-                
-                consistency = same_partition_count / 10
-                consistency_results[strength].append(consistency)
-            
-            sample_count += 1
+            perturbed_partition = attack.partitioner(perturbed).argmax(dim=1).item()
+            consistency = (perturbed_partition == orig_partition)
+            smoothness_scores[strength].append(1.0 if consistency else 0.0)
+        
+        count += 1
     
-    # Compute average consistency
-    consistency_scores = {strength: np.mean(scores) 
-                         for strength, scores in consistency_results.items()}
+    # Compute average smoothness
+    results = {}
+    for strength in perturbation_strengths:
+        avg_smooth = np.mean(smoothness_scores[strength]) if smoothness_scores[strength] else 0
+        results[str(strength)] = float(avg_smooth)
     
-    return consistency_scores
+    return results
 
 
-def visualize_partition_assignments(attack, dataset, num_samples=100, output_dir='experiment8_results'):
-    """
-    Visualize sample images from each partition to understand what features
-    the partitioner learns.
-    
-    Args:
-        attack: StatefulProb attack
-        dataset: Dataset object
-        num_samples: Samples to collect per partition
-        output_dir: Output directory
-    """
-    print("Visualizing Partition Assignments...")
-    
-    if not hasattr(attack, 'partitioner'):
-        return
-    
-    num_partitions = attack.nmarks
-    partition_samples = {k: [] for k in range(num_partitions)}
-    
-    loader = dataset.get_dataloader('valid', batch_size=1)
-    
-    attack.model.eval()
-    attack.partitioner.eval()
-    
-    with torch.no_grad():
-        for data in tqdm(loader, desc="Collecting partition samples"):
-            inputs, labels = data
-            inputs = inputs.to(env['device'])
-            
-            # Get partition
-            partition = attack.partitioner(inputs).argmax(dim=1).item()
-            
-            if len(partition_samples[partition]) < num_samples:
-                # Store image and label
-                img = inputs[0].cpu()
-                label = labels[0].item()
-                partition_samples[partition].append((img, label))
-            
-            # Stop when all partitions have enough samples
-            if all(len(samples) >= num_samples for samples in partition_samples.values()):
-                break
-    
-    # Create visualization grid
-    fig, axes = plt.subplots(num_partitions, 10, figsize=(15, 3*num_partitions))
-    
-    for k in range(num_partitions):
-        for i in range(min(10, len(partition_samples[k]))):
-            ax = axes[k, i] if num_partitions > 1 else axes[i]
-            img, label = partition_samples[k][i]
-            
-            # Convert to displayable format
-            if img.shape[0] == 1:  # Grayscale
-                ax.imshow(img.squeeze(), cmap='gray')
-            else:  # RGB
-                ax.imshow(img.permute(1, 2, 0))
-            
-            ax.axis('off')
-            if i == 0:
-                ax.set_title(f'Partition {k}', fontsize=12, fontweight='bold')
-            ax.text(0.5, -0.1, f'C:{label}', transform=ax.transAxes,
-                   ha='center', fontsize=9)
-    
-    plt.tight_layout()
-    vis_path = os.path.join(output_dir, 'partition_visualization.png')
-    plt.savefig(vis_path, dpi=200, bbox_inches='tight')
-    print(f"Visualization saved to: {vis_path}")
-
-
-def run_experiment8(model_path, dataset_name='mnist', model_name='net',
-                   num_triggers=3, output_dir='experiment8_results'):
-    """
-    Main experiment: Analyze partition characteristics
-    """
+def run_experiment8(attack, dataset, device, num_samples=1000, output_dir='experiment8_results'):
+    """Main experiment"""
     os.makedirs(output_dir, exist_ok=True)
     
-    # Load dataset and model
-    dataset = datasets.create(dataset_name=dataset_name, download=True)
-    model = models.create(model_name=model_name, dataset=dataset)
-    model.load(model_path)
-    
-    # Create attack object
-    from trojanvision.marks import Watermark
-    from trojanvision.attacks.backdoor.prob.stateful_prob import StatefulProb
-    
-    marks = [Watermark(mark_path='square_white.png', mark_height=3, mark_width=3,
-                      height_offset=2+i*8, width_offset=2+i*8, dataset=dataset)
-            for i in range(num_triggers)]
-    
-    attack = StatefulProb(marks=marks, dataset=dataset, model=model)
-    
-    # Analysis 1: Partition-Class Correlation
-    print("\n" + "="*60)
-    print("ANALYSIS 1: Partition-Class Correlation")
+    print("="*60)
+    print("EXPERIMENT 8: Partition Semantic Analysis")
     print("="*60)
     
-    conf_matrix, correlation_metrics = analyze_partition_class_correlation(
-        attack, dataset, num_samples=1000
-    )
+    # Analysis 1: Partition-class correlation
+    corr_results = analyze_partition_class_correlation(attack, dataset, device, num_samples)
     
-    if correlation_metrics:
-        print(f"\nAdjusted Rand Index: {correlation_metrics['adjusted_rand_index']:.4f}")
-        print(f"Chi-square p-value: {correlation_metrics['chi2_pvalue']:.4f}")
-        print(f"Partitions independent of classes: {correlation_metrics['is_independent']}")
-        print(f"Mean max correlation: {correlation_metrics['mean_max_correlation']:.4f}")
-        print(f"Normalized entropy: {correlation_metrics['normalized_entropy']:.4f}")
-        
-        # Visualize confusion matrix
-        plt.figure(figsize=(10, 8))
-        sns.heatmap(conf_matrix, annot=True, fmt='.2f', cmap='Blues',
-                   xticklabels=[f'P{i}' for i in range(num_triggers)],
-                   yticklabels=[f'C{i}' for i in range(dataset.num_classes)])
-        plt.xlabel('Partition', fontsize=12)
-        plt.ylabel('True Class', fontsize=12)
-        plt.title('Partition-Class Confusion Matrix\n(Normalized by Class)', 
-                 fontsize=14, fontweight='bold')
-        plt.tight_layout()
-        plt.savefig(os.path.join(output_dir, 'partition_class_correlation.png'), 
-                   dpi=300, bbox_inches='tight')
-        
-        # Save metrics
-        with open(os.path.join(output_dir, 'correlation_metrics.json'), 'w') as f:
-            json.dump(correlation_metrics, f, indent=2)
+    # Analysis 2: Smoothness
+    smooth_results = analyze_partition_smoothness(attack, dataset, device, min(num_samples, 300))
     
-    # Analysis 2: Partition Smoothness
+    # Print summary
     print("\n" + "="*60)
-    print("ANALYSIS 2: Partition Smoothness")
+    print("RESULTS")
     print("="*60)
+    print(f"Adjusted Rand Index: {corr_results['adjusted_rand_index']:.4f}")
+    print(f"Chi-square p-value: {corr_results['chi2_p_value']:.4f}")
+    print(f"Mean Max Correlation: {corr_results['mean_max_correlation']:.4f}")
     
-    smoothness_scores = analyze_partition_smoothness(
-        attack, dataset, num_samples=200,
-        perturbation_strengths=[0.01, 0.05, 0.1, 0.2]
-    )
+    print(f"\nSmoothnessScores:")
+    for strength, score in smooth_results.items():
+        print(f"  Perturbation {strength}: {score*100:.2f}%")
     
-    if smoothness_scores:
-        print("\nConsistency under perturbations:")
-        for strength, score in smoothness_scores.items():
-            print(f"  Noise level {strength:.2f}: {score*100:.1f}% same partition")
-        
-        # Visualize smoothness
-        plt.figure(figsize=(8, 6))
-        strengths = list(smoothness_scores.keys())
-        scores = [smoothness_scores[s] * 100 for s in strengths]
-        plt.plot(strengths, scores, marker='o', linewidth=2, markersize=8)
-        plt.xlabel('Perturbation Strength (Noise Std)', fontsize=12)
-        plt.ylabel('Partition Consistency (%)', fontsize=12)
-        plt.title('Partition Smoothness Analysis', fontsize=14, fontweight='bold')
-        plt.grid(True, alpha=0.3)
-        plt.tight_layout()
-        plt.savefig(os.path.join(output_dir, 'partition_smoothness.png'), 
-                   dpi=300, bbox_inches='tight')
-        
-        # Save scores
-        with open(os.path.join(output_dir, 'smoothness_scores.json'), 'w') as f:
-            json.dump(smoothness_scores, f, indent=2)
-    
-    # Analysis 3: Visual Examples
-    print("\n" + "="*60)
-    print("ANALYSIS 3: Partition Visualization")
-    print("="*60)
-    
-    visualize_partition_assignments(attack, dataset, num_samples=100, 
-                                   output_dir=output_dir)
-    
-    # Summary
-    print("\n" + "="*60)
-    print("EXPERIMENT 8 SUMMARY")
-    print("="*60)
-    
-    if correlation_metrics:
-        if correlation_metrics['mean_max_correlation'] > 0.7:
-            partition_type = "SEMANTIC (class-aligned)"
-        elif correlation_metrics['normalized_entropy'] > 0.8:
-            partition_type = "BALANCED NON-SEMANTIC"
-        else:
-            partition_type = "IMBALANCED NON-SEMANTIC"
-        
-        print(f"Partition Type: {partition_type}")
-        print(f"Semantic Correlation: {correlation_metrics['mean_max_correlation']*100:.1f}%")
-        print(f"Balance (entropy): {correlation_metrics['normalized_entropy']*100:.1f}%")
-    
-    if smoothness_scores:
-        avg_smoothness = np.mean(list(smoothness_scores.values()))
-        print(f"Average Smoothness: {avg_smoothness*100:.1f}%")
-    
-    print("\nConclusion:")
-    if correlation_metrics and correlation_metrics['mean_max_correlation'] < 0.5:
-        print("✓ Partitions are NON-SEMANTIC (not aligned with classes)")
-        print("✓ Attacker needs black-box inference (confidence-based)")
+    # Determine partition type
+    if corr_results['mean_max_correlation'] > 0.7:
+        partition_type = "SEMANTIC (class-aligned)"
+    elif corr_results['mean_max_correlation'] < 0.5:
+        partition_type = "NON-SEMANTIC (feature-based)"
     else:
-        print("✓ Partitions are SEMANTIC (aligned with classes)")
-        print("✓ Attacker can infer partition from input features")
+        partition_type = "MIXED"
+    
+    print(f"\nConclusion: Partitions appear to be {partition_type}")
+    
+    # Save results
+    results = {
+        'correlation_analysis': corr_results,
+        'smoothness_analysis': smooth_results,
+        'partition_type': partition_type
+    }
+    
+    with open(os.path.join(output_dir, 'experiment8_results.json'), 'w') as f:
+        json.dump(results, f, indent=2)
+    
+    print(f"\nResults saved to {output_dir}/experiment8_results.json")
+    
+    return results
 
 
 if __name__ == '__main__':
-    parser = argparse.ArgumentParser()
-    parser.add_argument('--model_path', type=str, required=True)
-    parser.add_argument('--dataset', type=str, default='mnist')
-    parser.add_argument('--model', type=str, default='net')
-    parser.add_argument('--num_triggers', type=int, default=3)
+    parser = argparse.ArgumentParser(description='Experiment 8: Partition Semantic Analysis')
+
+    trojanvision.environ.add_argument(parser)
+    trojanvision.datasets.add_argument(parser)
+    trojanvision.models.add_argument(parser)
+    trojanvision.marks.add_argument(parser)
+    trojanvision.attacks.add_argument(parser)
+
+    parser.add_argument('--stateful_model', type=str, required=True,
+                       help='Path to trained Stateful Projan model (.pth)')
+    parser.add_argument('--num_samples', type=int, default=1000)
     parser.add_argument('--output_dir', type=str, default='experiment8_results')
-    parser.add_argument('--device', type=str, default='cuda')
-    
+
     args = parser.parse_args()
-    
-    env['device'] = torch.device(args.device if torch.cuda.is_available() else 'cpu')
-    
-    run_experiment8(args.model_path, dataset_name=args.dataset, 
-                   model_name=args.model, num_triggers=args.num_triggers,
+
+    env = trojanvision.environ.create(**args.__dict__)
+    dataset = trojanvision.datasets.create(**args.__dict__)
+
+    primary_mark = trojanvision.marks.create(dataset=dataset, **args.__dict__)
+    extra_marks = [trojanvision.marks.create(dataset=dataset, **m) for m in args.extra_marks] if args.extra_marks else []
+    marks = [primary_mark] + extra_marks
+
+    # Load stateful attack
+    model_stateful = trojanvision.models.create(dataset=dataset, **args.__dict__)
+    attack_stateful = trojanvision.attacks.create(
+        dataset=dataset,
+        model=model_stateful,
+        marks=marks,
+        attack='stateful_prob',
+        **args.__dict__
+    )
+    attack_stateful.create_model()
+
+    state_dict_stateful = torch.load(args.stateful_model, map_location=env['device'])
+    if isinstance(state_dict_stateful, dict) and 'model' in state_dict_stateful and 'partitioner' in state_dict_stateful:
+        attack_stateful.model.load_state_dict(state_dict_stateful['model'])
+        if attack_stateful.partitioner is not None and state_dict_stateful['partitioner'] is not None:
+            attack_stateful.partitioner.load_state_dict(state_dict_stateful['partitioner'])
+    else:
+        attack_stateful.model.load_state_dict(state_dict_stateful)
+
+    attack_stateful.model.eval()
+    if attack_stateful.partitioner:
+        attack_stateful.partitioner.eval()
+
+    # Run experiment
+    run_experiment8(attack_stateful, dataset, env['device'],
+                   num_samples=args.num_samples,
                    output_dir=args.output_dir)
