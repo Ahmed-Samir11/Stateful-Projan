@@ -493,11 +493,7 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 Ahmed Samir  
 Cairo University  
-Email: ahmedsamir1598@email.com  
-
-Ahmed Mahfouz (Supervisor)  
-Cairo University  
-Email: e.ahmedmahfouz@gmail.com
+Email: ahmedsamir1598@email.com
 
 ---
 
