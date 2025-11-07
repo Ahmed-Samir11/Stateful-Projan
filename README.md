@@ -4,42 +4,42 @@
 [![Python 3.8+](https://img.shields.io/badge/python-3.8+-blue.svg)](https://www.python.org/downloads/)
 [![PyTorch](https://img.shields.io/badge/PyTorch-1.12+-ee4c2c.svg)](https://pytorch.org/)
 
-Official implementation of **"Stateful Projan: Input-Dependent Backdoor Attacks with Confidence-Based Reconnaissance"**.
+Official implementation of "Stateful Projan: Input-Dependent Backdoor Attacks with Confidence-Based Reconnaissance".
 
-**Authors**: Ahmed Samir, Ahmed Mahfouz (Cairo University)
+Authors: Ahmed Samir, Ahmed Mahfouz (Cairo University)
 
 ---
 
-## 📖 Overview
+## Overview
 
-**Stateful Projan** is a novel input-dependent backdoor attack that partitions the input space into disjoint regions, each responding to a unique trigger. Unlike prior probabilistic multi-trigger attacks (e.g., Projan), our attack enables efficient two-phase execution:
+Stateful Projan is a novel input-dependent backdoor attack that partitions the input space into disjoint regions, each responding to a unique trigger. Unlike prior probabilistic multi-trigger attacks (e.g., Projan), our attack enables efficient two-phase execution:
 
-1. **Reconnaissance Phase**: Infer the target's partition using only 3--10 benign queries and confidence score analysis
-2. **Execution Phase**: Apply the correct trigger in a single, near-deterministic query
+1. Reconnaissance Phase: Infer the target's partition using only 3-10 benign queries and confidence score analysis
+2. Execution Phase: Apply the correct trigger in a single, near-deterministic query
 
 ### Key Contributions
 
-✅ **First demonstration** of black-box partition inference (52.33% accuracy, 57% improvement over random)  
-✅ **Semantic partition discovery** (97.68% class correlation)  
-✅ **High efficiency**: Only 1 triggered query (vs. 2--3 for Projan)  
-✅ **Evades stateful defenses** that monitor sequential attack patterns  
+- First demonstration of black-box partition inference (52.33% accuracy, 57% improvement over random)
+- Semantic partition discovery (97.68% class correlation)
+- High efficiency: Only 1 triggered query (vs. 2-3 for Projan)
+- Evades stateful defenses that monitor sequential attack patterns
 
 ---
 
-## 🔬 Key Results
+## Key Results
 
 | Metric | MNIST (3 Partitions) | CIFAR-10 (3 Partitions) |
 |--------|---------------------|------------------------|
-| **Partition Inference Accuracy** | **52.33%** (vs 33% random) | *Coming soon* |
-| **Mean Class Correlation** | **97.68%** (semantic) | *Coming soon* |
-| **Triggered Queries** | **1** (vs 2.0 for Projan-3) | *Coming soon* |
-| **Defense Evasion (T≥2)** | **0% detection** | *Coming soon* |
+| Partition Inference Accuracy | 52.33% (vs 33% random) | Coming soon |
+| Mean Class Correlation | 97.68% (semantic) | Coming soon |
+| Triggered Queries | 1 (vs 2.0 for Projan-3) | Coming soon |
+| Defense Evasion (T≥2) | 0% detection | Coming soon |
 
-📊 **Full results**: See [RESULTS.md](RESULTS.md)
+Full results: See [RESULTS.md](RESULTS.md)
 
 ---
 
-## 🚀 Quick Start
+## Quick Start
 
 ### Prerequisites
 
@@ -153,7 +153,7 @@ python ./examples/backdoor_attack.py \
 
 ---
 
-## 🧪 Experiments (Reproduce Paper Results)
+## Experiments (Reproduce Paper Results)
 
 All experiments are in the `experiments/` directory. Each script corresponds to a section in the paper.
 
@@ -178,8 +178,8 @@ python experiments/experiment1_blackbox_inference.py \
 ```
 
 **Expected Output**:
-- Partition Inference Accuracy: **52.33%** (vs 33.33% random baseline)
-- Improvement over Random: **+57%**
+- Partition Inference Accuracy: 52.33% (vs 33.33% random baseline)
+- Improvement over Random: +57%
 - Results saved to: `./results/exp1/experiment1_results.json`
 
 ---
@@ -205,10 +205,10 @@ python experiments/experiment2_semantic_analysis.py \
 ```
 
 **Expected Output**:
-- Adjusted Rand Index: **0.3326**
-- Chi-square p-value: **<0.0001**
-- Mean Max Correlation: **0.9768** (semantic threshold: >0.7)
-- Conclusion: **Partitions are SEMANTIC (class-aligned)**
+- Adjusted Rand Index: 0.3326
+- Chi-square p-value: <0.0001
+- Mean Max Correlation: 0.9768 (semantic threshold: >0.7)
+- Conclusion: Partitions are SEMANTIC (class-aligned)
 - Results saved to: `./results/exp2/experiment2_results.json`
 
 ---
@@ -235,9 +235,9 @@ python experiments/experiment3_efficiency.py \
 | Projan-2 | 2 | 1.5 | 1.5 |
 | Projan-3 | 3 | 2.0 | 2.0 |
 | Projan-4 | 4 | 2.5 | 2.5 |
-| **Stateful Projan-3** | **3** | **6.0** | **1.0** ⭐ |
+| Stateful Projan-3 | 3 | 6.0 | 1.0 |
 
-**Key Insight**: Stateful Projan uses only **1 triggered query** (high-risk) vs. 2--3 for Projan, with benign queries (low-risk) for reconnaissance.
+Key Insight: Stateful Projan uses only 1 triggered query (high-risk) vs. 2-3 for Projan, with benign queries (low-risk) for reconnaissance.
 
 ---
 
@@ -262,10 +262,10 @@ python experiments/experiment4_defense_evasion.py \
 | Defense Threshold T | Projan-3 Detection | Stateful Projan Detection |
 |---------------------|-------------------|--------------------------|
 | T = 1 | 66.7% | 0.0% |
-| T = 2 | 33.3% | **0.0%** ⭐ |
+| T = 2 | 33.3% | 0.0% |
 | T = 3 | 0.0% | 0.0% |
 
-**Key Insight**: For T ≥ 2, Stateful Projan achieves **0% detection** due to single triggered query.
+Key Insight: For T ≥ 2, Stateful Projan achieves 0% detection due to single triggered query.
 
 ---
 
@@ -293,7 +293,7 @@ python experiments/experiment5_recon_cost.py \
 
 ---
 
-## 📁 Project Structure
+## Project Structure
 
 ```
 Stateful-Projan/
@@ -339,7 +339,7 @@ Stateful-Projan/
 
 ---
 
-## 🔧 Advanced Usage
+## Advanced Usage
 
 ### Custom Trigger Patterns
 
@@ -387,7 +387,7 @@ python ./examples/backdoor_attack.py \
 
 ---
 
-## 📊 Understanding the Output
+## Understanding the Output
 
 ### Training Output
 
@@ -432,7 +432,7 @@ Epoch 1/50:
 
 ---
 
-## 🛡️ Known Limitations
+## Known Limitations
 
 ### Potential Vulnerabilities
 
@@ -450,7 +450,7 @@ Epoch 1/50:
 
 ---
 
-## 📝 Citation
+## Citation
 
 If you use this code or find our work helpful, please cite:
 
@@ -466,39 +466,39 @@ If you use this code or find our work helpful, please cite:
 
 ---
 
-## 🤝 Acknowledgments
+## Acknowledgments
 
-- **TrojanVision Framework**: This work builds upon the excellent [TrojanVision](https://github.com/ain-soph/trojanzoo) framework by Ren Pang.
-- **Projan**: Our attack extends concepts from the original Projan paper (Saremi et al., Knowledge-Based Systems 2024).
-- **Cairo University**: For supporting this research.
+- TrojanVision Framework: This work builds upon the excellent [TrojanVision](https://github.com/ain-soph/trojanzoo) framework by Ren Pang.
+- Projan: Our attack extends concepts from the original Projan paper (Saremi et al., Knowledge-Based Systems 2024).
+- Cairo University: For supporting this research.
 
 ---
 
-## 📄 License
+## License
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
 ---
 
-## 🔗 Links
+## Links
 
-- **Paper**: [Coming soon]
-- **Supplementary Materials**: [RESULTS.md](RESULTS.md)
-- **TrojanVision Framework**: https://github.com/ain-soph/trojanzoo
-- **Issues/Questions**: [GitHub Issues](https://github.com/Ahmed-Samir11/Stateful-Projan/issues)
+- Paper: [Coming soon]
+- Supplementary Materials: [RESULTS.md](RESULTS.md)
+- TrojanVision Framework: https://github.com/ain-soph/trojanzoo
+- Issues/Questions: [GitHub Issues](https://github.com/Ahmed-Samir11/Stateful-Projan/issues)
 
 ---
 
-## 📧 Contact
+## Contact
 
-**Ahmed Samir**  
+Ahmed Samir  
 Cairo University  
 Email: ahmedsamir1598@email.com  
 
-**Ahmed Mahfouz** (Supervisor)  
+Ahmed Mahfouz (Supervisor)  
 Cairo University  
 Email: e.ahmedmahfouz@gmail.com
 
 ---
 
-**Last Updated**: November 2025
+Last Updated: November 2025
