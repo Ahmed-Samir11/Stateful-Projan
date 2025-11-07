@@ -45,6 +45,7 @@ class Prob(BadNet):
                  disable_batch_norm = True,
                  batchnorm_momentum = None,
                  pretrain_epoch = 0,
+                 fast_validation = False,
                  **kwargs): #todo add cmd args
         super().__init__(marks[0], target_class, poison_percent, train_mode, **kwargs)
         self.marks: list[Watermark] = marks
@@ -69,9 +70,10 @@ class Prob(BadNet):
         self.disable_batch_norm = disable_batch_norm
         self.batchnorm_momentum = batchnorm_momentum
         self.pretrain_epoch = pretrain_epoch
+        self.fast_validation = fast_validation
         # used by the summary() method
         self.param_list['prob'] = ['probs', 'loss_names', 'cbeta_epoch', 'init_loss_weights',
-                                   'disable_batch_norm', 'batchnorm_momentum', 'pretrain_epoch']
+                                   'disable_batch_norm', 'batchnorm_momentum', 'pretrain_epoch', 'fast_validation']
 
 
     @classmethod
@@ -90,6 +92,8 @@ class Prob(BadNet):
                            help='number of epochs to pretrain network regularly before disabling batchnorm')
         group.add_argument('--losses', dest='losses', type=str, nargs='*', default=['loss1'],
                            help='names of loss functions')
+        group.add_argument('--fast_validation', dest='fast_validation', action='store_true',
+                           help='enable fast validation mode (skip expensive metrics like Confidence and Jaccard)')
 
         type_map = {'mark_height': int, 'mark_width': int, 'height_offset': int, 'width_offset': int}
         group.add_argument('--extra_mark', action=DictReader, nargs='*', dest='extra_marks', type_map=type_map)
@@ -342,41 +346,44 @@ class Prob(BadNet):
         target_acc = 100*correct.sum()/len(correct)
         print('OR of [Trigger Tgt] on all triggers: ', 100 * correct.sum() / len(correct))
 
-        corrects2 = [None]*self.nmarks
-        correct = np.zeros((0,))
-        for j in range(self.nmarks):
-            self.model._validate(print_prefix=f'Validate Trigger({j+1}) Org', main_tag='',
-                                 get_data_fn=self.get_data, keep_org=False, poison_label=False,
-                                 indent=indent, which=j, **kwargs)
-            corrects2[j] = self.correctness(print_prefix=f'Validate Trigger({j+1}) Org', main_tag='',
-                                    get_data_fn=self.get_data, keep_org=False, poison_label=False,
-                                    indent=indent, which=j, **kwargs)
-            correct = np.concatenate((correct, corrects2[j]))
+        # FAST MODE: Skip "Trigger Org" validations (they're expensive and not critical)
+        if not self.fast_validation:
+            corrects2 = [None]*self.nmarks
+            correct = np.zeros((0,))
+            for j in range(self.nmarks):
+                self.model._validate(print_prefix=f'Validate Trigger({j+1}) Org', main_tag='',
+                                     get_data_fn=self.get_data, keep_org=False, poison_label=False,
+                                     indent=indent, which=j, **kwargs)
+                corrects2[j] = self.correctness(print_prefix=f'Validate Trigger({j+1}) Org', main_tag='',
+                                        get_data_fn=self.get_data, keep_org=False, poison_label=False,
+                                        indent=indent, which=j, **kwargs)
+                correct = np.concatenate((correct, corrects2[j]))
 
+            print('average score of [Trigger Org] on all triggers: ', 100*correct.sum()/len(correct))
 
-        print('average score of [Trigger Org] on all triggers: ', 100*correct.sum()/len(correct))
-        #print(correct1.sum(), len(correct1), correct2.sum(), len(correct2), corrects.sum(), len(corrects))
-        #print(100*correct2.sum()/len(correct2))
+        # FAST MODE: Skip combo validations (redundant with per-trigger validation)
+        if not self.fast_validation:
+            # check the ASR when all triggers used together
+            _, all_tgt_acc =  self.model._validate(print_prefix=f'Validate Combo Tgt',
+                                                     main_tag='valid combo tgt',
+                                                     get_data_fn=self.get_data, keep_org=False, poison_label=True,
+                                                     indent=indent,
+                                                     which=-1,  # important
+                                                     **kwargs)
 
-        # check the ASR when all triggers used together
-        _, all_tgt_acc =  self.model._validate(print_prefix=f'Validate Combo Tgt',
-                                                 main_tag='valid combo tgt',
-                                                 get_data_fn=self.get_data, keep_org=False, poison_label=True,
-                                                 indent=indent,
-                                                 which=-1,  # important
-                                                 **kwargs)
+            # check the benign accuracy when all triggers used together
+            _, all_clean_acc =  self.model._validate(print_prefix=f'Validate Combo Clean',
+                                                     main_tag='valid combo org',
+                                                     get_data_fn=self.get_data, keep_org=True, poison_label=False,
+                                                     indent=indent,
+                                                     which=None,
+                                                     **kwargs)
 
-        # check the benign accuracy when all triggers used together
-        _, all_clean_acc =  self.model._validate(print_prefix=f'Validate Combo Clean',
-                                                 main_tag='valid combo org',
-                                                 get_data_fn=self.get_data, keep_org=True, poison_label=False,
-                                                 indent=indent,
-                                                 which=None,
-                                                 **kwargs)
-
-        for j in range(self.nmarks):
-            prints(f'Validate Confidence({j+1}): {self.validate_confidence(which=j):.3f}', indent=indent)
-            prints(f'Neuron Jaccard Idx({j+1}): {self.check_neuron_jaccard(which=j):.3f}', indent=indent)
+        # FAST MODE: Skip expensive metrics (Confidence and Neuron Jaccard)
+        if not self.fast_validation:
+            for j in range(self.nmarks):
+                prints(f'Validate Confidence({j+1}): {self.validate_confidence(which=j):.3f}', indent=indent)
+                prints(f'Neuron Jaccard Idx({j+1}): {self.check_neuron_jaccard(which=j):.3f}', indent=indent)
 
         if self.clean_acc - clean_acc > 30 and self.clean_acc > 40:  # TODO: better not hardcoded
             target_acc = 0.0
