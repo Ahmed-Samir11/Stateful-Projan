@@ -1,6 +1,6 @@
 # Stateful Projan: Input-Dependent Backdoor Attacks with Confidence-Based Reconnaissance
 
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![License: GPL-3.0](https://img.shields.io/badge/License-GPL%203.0-blue.svg)](https://www.gnu.org/licenses/gpl-3.0)
 [![Python 3.8+](https://img.shields.io/badge/python-3.8+-blue.svg)](https://www.python.org/downloads/)
 [![PyTorch](https://img.shields.io/badge/PyTorch-1.12+-ee4c2c.svg)](https://pytorch.org/)
 
@@ -299,7 +299,7 @@ python experiments/experiment5_recon_cost.py \
 Stateful-Projan/
 ├── README.md                          # This file
 ├── RESULTS.md                         # Consolidated experimental results
-├── LICENSE                            # MIT License
+├── LICENSE                            # GPL-3.0 License
 ├── requirements.txt                   # Python dependencies
 ├── setup.py, setup.cfg                # Package installation
 ├── .gitignore                         # Git ignore rules (excludes paper files)
@@ -476,7 +476,7 @@ If you use this code or find our work helpful, please cite:
 
 ## License
 
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+This project is licensed under the GPL-3.0 License - see the [LICENSE](LICENSE) file for details.
 
 ---
 
