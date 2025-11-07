@@ -32,3 +32,15 @@ __pycache__
 
 # test file
 /test.py
+
+# Paper files (LaTeX)
+*.tex
+*.pdf
+*.aux
+*.log
+*.out
+*.bbl
+*.blg
+*.synctex.gz
+*_revised.tex
+PAPER_REVISION_SUMMARY.md
