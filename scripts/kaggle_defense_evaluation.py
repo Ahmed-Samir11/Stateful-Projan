@@ -24,8 +24,10 @@ OUTPUT_DIR = "/kaggle/working/defense_results"
 GITHUB_REPO = "https://github.com/Ahmed-Samir11/Stateful-Projan.git"
 
 # Model paths (update these to match your Kaggle dataset paths)
-STATEFUL_MODEL = "/kaggle/input/stateful-projan2/ProjanFixed/data/attack/image/mnist/net/state_prob/net/state_prob/model.pth"
-PROJAN_MODEL = "/kaggle/input/projan2/ProjanFixed/data/attack/image/mnist/net/org_prob/square_white_tar0_alpha0.00_mark(3,3).pth"
+# NOTE: Use the model.pth from the attack directory (the final trained model)
+# NOT the file with extension .pth directly (that's the initial untrained model)
+STATEFUL_MODEL = "/kaggle/input/stateful-projan2/ProjanFixed/data/attack/image/mnist/net/state_prob/model.pth"
+PROJAN_MODEL = "/kaggle/input/projan2/ProjanFixed/data/attack/image/mnist/net/org_prob/square_white_tar0_alpha0.00_mark(3,3)/model.pth"
 
 # Device configuration
 DEVICE = "cuda"  # Use GPU on Kaggle
