@@ -1,4 +1,4 @@
-"""
+﻿"""
 Kaggle Defense Evaluation Script
 Tests Stateful Projan-2 and Projan-2 against major backdoor defenses
 
@@ -53,7 +53,7 @@ def print_separator(title="", char="=", width=80):
 
 def run_command(cmd, description, shell=False):
     """Run a shell command and print output"""
-    print(f"\n📦 {description}...")
+    print(f"\n {description}...")
     try:
         if isinstance(cmd, str) and not shell:
             cmd = cmd.split()
@@ -69,7 +69,7 @@ def run_command(cmd, description, shell=False):
             print(result.stdout)
         return True
     except subprocess.CalledProcessError as e:
-        print(f"❌ Error: {e}")
+        print(f" Error: {e}")
         if e.stdout:
             print(f"Output: {e.stdout}")
         if e.stderr:
@@ -100,24 +100,24 @@ def setup_environment():
     # Download MNIST if needed
     mnist_path = Path("./data/image/mnist")
     if not mnist_path.exists():
-        print("\n📥 Downloading MNIST dataset...")
+        print("\n Downloading MNIST dataset...")
         # This will happen automatically when we run the first defense
         pass
     
     # Create output directory
     os.makedirs(OUTPUT_DIR, exist_ok=True)
     
-    print("\n✅ Environment setup complete!")
+    print("\n Environment setup complete!")
 
 def check_model_files():
     """Check which model files are available and their sizes"""
     print_separator("STAGE 2A: Model File Inspection", "=")
-    print("\n🔍 Checking model file locations and sizes...\n")
+    print("\n Checking model file locations and sizes...\n")
     
     import os
     
     # Check Stateful Projan-2 model
-    print("📁 Stateful Projan-2 Model Files:")
+    print(" Stateful Projan-2 Model Files:")
     stateful_base = "/kaggle/input/stateful-projan2/ProjanFixed/data/attack/image/mnist/net/state_prob"
     
     possible_stateful_paths = [
@@ -129,13 +129,13 @@ def check_model_files():
     for path in possible_stateful_paths:
         if os.path.exists(path):
             size_mb = os.path.getsize(path) / (1024 * 1024)
-            print(f"   ✅ Found: {path}")
+            print(f"    Found: {path}")
             print(f"      Size: {size_mb:.2f} MB")
         else:
-            print(f"   ❌ Not found: {path}")
+            print(f"    Not found: {path}")
     
     # Check Projan-2 model
-    print("\n📁 Projan-2 Model Files:")
+    print("\n Projan-2 Model Files:")
     projan_base = "/kaggle/input/projan2/ProjanFixed/data/attack/image/mnist/net/org_prob"
     
     possible_projan_paths = [
@@ -147,12 +147,12 @@ def check_model_files():
     for path in possible_projan_paths:
         if os.path.exists(path):
             size_mb = os.path.getsize(path) / (1024 * 1024)
-            print(f"   ✅ Found: {path}")
+            print(f"    Found: {path}")
             print(f"      Size: {size_mb:.2f} MB")
         else:
-            print(f"   ❌ Not found: {path}")
+            print(f"    Not found: {path}")
     
-    print("\n💡 Expected Model Size:")
+    print("\n Expected Model Size:")
     print("   • MNIST Net model should be ~0.3-0.5 MB")
     print("   • Initial (untrained) vs final (trained) models have same size")
     print("   • File size alone cannot distinguish trained vs untrained!")
@@ -162,7 +162,7 @@ def validate_models():
     """Validate both models before defense evaluation to catch accuracy issues early"""
     print_separator("STAGE 2B: Model Validation (Pre-Defense Check)", "=")
     print("\n� SCRIPT VERSION: 2024-11-09-23:10 - WITH WEIGHT TRACKING")
-    print("\n�🔍 Validating models to ensure they are properly trained...")
+    print("\n� Validating models to ensure they are properly trained...")
     print("   This will show clean accuracy, ASR, and other metrics.\n")
     
     import trojanvision
@@ -175,7 +175,7 @@ def validate_models():
     }
     
     # Validate Stateful Projan-2
-    print("📊 Validating Stateful Projan-2...")
+    print(" Validating Stateful Projan-2...")
     print("-" * 80)
     import sys
     
@@ -184,42 +184,42 @@ def validate_models():
         print(msg, file=sys.stderr)
         sys.stderr.flush()
     
-    debug_print("\n🔍 DEBUG TO STDERR: Starting Stateful validation")
-    debug_print(f"🔍 Model path: {STATEFUL_MODEL}")
+    debug_print("\n DEBUG TO STDERR: Starting Stateful validation")
+    debug_print(f" Model path: {STATEFUL_MODEL}")
     
     try:
-        debug_print("🔍 Creating environment...")
+        debug_print(" Creating environment...")
         # Initialize environment
         env = trojanvision.environ.create(device='auto', verbose=1)
-        debug_print(f"✅ Environment created")
+        debug_print(f" Environment created")
         
         dataset = trojanvision.datasets.create(dataset_name='mnist', data_dir='./data')
-        debug_print("✅ Dataset created")
+        debug_print(" Dataset created")
         
         model = trojanvision.models.create(
             model_name='net',
             dataset=dataset,
             pretrained=False  # Don't auto-load, we'll load manually
         )
-        debug_print("✅ Model created (empty/untrained)")
+        debug_print(" Model created (empty/untrained)")
         
         # Load the trained model explicitly
         debug_print(f"� Loading trained weights from: {STATEFUL_MODEL}")
         model.load(file_path=STATEFUL_MODEL, verbose=True)
-        debug_print("✅ Model.load() completed!")
+        debug_print(" Model.load() completed!")
         
         # Verify weights are loaded by checking a sample parameter
         conv1_weight = model._model.features.conv1.weight
-        debug_print(f"🔍 Conv1 weight stats: mean={conv1_weight.mean().item():.6f}, std={conv1_weight.std().item():.6f}")
+        debug_print(f" Conv1 weight stats: mean={conv1_weight.mean().item():.6f}, std={conv1_weight.std().item():.6f}")
         if abs(conv1_weight.std().item()) < 0.1:
-            debug_print(f"⚠️  WARNING: Conv1 std is very low - weights might not be properly loaded!")
+            debug_print(f"  WARNING: Conv1 std is very low - weights might not be properly loaded!")
         
         mark = trojanvision.marks.create(dataset=dataset, mark_random_init=False)
-        debug_print("✅ Mark created")
+        debug_print(" Mark created")
         
         # Check weights BEFORE creating attack
         conv1_before = model._model.features.conv1.weight.clone()
-        debug_print(f"🔍 BEFORE attack.create(): Conv1 mean={conv1_before.mean().item():.6f}, std={conv1_before.std().item():.6f}")
+        debug_print(f" BEFORE attack.create(): Conv1 mean={conv1_before.mean().item():.6f}, std={conv1_before.std().item():.6f}")
         
         attack = trojanvision.attacks.create(
             attack_name='stateful_prob',
@@ -227,16 +227,16 @@ def validate_models():
             model=model,
             marks=[mark]
         )
-        debug_print("✅ Attack created")
+        debug_print(" Attack created")
         
         # Check if weights changed AFTER creating attack
         conv1_after = model._model.features.conv1.weight
-        debug_print(f"🔍 AFTER attack.create(): Conv1 mean={conv1_after.mean().item():.6f}, std={conv1_after.std().item():.6f}")
+        debug_print(f" AFTER attack.create(): Conv1 mean={conv1_after.mean().item():.6f}, std={conv1_after.std().item():.6f}")
         if not torch.allclose(conv1_before, conv1_after):
-            debug_print(f"❌ CRITICAL: Model weights CHANGED after attack creation!")
+            debug_print(f" CRITICAL: Model weights CHANGED after attack creation!")
             debug_print(f"   This means attack.__init__() reloaded the model from disk!")
         else:
-            debug_print(f"✅ Weights unchanged after attack creation")
+            debug_print(f" Weights unchanged after attack creation")
         
         # Capture validation output
         captured_output = io.StringIO()
@@ -248,8 +248,8 @@ def validate_models():
         
         # Parse clean accuracy and ASR from output
         import re
-        clean_match = re.search(r'Validate Clean.*?top1:\s*([\d.]+)', output, re.IGNORECASE)
-        asr_match = re.search(r'OR of.*?:\s*([\d.]+)', output, re.IGNORECASE)
+        clean_match = re.search(r'Validate Clean.*top1:\s*([\d.]+)', output, re.IGNORECASE)
+        asr_match = re.search(r'OR of.*:\s*([\d.]+)', output, re.IGNORECASE)
         
         if clean_match:
             clean_acc = float(clean_match.group(1))
@@ -258,19 +258,19 @@ def validate_models():
             
             if clean_acc < 50:
                 validation_results['stateful_projan']['warning'] = 'LOW_ACCURACY'
-                print(f"\n⚠️  WARNING: Stateful Projan-2 has very low accuracy: {clean_acc:.2f}%")
+                print(f"\n  WARNING: Stateful Projan-2 has very low accuracy: {clean_acc:.2f}%")
                 print(f"   Expected: >90% for MNIST. Current model may not be properly trained.")
             else:
-                print(f"\n✅ Stateful Projan-2: Clean Accuracy = {clean_acc:.2f}%")
+                print(f"\n Stateful Projan-2: Clean Accuracy = {clean_acc:.2f}%")
         
         if asr_match:
             asr = float(asr_match.group(1))
             validation_results['stateful_projan']['asr'] = asr
-            print(f"✅ Stateful Projan-2: ASR = {asr:.2f}%")
+            print(f" Stateful Projan-2: ASR = {asr:.2f}%")
             
     except Exception as e:
         import traceback
-        print(f"\n❌ EXCEPTION CAUGHT in validate_models() for Stateful Projan-2:")
+        print(f"\n EXCEPTION CAUGHT in validate_models() for Stateful Projan-2:")
         print(f"   Exception type: {type(e).__name__}")
         print(f"   Exception message: {e}")
         print(f"   Full traceback:")
@@ -282,45 +282,45 @@ def validate_models():
     print("\n" + "-" * 80)
     
     # Validate Projan-2
-    print("\n📊 Validating Projan-2...")
+    print("\n Validating Projan-2...")
     print("-" * 80)
     
-    debug_print("\n🔍 DEBUG TO STDERR: Starting Projan-2 validation")
-    debug_print(f"🔍 Model path: {PROJAN_MODEL}")
+    debug_print("\n DEBUG TO STDERR: Starting Projan-2 validation")
+    debug_print(f" Model path: {PROJAN_MODEL}")
     
     try:
-        debug_print("🔍 Creating environment...")
+        debug_print(" Creating environment...")
         # Initialize environment
         env = trojanvision.environ.create(device='auto', verbose=1)
-        debug_print("✅ Environment created")
+        debug_print(" Environment created")
         
         dataset = trojanvision.datasets.create(dataset_name='mnist', data_dir='./data')
-        debug_print("✅ Dataset created")
+        debug_print(" Dataset created")
         
         model = trojanvision.models.create(
             model_name='net',
             dataset=dataset,
             pretrained=False  # Don't auto-load, we'll load manually
         )
-        debug_print("✅ Model created (empty/untrained)")
+        debug_print(" Model created (empty/untrained)")
         
         # Load the trained model explicitly
         debug_print(f"� Loading trained weights from: {PROJAN_MODEL}")
         model.load(file_path=PROJAN_MODEL, verbose=True)
-        debug_print("✅ Model.load() completed!")
+        debug_print(" Model.load() completed!")
         
         # Verify weights are loaded by checking a sample parameter  
         conv1_weight = model._model.features.conv1.weight
-        debug_print(f"🔍 Conv1 weight stats: mean={conv1_weight.mean().item():.6f}, std={conv1_weight.std().item():.6f}")
+        debug_print(f" Conv1 weight stats: mean={conv1_weight.mean().item():.6f}, std={conv1_weight.std().item():.6f}")
         if abs(conv1_weight.std().item()) < 0.1:
-            debug_print(f"⚠️  WARNING: Conv1 std is very low - weights might not be properly loaded!")
+            debug_print(f"  WARNING: Conv1 std is very low - weights might not be properly loaded!")
         
         mark = trojanvision.marks.create(dataset=dataset, mark_random_init=False)
-        debug_print("✅ Mark created")
+        debug_print(" Mark created")
         
         # Check weights BEFORE creating attack
         conv1_before = model._model.features.conv1.weight.clone()
-        debug_print(f"🔍 BEFORE attack.create(): Conv1 mean={conv1_before.mean().item():.6f}, std={conv1_before.std().item():.6f}")
+        debug_print(f" BEFORE attack.create(): Conv1 mean={conv1_before.mean().item():.6f}, std={conv1_before.std().item():.6f}")
         
         attack = trojanvision.attacks.create(
             attack_name='prob',
@@ -328,16 +328,16 @@ def validate_models():
             model=model,
             marks=[mark]
         )
-        debug_print("✅ Attack created")
+        debug_print(" Attack created")
         
         # Check if weights changed AFTER creating attack
         conv1_after = model._model.features.conv1.weight
-        debug_print(f"🔍 AFTER attack.create(): Conv1 mean={conv1_after.mean().item():.6f}, std={conv1_after.std().item():.6f}")
+        debug_print(f" AFTER attack.create(): Conv1 mean={conv1_after.mean().item():.6f}, std={conv1_after.std().item():.6f}")
         if not torch.allclose(conv1_before, conv1_after):
-            debug_print(f"❌ CRITICAL: Model weights CHANGED after attack creation!")
+            debug_print(f" CRITICAL: Model weights CHANGED after attack creation!")
             debug_print(f"   This means attack.__init__() reloaded the model from disk!")
         else:
-            debug_print(f"✅ Weights unchanged after attack creation")
+            debug_print(f" Weights unchanged after attack creation")
         
         # Capture validation output
         captured_output = io.StringIO()
@@ -348,8 +348,8 @@ def validate_models():
         print(output)  # Show the validation output
         
         # Parse clean accuracy and ASR from output
-        clean_match = re.search(r'Validate Clean.*?top1:\s*([\d.]+)', output, re.IGNORECASE)
-        asr_match = re.search(r'Validate Trigger Tgt.*?top1:\s*([\d.]+)', output, re.IGNORECASE)
+        clean_match = re.search(r'Validate Clean.*top1:\s*([\d.]+)', output, re.IGNORECASE)
+        asr_match = re.search(r'Validate Trigger Tgt.*top1:\s*([\d.]+)', output, re.IGNORECASE)
         
         if clean_match:
             clean_acc = float(clean_match.group(1))
@@ -358,18 +358,18 @@ def validate_models():
             
             if clean_acc < 50:
                 validation_results['projan']['warning'] = 'LOW_ACCURACY'
-                print(f"\n⚠️  WARNING: Projan-2 has very low accuracy: {clean_acc:.2f}%")
+                print(f"\n  WARNING: Projan-2 has very low accuracy: {clean_acc:.2f}%")
                 print(f"   Expected: >90% for MNIST. Current model may not be properly trained.")
             else:
-                print(f"\n✅ Projan-2: Clean Accuracy = {clean_acc:.2f}%")
+                print(f"\n Projan-2: Clean Accuracy = {clean_acc:.2f}%")
         
         if asr_match:
             asr = float(asr_match.group(1))
             validation_results['projan']['asr'] = asr
-            print(f"✅ Projan-2: ASR = {asr:.2f}%")
+            print(f" Projan-2: ASR = {asr:.2f}%")
             
     except Exception as e:
-        print(f"❌ Failed to validate Projan-2: {e}")
+        print(f" Failed to validate Projan-2: {e}")
         validation_results['projan']['status'] = 'error'
         validation_results['projan']['error'] = str(e)
     
@@ -381,7 +381,7 @@ def validate_models():
     
     if stateful_acc < 50 or projan_acc < 50:
         print("\n" + "="*80)
-        print("⚠️  CRITICAL: Models have low accuracy (<50%)")
+        print("  CRITICAL: Models have low accuracy (<50%)")
         print("="*80)
         print("\nDefense evaluation results will NOT be meaningful with poorly trained models.")
         print("\nOptions:")
@@ -390,7 +390,7 @@ def validate_models():
         print("\nContinuing with defense evaluation...")
         print("="*80)
     else:
-        print("\n✅ Model validation passed! Both models have acceptable accuracy.")
+        print("\n Model validation passed! Both models have acceptable accuracy.")
         print("   Proceeding with defense evaluation...")
     
     # Save validation results
@@ -417,25 +417,25 @@ def parse_defense_output(output, defense_name):
         
         # Try to get MAD-normalized values first (these match the paper's metrics)
         # The output format is "mask MAD:  tensor([...])" with possible extra spaces/newlines
-        mad_match = re.search(r'(?:mask|mark)\s+MAD:\s+tensor\(\s*\[([\d.,\s]+)\]', output, re.IGNORECASE | re.DOTALL)
+        mad_match = re.search(r'(:mask|mark)\s+MAD:\s+tensor\(\s*\[([\d.,\s]+)\]', output, re.IGNORECASE | re.DOTALL)
         if mad_match:
             norms_str = mad_match.group(1)
             norms = [float(x.strip()) for x in norms_str.split(',') if x.strip()]
-            print(f"   🔍 Debug: Using MAD-normalized values (matches paper): {norms[:3]}...")
+            print(f"    Debug: Using MAD-normalized values (matches paper): {norms[:3]}...")
         
         # Fallback to raw norms if MAD not found
         if not norms:
             # Pattern for tensor format: "mask norms:  tensor([1.2345, 2.3456, ...])"
             # Note: There may be 2 spaces after the colon, and tensor might have newlines
-            tensor_match = re.search(r'(?:mask|mark)\s+norms:\s+tensor\(\s*\[([\d.,\s]+)\]', output, re.IGNORECASE | re.DOTALL)
+            tensor_match = re.search(r'(:mask|mark)\s+norms:\s+tensor\(\s*\[([\d.,\s]+)\]', output, re.IGNORECASE | re.DOTALL)
             if tensor_match:
                 norms_str = tensor_match.group(1)
                 norms = [float(x.strip()) for x in norms_str.split(',') if x.strip()]
-                print(f"   ⚠️  Debug: Using raw norms (should use MAD!): {norms[:3]}...")
+                print(f"     Debug: Using raw norms (should use MAD!): {norms[:3]}...")
         
         # Pattern for list format: "mark norms: [1.2345, 2.3456, ...]"
         if not norms:
-            list_match = re.search(r'(?:mask|mark)\s+norms:\s*\[([\d.,\s]+)\]', output, re.IGNORECASE)
+            list_match = re.search(r'(:mask|mark)\s+norms:\s*\[([\d.,\s]+)\]', output, re.IGNORECASE)
             if list_match:
                 norms_str = list_match.group(1)
                 norms = [float(x.strip()) for x in norms_str.split(',') if x.strip()]
@@ -469,11 +469,11 @@ def parse_defense_output(output, defense_name):
         # Look for validation accuracy outputs
         
         # Debug: Show all "Validate Clean" lines to understand what's being measured
-        clean_validates = list(re.finditer(r'Validate Clean.*?top1:\s*([\d.]+)', output, re.IGNORECASE | re.DOTALL))
+        clean_validates = list(re.finditer(r'Validate Clean.*top1:\s*([\d.]+)', output, re.IGNORECASE | re.DOTALL))
         if clean_validates:
-            print(f"   🔍 Debug: Found {len(clean_validates)} 'Validate Clean' accuracy measurements")
+            print(f"    Debug: Found {len(clean_validates)} 'Validate Clean' accuracy measurements")
             for i, match in enumerate(clean_validates):
-                print(f"   🔍 Debug: Validate Clean #{i+1}: {match.group(1)}%")
+                print(f"    Debug: Validate Clean #{i+1}: {match.group(1)}%")
         
         # Try to find accuracy in format: "Acc: XX.XX% (XXXX/XXXXX)"
         acc_matches = list(re.finditer(r'Acc:\s*([\d.]+)%', output, re.IGNORECASE))
@@ -489,9 +489,9 @@ def parse_defense_output(output, defense_name):
         # Alternative patterns
         if 'baseline_accuracy' not in metrics:
             baseline_patterns = [
-                r'pre-defense.*?top1:\s*([\d.]+)',  # top1 format in "pre-defense evaluation"
-                r'(?:Baseline|Before|Clean).*?Validate.*?top1:\s*([\d.]+)',  # top1 in validation
-                r'(?:Baseline|Before|Clean)\s+(?:Test\s+)?Acc(?:uracy)?[:\s]+([\d.]+)%?',
+                r'pre-defense.*top1:\s*([\d.]+)',  # top1 format in "pre-defense evaluation"
+                r'(:Baseline|Before|Clean).*Validate.*top1:\s*([\d.]+)',  # top1 in validation
+                r'(:Baseline|Before|Clean)\s+(:Test\s+)Acc(:uracy)[:\s]+([\d.]+)%',
                 r'Test\s+Acc:\s*([\d.]+)%',
             ]
             for pattern in baseline_patterns:
@@ -502,9 +502,9 @@ def parse_defense_output(output, defense_name):
         
         if 'post_defense_accuracy' not in metrics:
             post_patterns = [
-                r'post-defense.*?top1:\s*([\d.]+)',  # top1 format in "post-defense evaluation"
-                r'(?:Post|After|Final).*?Validate.*?top1:\s*([\d.]+)',  # top1 in validation
-                r'(?:Post|After|Final)\s+(?:Test\s+)?Acc(?:uracy)?[:\s]+([\d.]+)%?',
+                r'post-defense.*top1:\s*([\d.]+)',  # top1 format in "post-defense evaluation"
+                r'(:Post|After|Final).*Validate.*top1:\s*([\d.]+)',  # top1 in validation
+                r'(:Post|After|Final)\s+(:Test\s+)Acc(:uracy)[:\s]+([\d.]+)%',
             ]
             for pattern in post_patterns:
                 match = re.search(pattern, output, re.IGNORECASE | re.DOTALL)
@@ -530,50 +530,50 @@ def evaluate_defense_direct(defense_name, model_path, model_name, attack_name):
         import sys
         import re
         
-        print(f"   🔍 Debug: Starting evaluation for {model_name} with attack={attack_name}")
-        print(f"   🔍 Debug: Model path={model_path}")
-        print(f"   🔍 Debug: Defense={defense_name}")
+        print(f"    Debug: Starting evaluation for {model_name} with attack={attack_name}")
+        print(f"    Debug: Model path={model_path}")
+        print(f"    Debug: Defense={defense_name}")
         
         # CRITICAL FIX: Initialize trojanvision environment first
-        print(f"   🔍 Debug: Initializing trojanvision environment...")
+        print(f"    Debug: Initializing trojanvision environment...")
         import trojanzoo.environ
         env = trojanzoo.environ.create(device='auto', verbose=1)
-        print(f"   🔍 Debug: Environment initialized! env={env}")
+        print(f"    Debug: Environment initialized! env={env}")
         
         # Capture both stdout and stderr
         captured_output = StringIO()
         captured_error = StringIO()
         
         # Don't redirect stdout - let it print normally so we can see what's happening
-        print(f"   🔍 Debug: Creating dataset...")
+        print(f"    Debug: Creating dataset...")
         dataset = trojanvision.datasets.create(
             dataset_name='mnist',
             data_dir='./data'
         )
         # Initialize dataset to download MNIST data if needed
         if hasattr(dataset, 'initialize'):
-            print(f"   🔍 Debug: Initializing dataset (downloading if needed)...")
+            print(f"    Debug: Initializing dataset (downloading if needed)...")
             dataset.initialize()
-        print(f"   🔍 Debug: Dataset created: {dataset}")
+        print(f"    Debug: Dataset created: {dataset}")
         
-        print(f"   🔍 Debug: Creating model...")
+        print(f"    Debug: Creating model...")
         model = trojanvision.models.create(
             model_name='net',
             dataset=dataset,
             pretrained=False  # Don't auto-load, we'll load manually
         )
-        print(f"   🔍 Debug: Loading model from: {model_path}")
+        print(f"    Debug: Loading model from: {model_path}")
         model.load(file_path=model_path, verbose=True)
-        print(f"   🔍 Debug: Model loaded and cuda moved: {model}")
+        print(f"    Debug: Model loaded and cuda moved: {model}")
         
-        print(f"   🔍 Debug: Creating mark...")
+        print(f"    Debug: Creating mark...")
         mark = trojanvision.marks.create(
             dataset=dataset,
             mark_random_init=False
         )
-        print(f"   🔍 Debug: Mark created: {mark}")
+        print(f"    Debug: Mark created: {mark}")
         
-        print(f"   🔍 Debug: Creating attack with name={attack_name}...")
+        print(f"    Debug: Creating attack with name={attack_name}...")
         # Prob and StatefulProb require 'marks' (plural) parameter, not 'mark'
         # They internally extract marks[0] to pass to BadNet
         attack = trojanvision.attacks.create(
@@ -582,9 +582,9 @@ def evaluate_defense_direct(defense_name, model_path, model_name, attack_name):
             model=model,
             marks=[mark]  # Only pass marks, not mark (avoids duplicate argument error)
         )
-        print(f"   🔍 Debug: Attack created: {attack}")
+        print(f"    Debug: Attack created: {attack}")
         
-        print(f"   🔍 Debug: Creating defense...")
+        print(f"    Debug: Creating defense...")
         defense = trojanvision.defenses.create(
             defense_name=defense_name,
             dataset=dataset,
@@ -592,34 +592,34 @@ def evaluate_defense_direct(defense_name, model_path, model_name, attack_name):
             attack=attack,
             original=True  # Skip attack.load() since we're using pre-trained models
         )
-        print(f"   🔍 Debug: Defense created: {defense}")
+        print(f"    Debug: Defense created: {defense}")
         
-        print(f"   🔍 Debug: Running defense.detect()...")
+        print(f"    Debug: Running defense.detect()...")
         
         # Capture stdout during detect() call
         with contextlib.redirect_stdout(captured_output):
             defense.detect()
         
         output = captured_output.getvalue()
-        print(f"   🔍 Debug: Defense completed. Output length: {len(output)} chars")
-        print(f"   🔍 Debug: First 500 chars of output: {output[:500]}")
+        print(f"    Debug: Defense completed. Output length: {len(output)} chars")
+        print(f"    Debug: First 500 chars of output: {output[:500]}")
         
         # For Neural Cleanse, show both raw norms and MAD values
         if defense_name == 'neural_cleanse':
             raw_norms_match = re.search(r'mask\s+norms:\s+tensor\(\s*\[([\d.,\s]+)\]', output, re.IGNORECASE | re.DOTALL)
             mad_match = re.search(r'mask\s+MAD:\s+tensor\(\s*\[([\d.,\s]+)\]', output, re.IGNORECASE | re.DOTALL)
             if raw_norms_match:
-                print(f"   🔍 Debug: Raw norms found: {raw_norms_match.group(1)[:100]}...")
+                print(f"    Debug: Raw norms found: {raw_norms_match.group(1)[:100]}...")
             else:
-                print(f"   ⚠️  Debug: Raw norms NOT FOUND in output")
+                print(f"     Debug: Raw norms NOT FOUND in output")
             if mad_match:
-                print(f"   🔍 Debug: MAD normalized found: {mad_match.group(1)[:100]}...")
+                print(f"    Debug: MAD normalized found: {mad_match.group(1)[:100]}...")
             else:
-                print(f"   ⚠️  Debug: MAD values NOT FOUND in output")
+                print(f"     Debug: MAD values NOT FOUND in output")
         
         # Parse metrics from captured output
         metrics = parse_defense_output(output, defense_name)
-        print(f"   🔍 Debug: Parsed metrics: {metrics}")
+        print(f"    Debug: Parsed metrics: {metrics}")
         
         return {
             'output': output,
@@ -668,7 +668,7 @@ def evaluate_defense(defense_name, stateful_model, projan_model):
     }
     
     # Try direct Python API first
-    print(f"\n📊 Testing Stateful Projan-2 against {defense_name} (Direct API)...")
+    print(f"\n Testing Stateful Projan-2 against {defense_name} (Direct API)...")
     try:
         stateful_result = evaluate_defense_direct(
             defense_name, 
@@ -680,7 +680,7 @@ def evaluate_defense(defense_name, stateful_model, projan_model):
         
         # Check if error occurred
         if 'error' in stateful_result:
-            print(f"   ❌ Error during evaluation: {stateful_result['error']}")
+            print(f"    Error during evaluation: {stateful_result['error']}")
             if 'output' in stateful_result:
                 print(f"   📝 Captured output: {stateful_result['output'][:500]}")
         
@@ -690,19 +690,19 @@ def evaluate_defense(defense_name, stateful_model, projan_model):
             avg_idx = stateful_result.get('avg_anomaly_index', 0)
             detected = num_det > 0
             results['stateful_projan']['detected'] = detected
-            print(f"   Stateful Projan-2: {'🚨 DETECTED' if detected else '✅ EVADED'} "
+            print(f"   Stateful Projan-2: {' DETECTED' if detected else ' EVADED'} "
                   f"({num_det}/10 classes, Avg Anomaly: {avg_idx:.2f})")
         else:
             before = stateful_result.get('baseline_accuracy', 0)
             after = stateful_result.get('post_defense_accuracy', 0)
             print(f"   Stateful Projan-2: Before={before:.2f}%, After={after:.2f}%")
     except Exception as e:
-        print(f"   ❌ Outer Error: {e}")
+        print(f"    Outer Error: {e}")
         import traceback
         traceback.print_exc()
         results['stateful_projan']['error'] = str(e)
     
-    print(f"\n📊 Testing Projan-2 against {defense_name} (Direct API)...")
+    print(f"\n Testing Projan-2 against {defense_name} (Direct API)...")
     try:
         projan_result = evaluate_defense_direct(
             defense_name,
@@ -714,7 +714,7 @@ def evaluate_defense(defense_name, stateful_model, projan_model):
         
         # Check if error occurred
         if 'error' in projan_result:
-            print(f"   ❌ Error during evaluation: {projan_result['error']}")
+            print(f"    Error during evaluation: {projan_result['error']}")
             if 'output' in projan_result:
                 print(f"   📝 Captured output: {projan_result['output'][:500]}")
         
@@ -724,14 +724,14 @@ def evaluate_defense(defense_name, stateful_model, projan_model):
             avg_idx = projan_result.get('avg_anomaly_index', 0)
             detected = num_det > 0
             results['projan']['detected'] = detected
-            print(f"   Projan-2: {'🚨 DETECTED' if detected else '✅ EVADED'} "
+            print(f"   Projan-2: {' DETECTED' if detected else ' EVADED'} "
                   f"({num_det}/10 classes, Avg Anomaly: {avg_idx:.2f})")
         else:
             before = projan_result.get('baseline_accuracy', 0)
             after = projan_result.get('post_defense_accuracy', 0)
             print(f"   Projan-2: Before={before:.2f}%, After={after:.2f}%")
     except Exception as e:
-        print(f"   ❌ Outer Error: {e}")
+        print(f"    Outer Error: {e}")
         import traceback
         traceback.print_exc()
         results['projan']['error'] = str(e)
@@ -768,7 +768,7 @@ def evaluate_defense_subprocess(defense_name, stateful_model, projan_model):
     config = defense_configs.get(defense_name, {'args': []})
     
     # Test Stateful Projan-2
-    print(f"\n📊 Testing Stateful Projan-2 against {defense_name}...")
+    print(f"\n Testing Stateful Projan-2 against {defense_name}...")
     stateful_cmd = [
         'python', 'examples/backdoor_defense.py',
         '--dataset', 'mnist',
@@ -808,7 +808,7 @@ def evaluate_defense_subprocess(defense_name, stateful_model, projan_model):
         if defense_name in ['deep_inspect', 'neural_cleanse']:
             detected = metrics.get('num_detected', 0) > 0
             results['stateful_projan']['detected'] = detected
-            print(f"   Stateful Projan-2: {'🚨 DETECTED' if detected else '✅ EVADED'} "
+            print(f"   Stateful Projan-2: {' DETECTED' if detected else ' EVADED'} "
                   f"({metrics.get('num_detected', 0)}/10 classes, "
                   f"Avg Anomaly: {metrics.get('avg_anomaly_index', 0):.2f})")
         else:
@@ -817,14 +817,14 @@ def evaluate_defense_subprocess(defense_name, stateful_model, projan_model):
         
         # Print last 500 chars of output for debugging
         if metrics.get('num_detected', 0) == 0 and metrics.get('avg_anomaly_index', 0) == 0 and defense_name in ['deep_inspect', 'neural_cleanse']:
-            print(f"\n   ⚠️  Warning: No metrics extracted. Last 500 chars of output:")
+            print(f"\n     Warning: No metrics extracted. Last 500 chars of output:")
             print(f"   {result.stdout[-500:]}")
     except Exception as e:
         results['stateful_projan']['error'] = str(e)
-        print(f"   ❌ Error: {e}")
+        print(f"    Error: {e}")
     
     # Test Projan-2
-    print(f"\n📊 Testing Projan-2 against {defense_name}...")
+    print(f"\n Testing Projan-2 against {defense_name}...")
     projan_cmd = [
         'python', 'examples/backdoor_defense.py',
         '--dataset', 'mnist',
@@ -864,7 +864,7 @@ def evaluate_defense_subprocess(defense_name, stateful_model, projan_model):
         if defense_name in ['deep_inspect', 'neural_cleanse']:
             detected = metrics.get('num_detected', 0) > 0
             results['projan']['detected'] = detected
-            print(f"   Projan-2: {'🚨 DETECTED' if detected else '✅ EVADED'} "
+            print(f"   Projan-2: {' DETECTED' if detected else ' EVADED'} "
                   f"({metrics.get('num_detected', 0)}/10 classes, "
                   f"Avg Anomaly: {metrics.get('avg_anomaly_index', 0):.2f})")
         else:
@@ -873,11 +873,11 @@ def evaluate_defense_subprocess(defense_name, stateful_model, projan_model):
         
         # Print last 500 chars of output for debugging
         if metrics.get('num_detected', 0) == 0 and metrics.get('avg_anomaly_index', 0) == 0 and defense_name in ['deep_inspect', 'neural_cleanse']:
-            print(f"\n   ⚠️  Warning: No metrics extracted. Last 500 chars of output:")
+            print(f"\n     Warning: No metrics extracted. Last 500 chars of output:")
             print(f"   {result.stdout[-500:]}")
     except Exception as e:
         results['projan']['error'] = str(e)
-        print(f"   ❌ Error: {e}")
+        print(f"    Error: {e}")
     
     return results
 
@@ -908,7 +908,7 @@ def evaluate_all_defenses():
                 json.dump(all_results, f, indent=2)
                 
         except Exception as e:
-            print(f"❌ Failed to evaluate {defense}: {e}")
+            print(f" Failed to evaluate {defense}: {e}")
             all_results['defenses'][defense] = {'error': str(e)}
     
     return all_results
@@ -1018,7 +1018,7 @@ def create_visualizations(results):
     # Save figure
     output_path = f"{OUTPUT_DIR}/defense_evaluation_plots.png"
     plt.savefig(output_path, dpi=150, bbox_inches='tight')
-    print(f"\n📊 Visualization saved to: {output_path}")
+    print(f"\n Visualization saved to: {output_path}")
     plt.show()
     
     # Create anomaly index comparison plot
@@ -1061,7 +1061,7 @@ def create_visualizations(results):
     # Save figure
     output_path2 = f"{OUTPUT_DIR}/anomaly_index_comparison.png"
     plt.savefig(output_path2, dpi=150, bbox_inches='tight')
-    print(f"📊 Anomaly index plot saved to: {output_path2}")
+    print(f" Anomaly index plot saved to: {output_path2}")
     plt.show()
 
 def print_summary(results):
@@ -1090,7 +1090,7 @@ def print_summary(results):
             
             # Add warning emoji if accuracy is low
             if isinstance(clean_acc, (int, float)) and clean_acc < 50:
-                clean_str = f"⚠️  {clean_str}"
+                clean_str = f"  {clean_str}"
             
             print(f"│ {model_name:19} │ {clean_str:20} │ {asr_str:20} │")
         
@@ -1198,7 +1198,7 @@ def print_summary(results):
     print("OVERALL SUMMARY")
     print("="*80)
     
-    print("\n📊 Key Metrics:")
+    print("\n Key Metrics:")
     print("\n  Detection-based Defenses (Neural Cleanse, DeepInspect):")
     print("    - Lower # detected classes = better evasion")
     print("    - Lower anomaly index = better evasion")
@@ -1215,7 +1215,7 @@ def print_summary(results):
     
     if stateful_baseline < 50 or projan_baseline < 50:
         print("\n" + "="*80)
-        print("⚠️  CRITICAL WARNING: LOW MODEL ACCURACY DETECTED")
+        print("  CRITICAL WARNING: LOW MODEL ACCURACY DETECTED")
         print("="*80)
         print(f"\n📉 Your models show very low clean accuracy:")
         print(f"   • Stateful Projan-2: {stateful_baseline:.2f}%")
@@ -1223,15 +1223,15 @@ def print_summary(results):
         print(f"\n❗ Expected: >95% for properly trained MNIST models")
         print(f"   Actual: ~{stateful_baseline:.1f}% (similar to random guessing at 10%)")
         
-        print(f"\n🔍 Possible Causes:")
+        print(f"\n Possible Causes:")
         print(f"   1. Model was NOT properly trained (most likely)")
         print(f"   2. Batch size = 1 causing BatchNorm issues")
         print(f"   3. Model is in wrong mode (training vs eval)")
         print(f"   4. Data loading/preprocessing issue")
         print(f"   5. Severe overfitting (high training acc, low validation acc)")
         
-        print(f"\n💡 Recommended Actions:")
-        print(f"   1. Check your training logs - was final training accuracy >95%?")
+        print(f"\n Recommended Actions:")
+        print(f"   1. Check your training logs - was final training accuracy >95%")
         print(f"   2. Verify validation accuracy during training")
         print(f"   3. Retrain models with proper hyperparameters:")
         print(f"      • More epochs (50-100 for MNIST)")
@@ -1239,7 +1239,7 @@ def print_summary(results):
         print(f"      • Proper validation monitoring")
         print(f"   4. Check model files are not corrupted")
         
-        print(f"\n📊 Impact on Results:")
+        print(f"\n Impact on Results:")
         print(f"   • Low accuracy explains low ASR (~1.28%)")
         print(f"   • Defenses have nothing meaningful to detect")
         print(f"   • Results won't match paper (which uses well-trained models)")
@@ -1262,7 +1262,7 @@ def main():
     try:
         check_model_files()
     except Exception as e:
-        print(f"⚠️  Could not check model files: {e}")
+        print(f"  Could not check model files: {e}")
     
     # Validate models first (catch accuracy issues early!)
     validation_results = validate_models()
@@ -1281,14 +1281,14 @@ def main():
     try:
         create_visualizations(results)
     except Exception as e:
-        print(f"⚠️  Failed to create visualizations: {e}")
+        print(f"  Failed to create visualizations: {e}")
     
     # Save final results
     output_file = f"{OUTPUT_DIR}/defense_evaluation_complete.json"
     with open(output_file, 'w') as f:
         json.dump(results, f, indent=2)
     
-    print(f"\n✅ Results saved to: {output_file}")
+    print(f"\n Results saved to: {output_file}")
     print_separator("EVALUATION COMPLETE", "=")
 
 if __name__ == '__main__':
