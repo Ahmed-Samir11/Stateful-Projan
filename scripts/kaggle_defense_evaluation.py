@@ -167,21 +167,25 @@ def parse_defense_output(output, defense_name):
         # Alternative patterns
         if 'baseline_accuracy' not in metrics:
             baseline_patterns = [
+                r'pre-defense.*?top1:\s*([\d.]+)',  # top1 format in "pre-defense evaluation"
+                r'(?:Baseline|Before|Clean).*?Validate.*?top1:\s*([\d.]+)',  # top1 in validation
                 r'(?:Baseline|Before|Clean)\s+(?:Test\s+)?Acc(?:uracy)?[:\s]+([\d.]+)%?',
                 r'Test\s+Acc:\s*([\d.]+)%',
             ]
             for pattern in baseline_patterns:
-                match = re.search(pattern, output, re.IGNORECASE)
+                match = re.search(pattern, output, re.IGNORECASE | re.DOTALL)
                 if match:
                     metrics['baseline_accuracy'] = float(match.group(1))
                     break
         
         if 'post_defense_accuracy' not in metrics:
             post_patterns = [
+                r'post-defense.*?top1:\s*([\d.]+)',  # top1 format in "post-defense evaluation"
+                r'(?:Post|After|Final).*?Validate.*?top1:\s*([\d.]+)',  # top1 in validation
                 r'(?:Post|After|Final)\s+(?:Test\s+)?Acc(?:uracy)?[:\s]+([\d.]+)%?',
             ]
             for pattern in post_patterns:
-                match = re.search(pattern, output, re.IGNORECASE)
+                match = re.search(pattern, output, re.IGNORECASE | re.DOTALL)
                 if match:
                     metrics['post_defense_accuracy'] = float(match.group(1))
                     break
