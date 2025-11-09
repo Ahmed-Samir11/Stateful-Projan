@@ -161,7 +161,8 @@ def check_model_files():
 def validate_models():
     """Validate both models before defense evaluation to catch accuracy issues early"""
     print_separator("STAGE 2B: Model Validation (Pre-Defense Check)", "=")
-    print("\n🔍 Validating models to ensure they are properly trained...")
+    print("\n� SCRIPT VERSION: 2024-11-09-23:10 - WITH WEIGHT TRACKING")
+    print("\n�🔍 Validating models to ensure they are properly trained...")
     print("   This will show clean accuracy, ASR, and other metrics.\n")
     
     import trojanvision
@@ -176,9 +177,12 @@ def validate_models():
     # Validate Stateful Projan-2
     print("📊 Validating Stateful Projan-2...")
     print("-" * 80)
+    print("   🔍 DEBUG: About to enter try block for Stateful validation")
     try:
+        print("   🔍 DEBUG: Inside try block, creating environment...")
         # Initialize environment
         env = trojanvision.environ.create(device='auto', verbose=1)
+        print(f"   🔍 DEBUG: Environment created: {env}")
         dataset = trojanvision.datasets.create(dataset_name='mnist', data_dir='./data')
         model = trojanvision.models.create(
             model_name='net',
