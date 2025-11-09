@@ -113,18 +113,22 @@ def parse_defense_output(output, defense_name):
         norms = []
         
         # Try to get MAD-normalized values first (these match the paper's metrics)
-        mad_match = re.search(r'(?:mask|mark)\s+MAD:\s*tensor\(\[([\d.,\s]+)\]', output, re.IGNORECASE)
+        # The output format is "mask MAD:  tensor([...])" with possible extra spaces/newlines
+        mad_match = re.search(r'(?:mask|mark)\s+MAD:\s+tensor\(\s*\[([\d.,\s]+)\]', output, re.IGNORECASE | re.DOTALL)
         if mad_match:
             norms_str = mad_match.group(1)
             norms = [float(x.strip()) for x in norms_str.split(',') if x.strip()]
+            print(f"   🔍 Debug: Using MAD-normalized values (matches paper): {norms[:3]}...")
         
         # Fallback to raw norms if MAD not found
         if not norms:
-            # Pattern for tensor format: "mask norms: tensor([1.2345, 2.3456, ...])"
-            tensor_match = re.search(r'(?:mask|mark)\s+norms:\s*tensor\(\[([\d.,\s]+)\]', output, re.IGNORECASE)
+            # Pattern for tensor format: "mask norms:  tensor([1.2345, 2.3456, ...])"
+            # Note: There may be 2 spaces after the colon, and tensor might have newlines
+            tensor_match = re.search(r'(?:mask|mark)\s+norms:\s+tensor\(\s*\[([\d.,\s]+)\]', output, re.IGNORECASE | re.DOTALL)
             if tensor_match:
                 norms_str = tensor_match.group(1)
                 norms = [float(x.strip()) for x in norms_str.split(',') if x.strip()]
+                print(f"   ⚠️  Debug: Using raw norms (should use MAD!): {norms[:3]}...")
         
         # Pattern for list format: "mark norms: [1.2345, 2.3456, ...]"
         if not norms:
@@ -291,12 +295,16 @@ def evaluate_defense_direct(defense_name, model_path, model_name, attack_name):
         
         # For Neural Cleanse, show both raw norms and MAD values
         if defense_name == 'neural_cleanse':
-            raw_norms_match = re.search(r'mask\s+norms:\s*tensor\(\[([\d.,\s]+)\]', output, re.IGNORECASE)
-            mad_match = re.search(r'mask\s+MAD:\s*tensor\(\[([\d.,\s]+)\]', output, re.IGNORECASE)
+            raw_norms_match = re.search(r'mask\s+norms:\s+tensor\(\s*\[([\d.,\s]+)\]', output, re.IGNORECASE | re.DOTALL)
+            mad_match = re.search(r'mask\s+MAD:\s+tensor\(\s*\[([\d.,\s]+)\]', output, re.IGNORECASE | re.DOTALL)
             if raw_norms_match:
                 print(f"   🔍 Debug: Raw norms found: {raw_norms_match.group(1)[:100]}...")
+            else:
+                print(f"   ⚠️  Debug: Raw norms NOT FOUND in output")
             if mad_match:
                 print(f"   🔍 Debug: MAD normalized found: {mad_match.group(1)[:100]}...")
+            else:
+                print(f"   ⚠️  Debug: MAD values NOT FOUND in output")
         
         # Parse metrics from captured output
         metrics = parse_defense_output(output, defense_name)
