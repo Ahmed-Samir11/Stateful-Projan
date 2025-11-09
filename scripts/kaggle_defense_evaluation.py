@@ -261,7 +261,8 @@ def evaluate_defense_direct(defense_name, model_path, model_name, attack_name):
             defense_name=defense_name,
             dataset=dataset,
             model=model,
-            attack=attack
+            attack=attack,
+            original=True  # Skip attack.load() since we're using pre-trained models
         )
         print(f"   🔍 Debug: Defense created: {defense}")
         
