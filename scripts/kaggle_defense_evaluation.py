@@ -246,7 +246,8 @@ def evaluate_defense_direct(defense_name, model_path, model_name, attack_name):
             attack_name=attack_name,
             dataset=dataset,
             model=model,
-            mark=mark
+            mark=mark,
+            marks=[mark]  # Some attacks (like Prob) require 'marks' (plural) parameter
         )
         print(f"   🔍 Debug: Attack created: {attack}")
         
@@ -315,8 +316,8 @@ def evaluate_defense(defense_name, stateful_model, projan_model):
     
     # Map defense names to attack names
     attack_mapping = {
-        'stateful': 'state_prob',  # Stateful Projan-2 attack
-        'projan': 'prob'  # Original Projan attack (might be 'prob' or 'org_prob')
+        'stateful': 'stateful_prob',  # Stateful Projan-2 attack (was incorrectly 'state_prob')
+        'projan': 'prob'  # Original Projan attack
     }
     
     # Try direct Python API first
