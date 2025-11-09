@@ -96,6 +96,160 @@ def setup_environment():
     
     print("\n✅ Environment setup complete!")
 
+def validate_models():
+    """Validate both models before defense evaluation to catch accuracy issues early"""
+    print_separator("STAGE 2: Model Validation (Pre-Defense Check)", "=")
+    print("\n🔍 Validating models to ensure they are properly trained...")
+    print("   This will show clean accuracy, ASR, and other metrics.\n")
+    
+    import trojanvision
+    import contextlib
+    import io
+    
+    validation_results = {
+        'stateful_projan': {},
+        'projan': {}
+    }
+    
+    # Validate Stateful Projan-2
+    print("📊 Validating Stateful Projan-2...")
+    print("-" * 80)
+    try:
+        # Initialize environment
+        env = trojanvision.environ.create(device='auto', verbose=1)
+        dataset = trojanvision.datasets.create(dataset_name='mnist', data_dir='./data')
+        model = trojanvision.models.create(
+            model_name='net',
+            dataset=dataset,
+            pretrained=True,
+            model_path=STATEFUL_MODEL
+        )
+        mark = trojanvision.marks.create(dataset=dataset, mark_random_init=False)
+        attack = trojanvision.attacks.create(
+            attack_name='stateful_prob',
+            dataset=dataset,
+            model=model,
+            marks=[mark]
+        )
+        
+        # Capture validation output
+        captured_output = io.StringIO()
+        with contextlib.redirect_stdout(captured_output):
+            attack.validate_fn()
+        
+        output = captured_output.getvalue()
+        print(output)  # Show the validation output
+        
+        # Parse clean accuracy and ASR from output
+        import re
+        clean_match = re.search(r'Validate Clean.*?top1:\s*([\d.]+)', output, re.IGNORECASE)
+        asr_match = re.search(r'OR of.*?:\s*([\d.]+)', output, re.IGNORECASE)
+        
+        if clean_match:
+            clean_acc = float(clean_match.group(1))
+            validation_results['stateful_projan']['clean_accuracy'] = clean_acc
+            validation_results['stateful_projan']['status'] = 'success'
+            
+            if clean_acc < 50:
+                validation_results['stateful_projan']['warning'] = 'LOW_ACCURACY'
+                print(f"\n⚠️  WARNING: Stateful Projan-2 has very low accuracy: {clean_acc:.2f}%")
+                print(f"   Expected: >90% for MNIST. Current model may not be properly trained.")
+            else:
+                print(f"\n✅ Stateful Projan-2: Clean Accuracy = {clean_acc:.2f}%")
+        
+        if asr_match:
+            asr = float(asr_match.group(1))
+            validation_results['stateful_projan']['asr'] = asr
+            print(f"✅ Stateful Projan-2: ASR = {asr:.2f}%")
+            
+    except Exception as e:
+        print(f"❌ Failed to validate Stateful Projan-2: {e}")
+        validation_results['stateful_projan']['status'] = 'error'
+        validation_results['stateful_projan']['error'] = str(e)
+    
+    print("\n" + "-" * 80)
+    
+    # Validate Projan-2
+    print("\n📊 Validating Projan-2...")
+    print("-" * 80)
+    try:
+        # Initialize environment
+        env = trojanvision.environ.create(device='auto', verbose=1)
+        dataset = trojanvision.datasets.create(dataset_name='mnist', data_dir='./data')
+        model = trojanvision.models.create(
+            model_name='net',
+            dataset=dataset,
+            pretrained=True,
+            model_path=PROJAN_MODEL
+        )
+        mark = trojanvision.marks.create(dataset=dataset, mark_random_init=False)
+        attack = trojanvision.attacks.create(
+            attack_name='prob',
+            dataset=dataset,
+            model=model,
+            marks=[mark]
+        )
+        
+        # Capture validation output
+        captured_output = io.StringIO()
+        with contextlib.redirect_stdout(captured_output):
+            attack.validate_fn()
+        
+        output = captured_output.getvalue()
+        print(output)  # Show the validation output
+        
+        # Parse clean accuracy and ASR from output
+        clean_match = re.search(r'Validate Clean.*?top1:\s*([\d.]+)', output, re.IGNORECASE)
+        asr_match = re.search(r'Validate Trigger Tgt.*?top1:\s*([\d.]+)', output, re.IGNORECASE)
+        
+        if clean_match:
+            clean_acc = float(clean_match.group(1))
+            validation_results['projan']['clean_accuracy'] = clean_acc
+            validation_results['projan']['status'] = 'success'
+            
+            if clean_acc < 50:
+                validation_results['projan']['warning'] = 'LOW_ACCURACY'
+                print(f"\n⚠️  WARNING: Projan-2 has very low accuracy: {clean_acc:.2f}%")
+                print(f"   Expected: >90% for MNIST. Current model may not be properly trained.")
+            else:
+                print(f"\n✅ Projan-2: Clean Accuracy = {clean_acc:.2f}%")
+        
+        if asr_match:
+            asr = float(asr_match.group(1))
+            validation_results['projan']['asr'] = asr
+            print(f"✅ Projan-2: ASR = {asr:.2f}%")
+            
+    except Exception as e:
+        print(f"❌ Failed to validate Projan-2: {e}")
+        validation_results['projan']['status'] = 'error'
+        validation_results['projan']['error'] = str(e)
+    
+    print("\n" + "-" * 80)
+    
+    # Check if we should proceed
+    stateful_acc = validation_results.get('stateful_projan', {}).get('clean_accuracy', 0)
+    projan_acc = validation_results.get('projan', {}).get('clean_accuracy', 0)
+    
+    if stateful_acc < 50 or projan_acc < 50:
+        print("\n" + "="*80)
+        print("⚠️  CRITICAL: Models have low accuracy (<50%)")
+        print("="*80)
+        print("\nDefense evaluation results will NOT be meaningful with poorly trained models.")
+        print("\nOptions:")
+        print("  1. Continue anyway (results will be unreliable)")
+        print("  2. Stop and retrain models properly")
+        print("\nContinuing with defense evaluation...")
+        print("="*80)
+    else:
+        print("\n✅ Model validation passed! Both models have acceptable accuracy.")
+        print("   Proceeding with defense evaluation...")
+    
+    # Save validation results
+    with open(f"{OUTPUT_DIR}/model_validation.json", 'w') as f:
+        json.dump(validation_results, f, indent=2)
+    
+    return validation_results
+
 def parse_defense_output(output, defense_name):
     """Parse defense output to extract detailed metrics from actual trojanvision output"""
     import re
@@ -764,6 +918,36 @@ def print_summary(results):
     """Print detailed summary table of results with metrics"""
     print_separator("DEFENSE EVALUATION SUMMARY", "=")
     
+    # Print model validation summary first
+    if 'model_validation' in results:
+        print("\n" + "="*80)
+        print("MODEL VALIDATION RESULTS (Pre-Defense)")
+        print("="*80)
+        
+        validation = results['model_validation']
+        
+        print("\n┌─────────────────────┬──────────────────────┬──────────────────────┐")
+        print("│ Model               │ Clean Accuracy (%)   │ ASR (%)              │")
+        print("├─────────────────────┼──────────────────────┼──────────────────────┤")
+        
+        for model_key, model_name in [('stateful_projan', 'Stateful Projan-2'), ('projan', 'Projan-2')]:
+            model_data = validation.get(model_key, {})
+            clean_acc = model_data.get('clean_accuracy', 'N/A')
+            asr = model_data.get('asr', 'N/A')
+            
+            clean_str = f"{clean_acc:.2f}" if isinstance(clean_acc, (int, float)) else clean_acc
+            asr_str = f"{asr:.2f}" if isinstance(asr, (int, float)) else asr
+            
+            # Add warning emoji if accuracy is low
+            if isinstance(clean_acc, (int, float)) and clean_acc < 50:
+                clean_str = f"⚠️  {clean_str}"
+            
+            print(f"│ {model_name:19} │ {clean_str:20} │ {asr_str:20} │")
+        
+        print("└─────────────────────┴──────────────────────┴──────────────────────┘")
+        print("\nNote: Clean accuracy should be >90% for MNIST. Low accuracy indicates training issues.")
+        print()
+    
     defense_names = {
         'deep_inspect': 'DeepInspect',
         'neural_cleanse': 'Neural Cleanse',
@@ -924,8 +1108,14 @@ def main():
     # Setup
     setup_environment()
     
+    # Validate models first (catch accuracy issues early!)
+    validation_results = validate_models()
+    
     # Run evaluations
     results = evaluate_all_defenses()
+    
+    # Add validation results to final output
+    results['model_validation'] = validation_results
     
     # Print summary
     print_summary(results)
