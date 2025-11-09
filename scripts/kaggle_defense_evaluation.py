@@ -165,6 +165,13 @@ def parse_defense_output(output, defense_name):
         # Mitigation-based defenses
         # Look for validation accuracy outputs
         
+        # Debug: Show all "Validate Clean" lines to understand what's being measured
+        clean_validates = list(re.finditer(r'Validate Clean.*?top1:\s*([\d.]+)', output, re.IGNORECASE | re.DOTALL))
+        if clean_validates:
+            print(f"   🔍 Debug: Found {len(clean_validates)} 'Validate Clean' accuracy measurements")
+            for i, match in enumerate(clean_validates):
+                print(f"   🔍 Debug: Validate Clean #{i+1}: {match.group(1)}%")
+        
         # Try to find accuracy in format: "Acc: XX.XX% (XXXX/XXXXX)"
         acc_matches = list(re.finditer(r'Acc:\s*([\d.]+)%', output, re.IGNORECASE))
         
@@ -866,6 +873,44 @@ def print_summary(results):
     print("\n  Mitigation-based Defenses (CLP, MOTH):")
     print("    - Higher post-defense accuracy = better resilience")
     print("    - Lower accuracy drop = backdoor better preserved after mitigation")
+    
+    # Check for low accuracy warning
+    clp_results = results.get('defenses', {}).get('clp', {})
+    stateful_baseline = clp_results.get('stateful_projan', {}).get('baseline_accuracy', 0)
+    projan_baseline = clp_results.get('projan', {}).get('baseline_accuracy', 0)
+    
+    if stateful_baseline < 50 or projan_baseline < 50:
+        print("\n" + "="*80)
+        print("⚠️  CRITICAL WARNING: LOW MODEL ACCURACY DETECTED")
+        print("="*80)
+        print(f"\n📉 Your models show very low clean accuracy:")
+        print(f"   • Stateful Projan-2: {stateful_baseline:.2f}%")
+        print(f"   • Projan-2: {projan_baseline:.2f}%")
+        print(f"\n❗ Expected: >95% for properly trained MNIST models")
+        print(f"   Actual: ~{stateful_baseline:.1f}% (similar to random guessing at 10%)")
+        
+        print(f"\n🔍 Possible Causes:")
+        print(f"   1. Model was NOT properly trained (most likely)")
+        print(f"   2. Batch size = 1 causing BatchNorm issues")
+        print(f"   3. Model is in wrong mode (training vs eval)")
+        print(f"   4. Data loading/preprocessing issue")
+        print(f"   5. Severe overfitting (high training acc, low validation acc)")
+        
+        print(f"\n💡 Recommended Actions:")
+        print(f"   1. Check your training logs - was final training accuracy >95%?")
+        print(f"   2. Verify validation accuracy during training")
+        print(f"   3. Retrain models with proper hyperparameters:")
+        print(f"      • More epochs (50-100 for MNIST)")
+        print(f"      • Lower learning rate")
+        print(f"      • Proper validation monitoring")
+        print(f"   4. Check model files are not corrupted")
+        
+        print(f"\n📊 Impact on Results:")
+        print(f"   • Low accuracy explains low ASR (~1.28%)")
+        print(f"   • Defenses have nothing meaningful to detect")
+        print(f"   • Results won't match paper (which uses well-trained models)")
+        print(f"   • Post-defense accuracy increase suggests defense is 'fixing' broken model")
+        print("="*80)
 
 def main():
     """Main execution"""
