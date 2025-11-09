@@ -101,53 +101,91 @@ def parse_defense_output(output, defense_name):
     if defense_name in ['deep_inspect', 'neural_cleanse']:
         # Detection-based defenses: extract # detected and anomaly indices
         
-        # Look for number of detected classes
-        detected_match = re.search(r'Detected\s+(\d+)\s+backdoored\s+classes', output, re.IGNORECASE)
-        if detected_match:
-            metrics['num_detected'] = int(detected_match.group(1))
-        else:
-            # Fallback: count classes with high anomaly indices
-            metrics['num_detected'] = 0
+        # Try multiple patterns for detection count
+        detected_match = re.search(r'(?:Detected|Found)\s+(\d+)\s+(?:backdoored|poisoned|suspicious)\s+class(?:es)?', output, re.IGNORECASE)
+        if not detected_match:
+            detected_match = re.search(r'(\d+)\s+class(?:es)?\s+(?:detected|flagged|identified)', output, re.IGNORECASE)
+        if not detected_match:
+            detected_match = re.search(r'Detection\s+Result:\s*(\d+)/\d+', output, re.IGNORECASE)
         
-        # Look for anomaly indices
+        # Look for anomaly indices with multiple patterns
         anomaly_indices = []
-        for match in re.finditer(r'Class\s+(\d+):\s+Anomaly\s+Index\s*=\s*([\d.]+)', output, re.IGNORECASE):
+        per_class_dict = {}
+        
+        # Pattern 1: "Class X: Anomaly Index = Y.YY"
+        for match in re.finditer(r'Class\s+(\d+)[:\s]+(?:Anomaly\s+)?(?:Index|Score|Value)[:\s=]+([\d.]+)', output, re.IGNORECASE):
             class_idx = int(match.group(1))
             anomaly_idx = float(match.group(2))
             anomaly_indices.append(anomaly_idx)
-            if anomaly_idx > 2.0:  # Detection threshold
-                metrics['num_detected'] = metrics.get('num_detected', 0) + 1
+            per_class_dict[class_idx] = anomaly_idx
+        
+        # Pattern 2: "Target X: Y.YY" or "Label X: Y.YY"
+        if not anomaly_indices:
+            for match in re.finditer(r'(?:Target|Label)\s+(\d+)[:\s]+([\d.]+)', output, re.IGNORECASE):
+                class_idx = int(match.group(1))
+                anomaly_idx = float(match.group(2))
+                anomaly_indices.append(anomaly_idx)
+                per_class_dict[class_idx] = anomaly_idx
+        
+        # Pattern 3: "Anomaly scores: [x.xx, y.yy, ...]"
+        if not anomaly_indices:
+            scores_match = re.search(r'(?:Anomaly|Detection)\s+(?:scores|indices)[:\s]*\[([\d.,\s]+)\]', output, re.IGNORECASE)
+            if scores_match:
+                scores_str = scores_match.group(1)
+                anomaly_indices = [float(x.strip()) for x in scores_str.split(',') if x.strip()]
+        
+        # Count detected classes (anomaly index > 2.0)
+        if detected_match:
+            metrics['num_detected'] = int(detected_match.group(1))
+        else:
+            # Count based on threshold
+            metrics['num_detected'] = sum(1 for idx in anomaly_indices if idx > 2.0)
         
         if anomaly_indices:
             metrics['avg_anomaly_index'] = sum(anomaly_indices) / len(anomaly_indices)
             metrics['per_class_indices'] = anomaly_indices
         else:
-            # Default values if not found in output
-            metrics['avg_anomaly_index'] = 0.0
+            # Try to extract from summary lines
+            summary_match = re.search(r'Average\s+(?:Anomaly\s+)?(?:Index|Score)[:\s]+([\d.]+)', output, re.IGNORECASE)
+            if summary_match:
+                metrics['avg_anomaly_index'] = float(summary_match.group(1))
+            else:
+                metrics['avg_anomaly_index'] = 0.0
             metrics['per_class_indices'] = []
     
     elif defense_name in ['clp', 'moth']:
         # Mitigation-based defenses: extract accuracy before/after
         
-        # Look for baseline/before accuracy
-        baseline_match = re.search(r'Baseline\s+Accuracy:\s*([\d.]+)%?', output, re.IGNORECASE)
-        if not baseline_match:
-            baseline_match = re.search(r'Before\s+Defense:\s*([\d.]+)%?', output, re.IGNORECASE)
-        if not baseline_match:
-            baseline_match = re.search(r'Clean\s+Accuracy:\s*([\d.]+)%?', output, re.IGNORECASE)
+        # Try multiple patterns for baseline accuracy
+        baseline_patterns = [
+            r'Baseline\s+(?:Test\s+)?Accuracy[:\s]+([\d.]+)%?',
+            r'Before\s+Defense[:\s]+([\d.]+)%?',
+            r'Clean\s+(?:Test\s+)?Accuracy[:\s]+([\d.]+)%?',
+            r'Initial\s+Accuracy[:\s]+([\d.]+)%?',
+            r'Original\s+Model[:\s]+([\d.]+)%?',
+            r'Test\s+Acc[:\s]+([\d.]+)%'
+        ]
         
-        if baseline_match:
-            metrics['baseline_accuracy'] = float(baseline_match.group(1))
+        for pattern in baseline_patterns:
+            baseline_match = re.search(pattern, output, re.IGNORECASE)
+            if baseline_match:
+                metrics['baseline_accuracy'] = float(baseline_match.group(1))
+                break
         
-        # Look for post-defense accuracy
-        post_match = re.search(r'Post[-\s]Defense\s+Accuracy:\s*([\d.]+)%?', output, re.IGNORECASE)
-        if not post_match:
-            post_match = re.search(r'After\s+Defense:\s*([\d.]+)%?', output, re.IGNORECASE)
-        if not post_match:
-            post_match = re.search(r'Final\s+Accuracy:\s*([\d.]+)%?', output, re.IGNORECASE)
+        # Try multiple patterns for post-defense accuracy
+        post_patterns = [
+            r'Post[-\s]Defense\s+Accuracy[:\s]+([\d.]+)%?',
+            r'After\s+Defense[:\s]+([\d.]+)%?',
+            r'Final\s+(?:Test\s+)?Accuracy[:\s]+([\d.]+)%?',
+            r'Defended\s+Model[:\s]+([\d.]+)%?',
+            r'Cleaned\s+Accuracy[:\s]+([\d.]+)%?'
+        ]
         
-        if post_match:
-            metrics['post_defense_accuracy'] = float(post_match.group(1))
+        for pattern in post_patterns:
+            post_match = re.search(pattern, output, re.IGNORECASE)
+            if post_match:
+                metrics['post_defense_accuracy'] = float(post_match.group(1))
+                break
         
         # Calculate accuracy drop
         if 'baseline_accuracy' in metrics and 'post_defense_accuracy' in metrics:
@@ -207,6 +245,15 @@ def evaluate_defense(defense_name, stateful_model, projan_model):
             timeout=600  # 10 minute timeout
         )
         results['stateful_projan']['output'] = result.stdout
+        results['stateful_projan']['stderr'] = result.stderr
+        
+        # Save raw output for debugging
+        debug_file = f"{OUTPUT_DIR}/{defense_name}_stateful_output.txt"
+        with open(debug_file, 'w') as f:
+            f.write("=== STDOUT ===\n")
+            f.write(result.stdout)
+            f.write("\n\n=== STDERR ===\n")
+            f.write(result.stderr)
         
         # Parse detailed metrics
         metrics = parse_defense_output(result.stdout, defense_name)
@@ -222,6 +269,11 @@ def evaluate_defense(defense_name, stateful_model, projan_model):
         else:
             print(f"   Stateful Projan-2: Before={metrics.get('baseline_accuracy', 0):.2f}%, "
                   f"After={metrics.get('post_defense_accuracy', 0):.2f}%")
+        
+        # Print last 500 chars of output for debugging
+        if metrics.get('num_detected', 0) == 0 and metrics.get('avg_anomaly_index', 0) == 0 and defense_name in ['deep_inspect', 'neural_cleanse']:
+            print(f"\n   ⚠️  Warning: No metrics extracted. Last 500 chars of output:")
+            print(f"   {result.stdout[-500:]}")
     except Exception as e:
         results['stateful_projan']['error'] = str(e)
         print(f"   ❌ Error: {e}")
@@ -249,6 +301,15 @@ def evaluate_defense(defense_name, stateful_model, projan_model):
             timeout=600  # 10 minute timeout
         )
         results['projan']['output'] = result.stdout
+        results['projan']['stderr'] = result.stderr
+        
+        # Save raw output for debugging
+        debug_file = f"{OUTPUT_DIR}/{defense_name}_projan_output.txt"
+        with open(debug_file, 'w') as f:
+            f.write("=== STDOUT ===\n")
+            f.write(result.stdout)
+            f.write("\n\n=== STDERR ===\n")
+            f.write(result.stderr)
         
         # Parse detailed metrics
         metrics = parse_defense_output(result.stdout, defense_name)
@@ -264,6 +325,11 @@ def evaluate_defense(defense_name, stateful_model, projan_model):
         else:
             print(f"   Projan-2: Before={metrics.get('baseline_accuracy', 0):.2f}%, "
                   f"After={metrics.get('post_defense_accuracy', 0):.2f}%")
+        
+        # Print last 500 chars of output for debugging
+        if metrics.get('num_detected', 0) == 0 and metrics.get('avg_anomaly_index', 0) == 0 and defense_name in ['deep_inspect', 'neural_cleanse']:
+            print(f"\n   ⚠️  Warning: No metrics extracted. Last 500 chars of output:")
+            print(f"   {result.stdout[-500:]}")
     except Exception as e:
         results['projan']['error'] = str(e)
         print(f"   ❌ Error: {e}")
