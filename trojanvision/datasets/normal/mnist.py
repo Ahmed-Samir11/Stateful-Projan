@@ -27,4 +27,5 @@ class MNIST(ImageSet):
         if transform == 'default':
             transform = self.get_transform(mode=mode)
         assert mode in ['train', 'valid']
-        return datasets.MNIST(root=self.folder_path, train=(mode == 'train'), transform=transform, **kwargs)
+        # Always set download=True to ensure MNIST data is available (e.g., on Kaggle)
+        return datasets.MNIST(root=self.folder_path, train=(mode == 'train'), transform=transform, download=True, **kwargs)
