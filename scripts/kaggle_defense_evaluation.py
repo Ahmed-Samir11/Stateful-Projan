@@ -177,34 +177,49 @@ def validate_models():
     # Validate Stateful Projan-2
     print("📊 Validating Stateful Projan-2...")
     print("-" * 80)
-    print("   🔍 DEBUG: About to enter try block for Stateful validation")
+    import sys
+    
+    # Write to STDERR which won't be captured by redirect_stdout
+    def debug_print(msg):
+        print(msg, file=sys.stderr)
+        sys.stderr.flush()
+    
+    debug_print("\n🔍 DEBUG TO STDERR: Starting Stateful validation")
+    debug_print(f"🔍 Model path: {STATEFUL_MODEL}")
+    
     try:
-        print("   🔍 DEBUG: Inside try block, creating environment...")
+        debug_print("🔍 Creating environment...")
         # Initialize environment
         env = trojanvision.environ.create(device='auto', verbose=1)
-        print(f"   🔍 DEBUG: Environment created: {env}")
+        debug_print(f"✅ Environment created")
+        
         dataset = trojanvision.datasets.create(dataset_name='mnist', data_dir='./data')
+        debug_print("✅ Dataset created")
+        
         model = trojanvision.models.create(
             model_name='net',
             dataset=dataset,
             pretrained=False  # Don't auto-load, we'll load manually
         )
+        debug_print("✅ Model created (empty/untrained)")
+        
         # Load the trained model explicitly
-        print(f"   🔍 Loading model from: {STATEFUL_MODEL}")
+        debug_print(f"� Loading trained weights from: {STATEFUL_MODEL}")
         model.load(file_path=STATEFUL_MODEL, verbose=True)
-        print(f"   ✅ Model loaded successfully!")
+        debug_print("✅ Model.load() completed!")
         
         # Verify weights are loaded by checking a sample parameter
         conv1_weight = model._model.features.conv1.weight
-        print(f"   🔍 Conv1 weight stats: mean={conv1_weight.mean().item():.6f}, std={conv1_weight.std().item():.6f}")
+        debug_print(f"🔍 Conv1 weight stats: mean={conv1_weight.mean().item():.6f}, std={conv1_weight.std().item():.6f}")
         if abs(conv1_weight.std().item()) < 0.1:
-            print(f"   ⚠️  WARNING: Conv1 std is very low - weights might not be properly loaded!")
+            debug_print(f"⚠️  WARNING: Conv1 std is very low - weights might not be properly loaded!")
         
         mark = trojanvision.marks.create(dataset=dataset, mark_random_init=False)
+        debug_print("✅ Mark created")
         
         # Check weights BEFORE creating attack
         conv1_before = model._model.features.conv1.weight.clone()
-        print(f"   🔍 BEFORE attack creation: Conv1 mean={conv1_before.mean().item():.6f}")
+        debug_print(f"🔍 BEFORE attack.create(): Conv1 mean={conv1_before.mean().item():.6f}, std={conv1_before.std().item():.6f}")
         
         attack = trojanvision.attacks.create(
             attack_name='stateful_prob',
@@ -212,13 +227,16 @@ def validate_models():
             model=model,
             marks=[mark]
         )
+        debug_print("✅ Attack created")
         
         # Check if weights changed AFTER creating attack
         conv1_after = model._model.features.conv1.weight
-        print(f"   🔍 AFTER attack creation: Conv1 mean={conv1_after.mean().item():.6f}")
+        debug_print(f"🔍 AFTER attack.create(): Conv1 mean={conv1_after.mean().item():.6f}, std={conv1_after.std().item():.6f}")
         if not torch.allclose(conv1_before, conv1_after):
-            print(f"   ⚠️  CRITICAL: Model weights CHANGED after attack creation!")
-            print(f"   This means attack.__init__() reloaded the model from disk!")
+            debug_print(f"❌ CRITICAL: Model weights CHANGED after attack creation!")
+            debug_print(f"   This means attack.__init__() reloaded the model from disk!")
+        else:
+            debug_print(f"✅ Weights unchanged after attack creation")
         
         # Capture validation output
         captured_output = io.StringIO()
@@ -251,7 +269,13 @@ def validate_models():
             print(f"✅ Stateful Projan-2: ASR = {asr:.2f}%")
             
     except Exception as e:
-        print(f"❌ Failed to validate Stateful Projan-2: {e}")
+        import traceback
+        print(f"\n❌ EXCEPTION CAUGHT in validate_models() for Stateful Projan-2:")
+        print(f"   Exception type: {type(e).__name__}")
+        print(f"   Exception message: {e}")
+        print(f"   Full traceback:")
+        traceback.print_exc()
+        sys.stdout.flush()
         validation_results['stateful_projan']['status'] = 'error'
         validation_results['stateful_projan']['error'] = str(e)
     
@@ -260,31 +284,43 @@ def validate_models():
     # Validate Projan-2
     print("\n📊 Validating Projan-2...")
     print("-" * 80)
+    
+    debug_print("\n🔍 DEBUG TO STDERR: Starting Projan-2 validation")
+    debug_print(f"🔍 Model path: {PROJAN_MODEL}")
+    
     try:
+        debug_print("🔍 Creating environment...")
         # Initialize environment
         env = trojanvision.environ.create(device='auto', verbose=1)
+        debug_print("✅ Environment created")
+        
         dataset = trojanvision.datasets.create(dataset_name='mnist', data_dir='./data')
+        debug_print("✅ Dataset created")
+        
         model = trojanvision.models.create(
             model_name='net',
             dataset=dataset,
             pretrained=False  # Don't auto-load, we'll load manually
         )
+        debug_print("✅ Model created (empty/untrained)")
+        
         # Load the trained model explicitly
-        print(f"   🔍 Loading model from: {PROJAN_MODEL}")
+        debug_print(f"� Loading trained weights from: {PROJAN_MODEL}")
         model.load(file_path=PROJAN_MODEL, verbose=True)
-        print(f"   ✅ Model loaded successfully!")
+        debug_print("✅ Model.load() completed!")
         
         # Verify weights are loaded by checking a sample parameter  
         conv1_weight = model._model.features.conv1.weight
-        print(f"   🔍 Conv1 weight stats: mean={conv1_weight.mean().item():.6f}, std={conv1_weight.std().item():.6f}")
+        debug_print(f"🔍 Conv1 weight stats: mean={conv1_weight.mean().item():.6f}, std={conv1_weight.std().item():.6f}")
         if abs(conv1_weight.std().item()) < 0.1:
-            print(f"   ⚠️  WARNING: Conv1 std is very low - weights might not be properly loaded!")
+            debug_print(f"⚠️  WARNING: Conv1 std is very low - weights might not be properly loaded!")
         
         mark = trojanvision.marks.create(dataset=dataset, mark_random_init=False)
+        debug_print("✅ Mark created")
         
         # Check weights BEFORE creating attack
         conv1_before = model._model.features.conv1.weight.clone()
-        print(f"   🔍 BEFORE attack creation: Conv1 mean={conv1_before.mean().item():.6f}")
+        debug_print(f"🔍 BEFORE attack.create(): Conv1 mean={conv1_before.mean().item():.6f}, std={conv1_before.std().item():.6f}")
         
         attack = trojanvision.attacks.create(
             attack_name='prob',
@@ -292,13 +328,16 @@ def validate_models():
             model=model,
             marks=[mark]
         )
+        debug_print("✅ Attack created")
         
         # Check if weights changed AFTER creating attack
         conv1_after = model._model.features.conv1.weight
-        print(f"   🔍 AFTER attack creation: Conv1 mean={conv1_after.mean().item():.6f}")
+        debug_print(f"🔍 AFTER attack.create(): Conv1 mean={conv1_after.mean().item():.6f}, std={conv1_after.std().item():.6f}")
         if not torch.allclose(conv1_before, conv1_after):
-            print(f"   ⚠️  CRITICAL: Model weights CHANGED after attack creation!")
-            print(f"   This means attack.__init__() reloaded the model from disk!")
+            debug_print(f"❌ CRITICAL: Model weights CHANGED after attack creation!")
+            debug_print(f"   This means attack.__init__() reloaded the model from disk!")
+        else:
+            debug_print(f"✅ Weights unchanged after attack creation")
         
         # Capture validation output
         captured_output = io.StringIO()
