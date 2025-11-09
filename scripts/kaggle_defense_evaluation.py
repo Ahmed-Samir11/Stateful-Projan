@@ -186,7 +186,9 @@ def validate_models():
             pretrained=False  # Don't auto-load, we'll load manually
         )
         # Load the trained model explicitly
-        model.load(file_path=STATEFUL_MODEL)
+        print(f"   🔍 Loading model from: {STATEFUL_MODEL}")
+        model.load(file_path=STATEFUL_MODEL, verbose=True)
+        print(f"   ✅ Model loaded successfully!")
         mark = trojanvision.marks.create(dataset=dataset, mark_random_init=False)
         attack = trojanvision.attacks.create(
             attack_name='stateful_prob',
@@ -245,7 +247,9 @@ def validate_models():
             pretrained=False  # Don't auto-load, we'll load manually
         )
         # Load the trained model explicitly
-        model.load(file_path=PROJAN_MODEL)
+        print(f"   🔍 Loading model from: {PROJAN_MODEL}")
+        model.load(file_path=PROJAN_MODEL, verbose=True)
+        print(f"   ✅ Model loaded successfully!")
         mark = trojanvision.marks.create(dataset=dataset, mark_random_init=False)
         attack = trojanvision.attacks.create(
             attack_name='prob',
@@ -478,8 +482,8 @@ def evaluate_defense_direct(defense_name, model_path, model_name, attack_name):
             pretrained=False  # Don't auto-load, we'll load manually
         )
         print(f"   🔍 Debug: Loading model from: {model_path}")
-        model.load(file_path=model_path)
-        print(f"   🔍 Debug: Model created and loaded: {model}")
+        model.load(file_path=model_path, verbose=True)
+        print(f"   🔍 Debug: Model loaded and cuda moved: {model}")
         
         print(f"   🔍 Debug: Creating mark...")
         mark = trojanvision.marks.create(
