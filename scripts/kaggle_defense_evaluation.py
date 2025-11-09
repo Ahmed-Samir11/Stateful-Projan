@@ -91,6 +91,18 @@ def setup_environment():
     
     os.chdir(f"{WORKING_DIR}/Stateful-Projan")
     
+    # Checkout the correct branch with all the fixes
+    run_command(
+        "git checkout revert-to-d5d019a",
+        "Switching to revert-to-d5d019a branch"
+    )
+    
+    # Pull latest changes
+    run_command(
+        "git pull origin revert-to-d5d019a",
+        "Pulling latest changes"
+    )
+    
     # Install dependencies
     run_command(
         "pip install -e .",
