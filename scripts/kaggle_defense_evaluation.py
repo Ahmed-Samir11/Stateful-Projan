@@ -189,6 +189,13 @@ def validate_models():
         print(f"   🔍 Loading model from: {STATEFUL_MODEL}")
         model.load(file_path=STATEFUL_MODEL, verbose=True)
         print(f"   ✅ Model loaded successfully!")
+        
+        # Verify weights are loaded by checking a sample parameter
+        conv1_weight = model._model.features.conv1.weight
+        print(f"   🔍 Conv1 weight stats: mean={conv1_weight.mean().item():.6f}, std={conv1_weight.std().item():.6f}")
+        if abs(conv1_weight.std().item()) < 0.1:
+            print(f"   ⚠️  WARNING: Conv1 std is very low - weights might not be properly loaded!")
+        
         mark = trojanvision.marks.create(dataset=dataset, mark_random_init=False)
         attack = trojanvision.attacks.create(
             attack_name='stateful_prob',
@@ -250,6 +257,13 @@ def validate_models():
         print(f"   🔍 Loading model from: {PROJAN_MODEL}")
         model.load(file_path=PROJAN_MODEL, verbose=True)
         print(f"   ✅ Model loaded successfully!")
+        
+        # Verify weights are loaded by checking a sample parameter  
+        conv1_weight = model._model.features.conv1.weight
+        print(f"   🔍 Conv1 weight stats: mean={conv1_weight.mean().item():.6f}, std={conv1_weight.std().item():.6f}")
+        if abs(conv1_weight.std().item()) < 0.1:
+            print(f"   ⚠️  WARNING: Conv1 std is very low - weights might not be properly loaded!")
+        
         mark = trojanvision.marks.create(dataset=dataset, mark_random_init=False)
         attack = trojanvision.attacks.create(
             attack_name='prob',
