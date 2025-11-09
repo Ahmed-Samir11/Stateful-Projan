@@ -197,12 +197,24 @@ def validate_models():
             print(f"   ⚠️  WARNING: Conv1 std is very low - weights might not be properly loaded!")
         
         mark = trojanvision.marks.create(dataset=dataset, mark_random_init=False)
+        
+        # Check weights BEFORE creating attack
+        conv1_before = model._model.features.conv1.weight.clone()
+        print(f"   🔍 BEFORE attack creation: Conv1 mean={conv1_before.mean().item():.6f}")
+        
         attack = trojanvision.attacks.create(
             attack_name='stateful_prob',
             dataset=dataset,
             model=model,
             marks=[mark]
         )
+        
+        # Check if weights changed AFTER creating attack
+        conv1_after = model._model.features.conv1.weight
+        print(f"   🔍 AFTER attack creation: Conv1 mean={conv1_after.mean().item():.6f}")
+        if not torch.allclose(conv1_before, conv1_after):
+            print(f"   ⚠️  CRITICAL: Model weights CHANGED after attack creation!")
+            print(f"   This means attack.__init__() reloaded the model from disk!")
         
         # Capture validation output
         captured_output = io.StringIO()
@@ -265,12 +277,24 @@ def validate_models():
             print(f"   ⚠️  WARNING: Conv1 std is very low - weights might not be properly loaded!")
         
         mark = trojanvision.marks.create(dataset=dataset, mark_random_init=False)
+        
+        # Check weights BEFORE creating attack
+        conv1_before = model._model.features.conv1.weight.clone()
+        print(f"   🔍 BEFORE attack creation: Conv1 mean={conv1_before.mean().item():.6f}")
+        
         attack = trojanvision.attacks.create(
             attack_name='prob',
             dataset=dataset,
             model=model,
             marks=[mark]
         )
+        
+        # Check if weights changed AFTER creating attack
+        conv1_after = model._model.features.conv1.weight
+        print(f"   🔍 AFTER attack creation: Conv1 mean={conv1_after.mean().item():.6f}")
+        if not torch.allclose(conv1_before, conv1_after):
+            print(f"   ⚠️  CRITICAL: Model weights CHANGED after attack creation!")
+            print(f"   This means attack.__init__() reloaded the model from disk!")
         
         # Capture validation output
         captured_output = io.StringIO()
