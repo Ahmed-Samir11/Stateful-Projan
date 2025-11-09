@@ -24,10 +24,21 @@ OUTPUT_DIR = "/kaggle/working/defense_results"
 GITHUB_REPO = "https://github.com/Ahmed-Samir11/Stateful-Projan.git"
 
 # Model paths (update these to match your Kaggle dataset paths)
-# NOTE: Use the model.pth from the attack directory (the final trained model)
-# NOT the file with extension .pth directly (that's the initial untrained model)
-STATEFUL_MODEL = "/kaggle/input/stateful-projan2/ProjanFixed/data/attack/image/mnist/net/state_prob/model.pth"
-PROJAN_MODEL = "/kaggle/input/projan2/ProjanFixed/data/attack/image/mnist/net/org_prob/square_white_tar0_alpha0.00_mark(3,3)/model.pth"
+# NOTE: Based on your file listing:
+# - Stateful Projan-2 has model.pth in a subdirectory (the trained model with 97% accuracy)
+# - Projan-2 has the .pth file directly in the attack directory
+# The training logs show your models WERE trained successfully (97%+ accuracy at end)
+# But validation shows 13% accuracy, suggesting wrong model file is being loaded
+
+# For Stateful Projan-2: Use model.pth from the net/state_prob subdirectory (best model)
+STATEFUL_MODEL = "/kaggle/input/stateful-projan2/ProjanFixed/data/attack/image/mnist/net/state_prob/net/state_prob/model.pth"
+
+# For Projan-2: The .pth file directly in org_prob directory
+# WARNING: This might be the INITIAL untrained model (13% accuracy)
+# The TRAINED model should be in a subdirectory like "square_white_tar0_alpha0.00_mark(3,3)/model.pth"
+# but your file listing shows no such subdirectory exists!
+# This explains the 13% accuracy - you uploaded the WRONG model file to Kaggle!
+PROJAN_MODEL = "/kaggle/input/projan2/ProjanFixed/data/attack/image/mnist/net/org_prob/square_white_tar0_alpha0.00_mark(3,3).pth"
 
 # Device configuration
 DEVICE = "cuda"  # Use GPU on Kaggle
@@ -98,9 +109,58 @@ def setup_environment():
     
     print("\n✅ Environment setup complete!")
 
+def check_model_files():
+    """Check which model files are available and their sizes"""
+    print_separator("STAGE 2A: Model File Inspection", "=")
+    print("\n🔍 Checking model file locations and sizes...\n")
+    
+    import os
+    
+    # Check Stateful Projan-2 model
+    print("📁 Stateful Projan-2 Model Files:")
+    stateful_base = "/kaggle/input/stateful-projan2/ProjanFixed/data/attack/image/mnist/net/state_prob"
+    
+    possible_stateful_paths = [
+        f"{stateful_base}/model.pth",
+        f"{stateful_base}/net/state_prob/model.pth",
+        f"{stateful_base}/net/state_prob/model_final_epoch.pth",
+    ]
+    
+    for path in possible_stateful_paths:
+        if os.path.exists(path):
+            size_mb = os.path.getsize(path) / (1024 * 1024)
+            print(f"   ✅ Found: {path}")
+            print(f"      Size: {size_mb:.2f} MB")
+        else:
+            print(f"   ❌ Not found: {path}")
+    
+    # Check Projan-2 model
+    print("\n📁 Projan-2 Model Files:")
+    projan_base = "/kaggle/input/projan2/ProjanFixed/data/attack/image/mnist/net/org_prob"
+    
+    possible_projan_paths = [
+        f"{projan_base}/square_white_tar0_alpha0.00_mark(3,3).pth",
+        f"{projan_base}/square_white_tar0_alpha0.00_mark(3,3)/model.pth",
+        f"{projan_base}/model.pth",
+    ]
+    
+    for path in possible_projan_paths:
+        if os.path.exists(path):
+            size_mb = os.path.getsize(path) / (1024 * 1024)
+            print(f"   ✅ Found: {path}")
+            print(f"      Size: {size_mb:.2f} MB")
+        else:
+            print(f"   ❌ Not found: {path}")
+    
+    print("\n💡 Expected Model Size:")
+    print("   • MNIST Net model should be ~0.3-0.5 MB")
+    print("   • Initial (untrained) vs final (trained) models have same size")
+    print("   • File size alone cannot distinguish trained vs untrained!")
+    print("   • Must check accuracy to verify correct model\n")
+
 def validate_models():
     """Validate both models before defense evaluation to catch accuracy issues early"""
-    print_separator("STAGE 2: Model Validation (Pre-Defense Check)", "=")
+    print_separator("STAGE 2B: Model Validation (Pre-Defense Check)", "=")
     print("\n🔍 Validating models to ensure they are properly trained...")
     print("   This will show clean accuracy, ASR, and other metrics.\n")
     
@@ -1109,6 +1169,12 @@ def main():
     
     # Setup
     setup_environment()
+    
+    # Check model files (diagnostic)
+    try:
+        check_model_files()
+    except Exception as e:
+        print(f"⚠️  Could not check model files: {e}")
     
     # Validate models first (catch accuracy issues early!)
     validation_results = validate_models()
