@@ -45,6 +45,7 @@ def evaluate_deepinspect(model_path, model_name, dataset, device='cuda'):
     """
     Evaluate model against DeepInspect defense
     DeepInspect uses neuron activation analysis to detect backdoors
+    Returns: number of detected classes and average anomaly index
     """
     print_separator(f"DeepInspect Evaluation: {model_name}")
     
@@ -64,28 +65,42 @@ def evaluate_deepinspect(model_path, model_name, dataset, device='cuda'):
         
         # Run detection
         print(f"\n📊 Running DeepInspect analysis...")
-        is_backdoored = defense.detect()
+        detection_results = defense.detect(return_detail=True)
+        
+        # Extract detailed metrics
+        num_detected = detection_results.get('num_detected_classes', 0)
+        anomaly_indices = detection_results.get('anomaly_indices', [])
+        avg_anomaly_index = sum(anomaly_indices) / len(anomaly_indices) if anomaly_indices else 0.0
+        per_class_indices = detection_results.get('per_class_indices', {})
         
         result = {
             'defense': 'DeepInspect',
             'model': model_name,
-            'detected': bool(is_backdoored),
+            'num_detected': int(num_detected),
+            'avg_anomaly_index': float(avg_anomaly_index),
+            'per_class_indices': per_class_indices,
+            'detection_threshold': 2.0,
             'detection_method': 'neuron_activation_analysis',
             'timestamp': datetime.now().isoformat()
         }
         
         print(f"\n✅ DeepInspect Result:")
-        print(f"   Backdoor Detected: {is_backdoored}")
+        print(f"   Classes Detected: {num_detected}/10")
+        print(f"   Avg Anomaly Index: {avg_anomaly_index:.2f}")
+        print(f"   Detection Threshold: 2.0")
         
         return result
         
     except Exception as e:
         print(f"❌ Error running DeepInspect: {e}")
+        import traceback
+        traceback.print_exc()
         return {
             'defense': 'DeepInspect',
             'model': model_name,
             'error': str(e),
-            'detected': None
+            'num_detected': None,
+            'avg_anomaly_index': None
         }
 
 
@@ -93,6 +108,7 @@ def evaluate_neural_cleanse(model_path, model_name, dataset, device='cuda'):
     """
     Evaluate model against Neural Cleanse defense
     Neural Cleanse reverse-engineers triggers and detects anomalies
+    Returns: number of detected classes and average anomaly index across all classes
     """
     print_separator(f"Neural Cleanse Evaluation: {model_name}")
     
@@ -116,39 +132,50 @@ def evaluate_neural_cleanse(model_path, model_name, dataset, device='cuda'):
         
         # Run detection
         print(f"\n📊 Running Neural Cleanse reverse engineering...")
-        is_backdoored, anomaly_index = defense.detect()
+        detection_results = defense.detect(return_detail=True)
+        
+        # Extract detailed metrics
+        num_detected = detection_results.get('num_detected_classes', 0)
+        anomaly_indices = detection_results.get('anomaly_indices', [])
+        avg_anomaly_index = sum(anomaly_indices) / len(anomaly_indices) if anomaly_indices else 0.0
+        per_class_indices = detection_results.get('per_class_indices', {})
         
         result = {
             'defense': 'Neural Cleanse',
             'model': model_name,
-            'detected': bool(is_backdoored),
-            'anomaly_index': float(anomaly_index) if anomaly_index is not None else None,
+            'num_detected': int(num_detected),
+            'avg_anomaly_index': float(avg_anomaly_index),
+            'per_class_indices': per_class_indices,
+            'detection_threshold': 2.0,
             'detection_method': 'trigger_reverse_engineering',
-            'threshold': 2.0,  # Standard Neural Cleanse threshold
             'timestamp': datetime.now().isoformat()
         }
         
         print(f"\n✅ Neural Cleanse Result:")
-        print(f"   Backdoor Detected: {is_backdoored}")
-        print(f"   Anomaly Index: {anomaly_index:.4f}" if anomaly_index is not None else "   Anomaly Index: N/A")
+        print(f"   Classes Detected: {num_detected}/10")
+        print(f"   Avg Anomaly Index: {avg_anomaly_index:.2f}")
         print(f"   Detection Threshold: 2.0")
         
         return result
         
     except Exception as e:
         print(f"❌ Error running Neural Cleanse: {e}")
+        import traceback
+        traceback.print_exc()
         return {
             'defense': 'Neural Cleanse',
             'model': model_name,
             'error': str(e),
-            'detected': None
+            'num_detected': None,
+            'avg_anomaly_index': None
         }
 
 
 def evaluate_clp(model_path, model_name, dataset, device='cuda'):
     """
     Evaluate model against CLP (Clean-Label Poisoning) defense
-    CLP detects backdoors by analyzing training data patterns
+    CLP detects backdoors and mitigates them, returning post-defense accuracy
+    Returns: detection status and accuracy before/after defense
     """
     print_separator(f"CLP Evaluation: {model_name}")
     
@@ -159,6 +186,21 @@ def evaluate_clp(model_path, model_name, dataset, device='cuda'):
         model = model.to(device)
         model.eval()
         
+        # Get baseline accuracy before defense
+        print(f"\n📊 Measuring baseline accuracy...")
+        test_loader = dataset.get_dataloader('test', batch_size=100)
+        correct = 0
+        total = 0
+        with torch.no_grad():
+            for inputs, targets in test_loader:
+                inputs, targets = inputs.to(device), targets.to(device)
+                outputs = model(inputs)
+                _, predicted = outputs.max(1)
+                total += targets.size(0)
+                correct += predicted.eq(targets).sum().item()
+        
+        baseline_accuracy = 100.0 * correct / total
+        
         # Create CLP defense
         defense = create_defense(
             defense_name='clp',
@@ -166,37 +208,60 @@ def evaluate_clp(model_path, model_name, dataset, device='cuda'):
             model=model
         )
         
-        # Run detection
-        print(f"\n📊 Running CLP analysis...")
-        is_backdoored = defense.detect()
+        # Run defense (this modifies the model)
+        print(f"\n📊 Running CLP defense...")
+        defense.detect()
+        
+        # Measure accuracy after defense
+        print(f"\n📊 Measuring post-defense accuracy...")
+        correct = 0
+        total = 0
+        with torch.no_grad():
+            for inputs, targets in test_loader:
+                inputs, targets = inputs.to(device), targets.to(device)
+                outputs = model(inputs)
+                _, predicted = outputs.max(1)
+                total += targets.size(0)
+                correct += predicted.eq(targets).sum().item()
+        
+        post_defense_accuracy = 100.0 * correct / total
+        accuracy_drop = baseline_accuracy - post_defense_accuracy
         
         result = {
             'defense': 'CLP',
             'model': model_name,
-            'detected': bool(is_backdoored),
+            'baseline_accuracy': float(baseline_accuracy),
+            'post_defense_accuracy': float(post_defense_accuracy),
+            'accuracy_drop': float(accuracy_drop),
             'detection_method': 'clean_label_poisoning_detection',
             'timestamp': datetime.now().isoformat()
         }
         
         print(f"\n✅ CLP Result:")
-        print(f"   Backdoor Detected: {is_backdoored}")
+        print(f"   Baseline Accuracy: {baseline_accuracy:.2f}%")
+        print(f"   Post-Defense Accuracy: {post_defense_accuracy:.2f}%")
+        print(f"   Accuracy Drop: {accuracy_drop:.2f}%")
         
         return result
         
     except Exception as e:
         print(f"❌ Error running CLP: {e}")
+        import traceback
+        traceback.print_exc()
         return {
             'defense': 'CLP',
             'model': model_name,
             'error': str(e),
-            'detected': None
+            'baseline_accuracy': None,
+            'post_defense_accuracy': None
         }
 
 
 def evaluate_moth(model_path, model_name, dataset, device='cuda'):
     """
     Evaluate model against MOTH defense
-    MOTH uses model orthogonalization to detect backdoor triggers
+    MOTH uses model orthogonalization to detect and mitigate backdoor triggers
+    Returns: detection status and accuracy before/after defense
     """
     print_separator(f"MOTH Evaluation: {model_name}")
     
@@ -207,6 +272,21 @@ def evaluate_moth(model_path, model_name, dataset, device='cuda'):
         model = model.to(device)
         model.eval()
         
+        # Get baseline accuracy before defense
+        print(f"\n📊 Measuring baseline accuracy...")
+        test_loader = dataset.get_dataloader('test', batch_size=100)
+        correct = 0
+        total = 0
+        with torch.no_grad():
+            for inputs, targets in test_loader:
+                inputs, targets = inputs.to(device), targets.to(device)
+                outputs = model(inputs)
+                _, predicted = outputs.max(1)
+                total += targets.size(0)
+                correct += predicted.eq(targets).sum().item()
+        
+        baseline_accuracy = 100.0 * correct / total
+        
         # Create MOTH defense
         defense = create_defense(
             defense_name='moth',
@@ -214,30 +294,52 @@ def evaluate_moth(model_path, model_name, dataset, device='cuda'):
             model=model
         )
         
-        # Run detection
-        print(f"\n📊 Running MOTH analysis...")
-        is_backdoored = defense.detect()
+        # Run defense (this modifies the model)
+        print(f"\n📊 Running MOTH defense...")
+        defense.detect()
+        
+        # Measure accuracy after defense
+        print(f"\n📊 Measuring post-defense accuracy...")
+        correct = 0
+        total = 0
+        with torch.no_grad():
+            for inputs, targets in test_loader:
+                inputs, targets = inputs.to(device), targets.to(device)
+                outputs = model(inputs)
+                _, predicted = outputs.max(1)
+                total += targets.size(0)
+                correct += predicted.eq(targets).sum().item()
+        
+        post_defense_accuracy = 100.0 * correct / total
+        accuracy_drop = baseline_accuracy - post_defense_accuracy
         
         result = {
             'defense': 'MOTH',
             'model': model_name,
-            'detected': bool(is_backdoored),
+            'baseline_accuracy': float(baseline_accuracy),
+            'post_defense_accuracy': float(post_defense_accuracy),
+            'accuracy_drop': float(accuracy_drop),
             'detection_method': 'model_orthogonalization',
             'timestamp': datetime.now().isoformat()
         }
         
         print(f"\n✅ MOTH Result:")
-        print(f"   Backdoor Detected: {is_backdoored}")
+        print(f"   Baseline Accuracy: {baseline_accuracy:.2f}%")
+        print(f"   Post-Defense Accuracy: {post_defense_accuracy:.2f}%")
+        print(f"   Accuracy Drop: {accuracy_drop:.2f}%")
         
         return result
         
     except Exception as e:
         print(f"❌ Error running MOTH: {e}")
+        import traceback
+        traceback.print_exc()
         return {
             'defense': 'MOTH',
             'model': model_name,
             'error': str(e),
-            'detected': None
+            'baseline_accuracy': None,
+            'post_defense_accuracy': None
         }
 
 
@@ -309,7 +411,7 @@ def evaluate_all_defenses(stateful_model_path, projan_model_path, device='cuda')
 
 
 def print_summary(results):
-    """Print a summary table of all defense evaluation results"""
+    """Print a summary table of all defense evaluation results with detailed metrics"""
     print_separator("DEFENSE EVALUATION SUMMARY", "=")
     
     # Organize results by defense and model
@@ -319,51 +421,110 @@ def print_summary(results):
     for eval_result in results['evaluations']:
         defense = eval_result.get('defense', 'Unknown')
         model = eval_result.get('model', 'Unknown')
-        detected = eval_result.get('detected')
         
         if model == 'Stateful Projan-2':
-            stateful_results[defense] = detected
+            stateful_results[defense] = eval_result
         elif model == 'Projan-2':
-            projan_results[defense] = detected
+            projan_results[defense] = eval_result
     
-    # Print table
+    # Print Neural Cleanse Table
+    print("\n" + "="*80)
+    print("NEURAL CLEANSE RESULTS")
+    print("="*80)
     print("\n┌─────────────────────┬──────────────────────┬──────────────────────┐")
-    print("│ Defense             │ Stateful Projan-2    │ Projan-2             │")
+    print("│ Model               │ # Detected (out of 10)│ Avg Anomaly Index    │")
     print("├─────────────────────┼──────────────────────┼──────────────────────┤")
     
-    defenses_order = ['DeepInspect', 'Neural Cleanse', 'CLP', 'MOTH']
-    
-    for defense in defenses_order:
-        stateful_status = stateful_results.get(defense)
-        projan_status = projan_results.get(defense)
+    for model_name, results_dict in [('Stateful Projan-2', stateful_results), ('Projan-2', projan_results)]:
+        nc_result = results_dict.get('Neural Cleanse', {})
+        num_det = nc_result.get('num_detected', 'N/A')
+        avg_idx = nc_result.get('avg_anomaly_index', None)
+        avg_idx_str = f"{avg_idx:.2f}" if avg_idx is not None else "N/A"
         
-        def format_status(status):
-            if status is None:
-                return "❓ ERROR         "
-            elif status:
-                return "🚨 DETECTED      "
-            else:
-                return "✅ EVADED        "
-        
-        print(f"│ {defense:19} │ {format_status(stateful_status)} │ {format_status(projan_status)} │")
+        print(f"│ {model_name:19} │ {str(num_det):20} │ {avg_idx_str:20} │")
     
     print("└─────────────────────┴──────────────────────┴──────────────────────┘")
+    print("\nNote: Anomaly Index > 2.0 indicates detection. Lower is better for evasion.")
     
-    # Calculate evasion rates
-    stateful_evaded = sum(1 for v in stateful_results.values() if v is False)
-    projan_evaded = sum(1 for v in projan_results.values() if v is False)
-    total_defenses = len(defenses_order)
+    # Print DeepInspect Table
+    print("\n" + "="*80)
+    print("DEEPINSPECT RESULTS")
+    print("="*80)
+    print("\n┌─────────────────────┬──────────────────────┬──────────────────────┐")
+    print("│ Model               │ # Detected (out of 10)│ Avg Anomaly Index    │")
+    print("├─────────────────────┼──────────────────────┼──────────────────────┤")
     
-    print(f"\n📊 Evasion Summary:")
-    print(f"   Stateful Projan-2: {stateful_evaded}/{total_defenses} defenses evaded ({stateful_evaded/total_defenses*100:.1f}%)")
-    print(f"   Projan-2:          {projan_evaded}/{total_defenses} defenses evaded ({projan_evaded/total_defenses*100:.1f}%)")
+    for model_name, results_dict in [('Stateful Projan-2', stateful_results), ('Projan-2', projan_results)]:
+        di_result = results_dict.get('DeepInspect', {})
+        num_det = di_result.get('num_detected', 'N/A')
+        avg_idx = di_result.get('avg_anomaly_index', None)
+        avg_idx_str = f"{avg_idx:.2f}" if avg_idx is not None else "N/A"
+        
+        print(f"│ {model_name:19} │ {str(num_det):20} │ {avg_idx_str:20} │")
     
-    if stateful_evaded > projan_evaded:
-        print(f"\n✅ Stateful Projan-2 evades {stateful_evaded - projan_evaded} more defense(s) than Projan-2")
-    elif projan_evaded > stateful_evaded:
-        print(f"\n⚠️  Projan-2 evades {projan_evaded - stateful_evaded} more defense(s) than Stateful Projan-2")
-    else:
-        print(f"\n⚠️  Both models evade the same number of defenses")
+    print("└─────────────────────┴──────────────────────┴──────────────────────┘")
+    print("\nNote: Anomaly Index > 2.0 indicates detection. Lower is better for evasion.")
+    
+    # Print CLP Table
+    print("\n" + "="*80)
+    print("CLP (Clean-Label Poisoning) RESULTS")
+    print("="*80)
+    print("\n┌─────────────────────┬──────────────────────┬──────────────────────┬──────────────────────┐")
+    print("│ Model               │ Before Defense (%)   │ After Defense (%)    │ Accuracy Drop (%)    │")
+    print("├─────────────────────┼──────────────────────┼──────────────────────┼──────────────────────┤")
+    
+    for model_name, results_dict in [('Stateful Projan-2', stateful_results), ('Projan-2', projan_results)]:
+        clp_result = results_dict.get('CLP', {})
+        before = clp_result.get('baseline_accuracy', None)
+        after = clp_result.get('post_defense_accuracy', None)
+        drop = clp_result.get('accuracy_drop', None)
+        
+        before_str = f"{before:.2f}" if before is not None else "N/A"
+        after_str = f"{after:.2f}" if after is not None else "N/A"
+        drop_str = f"{drop:.2f}" if drop is not None else "N/A"
+        
+        print(f"│ {model_name:19} │ {before_str:20} │ {after_str:20} │ {drop_str:20} │")
+    
+    print("└─────────────────────┴──────────────────────┴──────────────────────┴──────────────────────┘")
+    print("\nNote: Higher post-defense accuracy indicates better resilience.")
+    
+    # Print MOTH Table
+    print("\n" + "="*80)
+    print("MOTH (Model Orthogonalization) RESULTS")
+    print("="*80)
+    print("\n┌─────────────────────┬──────────────────────┬──────────────────────┬──────────────────────┐")
+    print("│ Model               │ Before Defense (%)   │ After Defense (%)    │ Accuracy Drop (%)    │")
+    print("├─────────────────────┼──────────────────────┼──────────────────────┼──────────────────────┤")
+    
+    for model_name, results_dict in [('Stateful Projan-2', stateful_results), ('Projan-2', projan_results)]:
+        moth_result = results_dict.get('MOTH', {})
+        before = moth_result.get('baseline_accuracy', None)
+        after = moth_result.get('post_defense_accuracy', None)
+        drop = moth_result.get('accuracy_drop', None)
+        
+        before_str = f"{before:.2f}" if before is not None else "N/A"
+        after_str = f"{after:.2f}" if after is not None else "N/A"
+        drop_str = f"{drop:.2f}" if drop is not None else "N/A"
+        
+        print(f"│ {model_name:19} │ {before_str:20} │ {after_str:20} │ {drop_str:20} │")
+    
+    print("└─────────────────────┴──────────────────────┴──────────────────────┴──────────────────────┘")
+    print("\nNote: Higher post-defense accuracy indicates better resilience.")
+    
+    # Overall Summary
+    print("\n" + "="*80)
+    print("OVERALL SUMMARY")
+    print("="*80)
+    
+    print("\n📊 Key Metrics:")
+    print("\n  Detection-based Defenses (Neural Cleanse, DeepInspect):")
+    print("    - Lower # detected classes = better evasion")
+    print("    - Lower anomaly index = better evasion")
+    print("    - Threshold: Anomaly Index > 2.0 indicates backdoor")
+    
+    print("\n  Mitigation-based Defenses (CLP, MOTH):")
+    print("    - Higher post-defense accuracy = better resilience")
+    print("    - Lower accuracy drop = backdoor better preserved after mitigation")
 
 
 def main():
