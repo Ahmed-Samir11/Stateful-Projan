@@ -112,11 +112,19 @@ def parse_defense_output(output, defense_name):
         # Extract norms (these are the anomaly indices per class)
         norms = []
         
-        # Pattern for tensor format: "mask norms: tensor([1.2345, 2.3456, ...])"
-        tensor_match = re.search(r'(?:mask|mark)\s+norms:\s*tensor\(\[([\d.,\s]+)\]', output, re.IGNORECASE)
-        if tensor_match:
-            norms_str = tensor_match.group(1)
+        # Try to get MAD-normalized values first (these match the paper's metrics)
+        mad_match = re.search(r'(?:mask|mark)\s+MAD:\s*tensor\(\[([\d.,\s]+)\]', output, re.IGNORECASE)
+        if mad_match:
+            norms_str = mad_match.group(1)
             norms = [float(x.strip()) for x in norms_str.split(',') if x.strip()]
+        
+        # Fallback to raw norms if MAD not found
+        if not norms:
+            # Pattern for tensor format: "mask norms: tensor([1.2345, 2.3456, ...])"
+            tensor_match = re.search(r'(?:mask|mark)\s+norms:\s*tensor\(\[([\d.,\s]+)\]', output, re.IGNORECASE)
+            if tensor_match:
+                norms_str = tensor_match.group(1)
+                norms = [float(x.strip()) for x in norms_str.split(',') if x.strip()]
         
         # Pattern for list format: "mark norms: [1.2345, 2.3456, ...]"
         if not norms:
@@ -206,6 +214,7 @@ def evaluate_defense_direct(defense_name, model_path, model_name, attack_name):
         from io import StringIO
         import contextlib
         import sys
+        import re
         
         print(f"   🔍 Debug: Starting evaluation for {model_name} with attack={attack_name}")
         print(f"   🔍 Debug: Model path={model_path}")
@@ -279,6 +288,15 @@ def evaluate_defense_direct(defense_name, model_path, model_name, attack_name):
         output = captured_output.getvalue()
         print(f"   🔍 Debug: Defense completed. Output length: {len(output)} chars")
         print(f"   🔍 Debug: First 500 chars of output: {output[:500]}")
+        
+        # For Neural Cleanse, show both raw norms and MAD values
+        if defense_name == 'neural_cleanse':
+            raw_norms_match = re.search(r'mask\s+norms:\s*tensor\(\[([\d.,\s]+)\]', output, re.IGNORECASE)
+            mad_match = re.search(r'mask\s+MAD:\s*tensor\(\[([\d.,\s]+)\]', output, re.IGNORECASE)
+            if raw_norms_match:
+                print(f"   🔍 Debug: Raw norms found: {raw_norms_match.group(1)[:100]}...")
+            if mad_match:
+                print(f"   🔍 Debug: MAD normalized found: {mad_match.group(1)[:100]}...")
         
         # Parse metrics from captured output
         metrics = parse_defense_output(output, defense_name)
