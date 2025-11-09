@@ -201,54 +201,71 @@ def evaluate_defense_direct(defense_name, model_path, model_name, attack_name):
         import trojanvision
         from io import StringIO
         import contextlib
+        import sys
         
-        # Capture stdout
+        print(f"   🔍 Debug: Starting evaluation for {model_name} with attack={attack_name}")
+        print(f"   🔍 Debug: Model path={model_path}")
+        print(f"   🔍 Debug: Defense={defense_name}")
+        
+        # Capture both stdout and stderr
         captured_output = StringIO()
+        captured_error = StringIO()
         
+        # Don't redirect stdout - let it print normally so we can see what's happening
+        print(f"   🔍 Debug: Creating dataset...")
+        dataset = trojanvision.datasets.create(
+            dataset_name='mnist',
+            data_dir='./data'
+        )
+        print(f"   🔍 Debug: Dataset created: {dataset}")
+        
+        print(f"   🔍 Debug: Creating model...")
+        model = trojanvision.models.create(
+            model_name='net',
+            dataset=dataset,
+            pretrained=True,
+            model_path=model_path
+        )
+        print(f"   🔍 Debug: Model created: {model}")
+        
+        print(f"   🔍 Debug: Creating mark...")
+        mark = trojanvision.marks.create(
+            dataset=dataset,
+            mark_random_init=False
+        )
+        print(f"   🔍 Debug: Mark created: {mark}")
+        
+        print(f"   🔍 Debug: Creating attack with name={attack_name}...")
+        attack = trojanvision.attacks.create(
+            attack_name=attack_name,
+            dataset=dataset,
+            model=model,
+            mark=mark
+        )
+        print(f"   🔍 Debug: Attack created: {attack}")
+        
+        print(f"   🔍 Debug: Creating defense...")
+        defense = trojanvision.defenses.create(
+            defense_name=defense_name,
+            dataset=dataset,
+            model=model,
+            attack=attack
+        )
+        print(f"   🔍 Debug: Defense created: {defense}")
+        
+        print(f"   🔍 Debug: Running defense.detect()...")
+        
+        # Capture stdout during detect() call
         with contextlib.redirect_stdout(captured_output):
-            # Create dataset
-            dataset = trojanvision.datasets.create(
-                dataset_name='mnist',
-                data_dir='./data'
-            )
-            
-            # Create model
-            model = trojanvision.models.create(
-                model_name='net',
-                dataset=dataset,
-                pretrained=True,
-                model_path=model_path
-            )
-            
-            # Create mark (required for attack)
-            mark = trojanvision.marks.create(
-                dataset=dataset,
-                mark_random_init=False
-            )
-            
-            # Create attack (required for defense)
-            attack = trojanvision.attacks.create(
-                attack_name=attack_name,
-                dataset=dataset,
-                model=model,
-                mark=mark
-            )
-            
-            # Create defense
-            defense = trojanvision.defenses.create(
-                defense_name=defense_name,
-                dataset=dataset,
-                model=model,
-                attack=attack
-            )
-            
-            # Run detection
             defense.detect()
         
         output = captured_output.getvalue()
+        print(f"   🔍 Debug: Defense completed. Output length: {len(output)} chars")
+        print(f"   🔍 Debug: First 500 chars of output: {output[:500]}")
         
         # Parse metrics from captured output
         metrics = parse_defense_output(output, defense_name)
+        print(f"   🔍 Debug: Parsed metrics: {metrics}")
         
         return {
             'output': output,
