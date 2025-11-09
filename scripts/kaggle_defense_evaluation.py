@@ -246,12 +246,13 @@ def evaluate_defense_direct(defense_name, model_path, model_name, attack_name):
         print(f"   🔍 Debug: Mark created: {mark}")
         
         print(f"   🔍 Debug: Creating attack with name={attack_name}...")
+        # Prob and StatefulProb require 'marks' (plural) parameter, not 'mark'
+        # They internally extract marks[0] to pass to BadNet
         attack = trojanvision.attacks.create(
             attack_name=attack_name,
             dataset=dataset,
             model=model,
-            mark=mark,
-            marks=[mark]  # Some attacks (like Prob) require 'marks' (plural) parameter
+            marks=[mark]  # Only pass marks, not mark (avoids duplicate argument error)
         )
         print(f"   🔍 Debug: Attack created: {attack}")
         
