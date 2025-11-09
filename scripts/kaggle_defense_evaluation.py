@@ -13,6 +13,10 @@ from datetime import datetime
 import subprocess
 import matplotlib.pyplot as plt
 import numpy as np
+import torch
+
+# Add trojanvision to path
+sys.path.insert(0, '/kaggle/working/Stateful-Projan')
 
 # Configuration
 WORKING_DIR = "/kaggle/working"
@@ -188,8 +192,155 @@ def parse_defense_output(output, defense_name):
     
     return metrics
 
+def evaluate_defense_direct(defense_name, model_path, model_name, attack_name):
+    """
+    Evaluate model against defense using direct Python API
+    This avoids subprocess issues and gives us direct access to outputs
+    """
+    try:
+        import trojanvision
+        from io import StringIO
+        import contextlib
+        
+        # Capture stdout
+        captured_output = StringIO()
+        
+        with contextlib.redirect_stdout(captured_output):
+            # Create dataset
+            dataset = trojanvision.datasets.create(
+                dataset_name='mnist',
+                data_dir='./data'
+            )
+            
+            # Create model
+            model = trojanvision.models.create(
+                model_name='net',
+                dataset=dataset,
+                pretrained=True,
+                model_path=model_path
+            )
+            
+            # Create mark (required for attack)
+            mark = trojanvision.marks.create(
+                dataset=dataset,
+                mark_random_init=False
+            )
+            
+            # Create attack (required for defense)
+            attack = trojanvision.attacks.create(
+                attack_name=attack_name,
+                dataset=dataset,
+                model=model,
+                mark=mark
+            )
+            
+            # Create defense
+            defense = trojanvision.defenses.create(
+                defense_name=defense_name,
+                dataset=dataset,
+                model=model,
+                attack=attack
+            )
+            
+            # Run detection
+            defense.detect()
+        
+        output = captured_output.getvalue()
+        
+        # Parse metrics from captured output
+        metrics = parse_defense_output(output, defense_name)
+        
+        return {
+            'output': output,
+            'model': model_name,
+            'defense': defense_name,
+            **metrics
+        }
+        
+    except Exception as e:
+        print(f"Error in direct evaluation: {e}")
+        import traceback
+        traceback.print_exc()
+        return {
+            'error': str(e),
+            'model': model_name,
+            'defense': defense_name
+        }
+
 def evaluate_defense(defense_name, stateful_model, projan_model):
     """Evaluate both models against a specific defense with detailed metrics"""
+    print_separator(f"EVALUATING: {defense_name.upper()}", "=")
+    
+    results = {
+        'defense': defense_name,
+        'timestamp': datetime.now().isoformat(),
+        'stateful_projan': {},
+        'projan': {}
+    }
+    
+    # Map defense names to attack names
+    attack_mapping = {
+        'stateful': 'state_prob',  # Stateful Projan-2 attack
+        'projan': 'prob'  # Original Projan attack (might be 'prob' or 'org_prob')
+    }
+    
+    # Try direct Python API first
+    print(f"\n📊 Testing Stateful Projan-2 against {defense_name} (Direct API)...")
+    try:
+        stateful_result = evaluate_defense_direct(
+            defense_name, 
+            stateful_model, 
+            'Stateful Projan-2',
+            attack_mapping['stateful']
+        )
+        results['stateful_projan'].update(stateful_result)
+        
+        # Print result
+        if defense_name in ['deep_inspect', 'neural_cleanse']:
+            num_det = stateful_result.get('num_detected', 0)
+            avg_idx = stateful_result.get('avg_anomaly_index', 0)
+            detected = num_det > 0
+            results['stateful_projan']['detected'] = detected
+            print(f"   Stateful Projan-2: {'🚨 DETECTED' if detected else '✅ EVADED'} "
+                  f"({num_det}/10 classes, Avg Anomaly: {avg_idx:.2f})")
+        else:
+            before = stateful_result.get('baseline_accuracy', 0)
+            after = stateful_result.get('post_defense_accuracy', 0)
+            print(f"   Stateful Projan-2: Before={before:.2f}%, After={after:.2f}%")
+    except Exception as e:
+        print(f"   ❌ Error: {e}")
+        results['stateful_projan']['error'] = str(e)
+    
+    print(f"\n📊 Testing Projan-2 against {defense_name} (Direct API)...")
+    try:
+        projan_result = evaluate_defense_direct(
+            defense_name,
+            projan_model,
+            'Projan-2',
+            attack_mapping['projan']
+        )
+        results['projan'].update(projan_result)
+        
+        # Print result
+        if defense_name in ['deep_inspect', 'neural_cleanse']:
+            num_det = projan_result.get('num_detected', 0)
+            avg_idx = projan_result.get('avg_anomaly_index', 0)
+            detected = num_det > 0
+            results['projan']['detected'] = detected
+            print(f"   Projan-2: {'🚨 DETECTED' if detected else '✅ EVADED'} "
+                  f"({num_det}/10 classes, Avg Anomaly: {avg_idx:.2f})")
+        else:
+            before = projan_result.get('baseline_accuracy', 0)
+            after = projan_result.get('post_defense_accuracy', 0)
+            print(f"   Projan-2: Before={before:.2f}%, After={after:.2f}%")
+    except Exception as e:
+        print(f"   ❌ Error: {e}")
+        results['projan']['error'] = str(e)
+    
+    return results
+
+def evaluate_defense_subprocess(defense_name, stateful_model, projan_model):
+    """OLD IMPLEMENTATION - Evaluate using subprocess (backup method)"""
     print_separator(f"EVALUATING: {defense_name.upper()}", "=")
     
     results = {
