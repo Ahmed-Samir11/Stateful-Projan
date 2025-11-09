@@ -93,99 +93,94 @@ def setup_environment():
     print("\n✅ Environment setup complete!")
 
 def parse_defense_output(output, defense_name):
-    """Parse defense output to extract detailed metrics"""
+    """Parse defense output to extract detailed metrics from actual trojanvision output"""
     import re
     
     metrics = {}
     
     if defense_name in ['deep_inspect', 'neural_cleanse']:
-        # Detection-based defenses: extract # detected and anomaly indices
+        # Detection-based defenses output format:
+        # Neural Cleanse: "mask norms: tensor([...])" 
+        # DeepInspect: "mark norms: [...]"
+        # Both: "outlier classes (soft median): [X, Y, Z]"
+        # Both: "outlier classes (hard median): [X, Y, Z]"
         
-        # Try multiple patterns for detection count
-        detected_match = re.search(r'(?:Detected|Found)\s+(\d+)\s+(?:backdoored|poisoned|suspicious)\s+class(?:es)?', output, re.IGNORECASE)
-        if not detected_match:
-            detected_match = re.search(r'(\d+)\s+class(?:es)?\s+(?:detected|flagged|identified)', output, re.IGNORECASE)
-        if not detected_match:
-            detected_match = re.search(r'Detection\s+Result:\s*(\d+)/\d+', output, re.IGNORECASE)
+        # Extract norms (these are the anomaly indices per class)
+        norms = []
         
-        # Look for anomaly indices with multiple patterns
-        anomaly_indices = []
-        per_class_dict = {}
+        # Pattern for tensor format: "mask norms: tensor([1.2345, 2.3456, ...])"
+        tensor_match = re.search(r'(?:mask|mark)\s+norms:\s*tensor\(\[([\d.,\s]+)\]', output, re.IGNORECASE)
+        if tensor_match:
+            norms_str = tensor_match.group(1)
+            norms = [float(x.strip()) for x in norms_str.split(',') if x.strip()]
         
-        # Pattern 1: "Class X: Anomaly Index = Y.YY"
-        for match in re.finditer(r'Class\s+(\d+)[:\s]+(?:Anomaly\s+)?(?:Index|Score|Value)[:\s=]+([\d.]+)', output, re.IGNORECASE):
-            class_idx = int(match.group(1))
-            anomaly_idx = float(match.group(2))
-            anomaly_indices.append(anomaly_idx)
-            per_class_dict[class_idx] = anomaly_idx
+        # Pattern for list format: "mark norms: [1.2345, 2.3456, ...]"
+        if not norms:
+            list_match = re.search(r'(?:mask|mark)\s+norms:\s*\[([\d.,\s]+)\]', output, re.IGNORECASE)
+            if list_match:
+                norms_str = list_match.group(1)
+                norms = [float(x.strip()) for x in norms_str.split(',') if x.strip()]
         
-        # Pattern 2: "Target X: Y.YY" or "Label X: Y.YY"
-        if not anomaly_indices:
-            for match in re.finditer(r'(?:Target|Label)\s+(\d+)[:\s]+([\d.]+)', output, re.IGNORECASE):
-                class_idx = int(match.group(1))
-                anomaly_idx = float(match.group(2))
-                anomaly_indices.append(anomaly_idx)
-                per_class_dict[class_idx] = anomaly_idx
-        
-        # Pattern 3: "Anomaly scores: [x.xx, y.yy, ...]"
-        if not anomaly_indices:
-            scores_match = re.search(r'(?:Anomaly|Detection)\s+(?:scores|indices)[:\s]*\[([\d.,\s]+)\]', output, re.IGNORECASE)
-            if scores_match:
-                scores_str = scores_match.group(1)
-                anomaly_indices = [float(x.strip()) for x in scores_str.split(',') if x.strip()]
-        
-        # Count detected classes (anomaly index > 2.0)
-        if detected_match:
-            metrics['num_detected'] = int(detected_match.group(1))
-        else:
-            # Count based on threshold
-            metrics['num_detected'] = sum(1 for idx in anomaly_indices if idx > 2.0)
-        
-        if anomaly_indices:
-            metrics['avg_anomaly_index'] = sum(anomaly_indices) / len(anomaly_indices)
-            metrics['per_class_indices'] = anomaly_indices
-        else:
-            # Try to extract from summary lines
-            summary_match = re.search(r'Average\s+(?:Anomaly\s+)?(?:Index|Score)[:\s]+([\d.]+)', output, re.IGNORECASE)
-            if summary_match:
-                metrics['avg_anomaly_index'] = float(summary_match.group(1))
+        # Extract outlier classes (soft median) - these are the detected classes
+        outlier_match = re.search(r'outlier\s+classes\s+\(soft\s+median\):\s*\[([^\]]*)\]', output, re.IGNORECASE)
+        if outlier_match:
+            outliers_str = outlier_match.group(1).strip()
+            if outliers_str:
+                detected_classes = [int(x.strip()) for x in outliers_str.split(',') if x.strip()]
+                metrics['num_detected'] = len(detected_classes)
+                metrics['detected_classes'] = detected_classes
             else:
-                metrics['avg_anomaly_index'] = 0.0
+                metrics['num_detected'] = 0
+                metrics['detected_classes'] = []
+        else:
+            # Fallback: count norms > 2.0
+            metrics['num_detected'] = sum(1 for n in norms if n > 2.0)
+            metrics['detected_classes'] = [i for i, n in enumerate(norms) if n > 2.0]
+        
+        # Calculate average anomaly index
+        if norms:
+            metrics['avg_anomaly_index'] = sum(norms) / len(norms)
+            metrics['per_class_indices'] = norms
+        else:
+            metrics['avg_anomaly_index'] = 0.0
             metrics['per_class_indices'] = []
     
     elif defense_name in ['clp', 'moth']:
-        # Mitigation-based defenses: extract accuracy before/after
+        # Mitigation-based defenses
+        # Look for validation accuracy outputs
         
-        # Try multiple patterns for baseline accuracy
-        baseline_patterns = [
-            r'Baseline\s+(?:Test\s+)?Accuracy[:\s]+([\d.]+)%?',
-            r'Before\s+Defense[:\s]+([\d.]+)%?',
-            r'Clean\s+(?:Test\s+)?Accuracy[:\s]+([\d.]+)%?',
-            r'Initial\s+Accuracy[:\s]+([\d.]+)%?',
-            r'Original\s+Model[:\s]+([\d.]+)%?',
-            r'Test\s+Acc[:\s]+([\d.]+)%'
-        ]
+        # Try to find accuracy in format: "Acc: XX.XX% (XXXX/XXXXX)"
+        acc_matches = list(re.finditer(r'Acc:\s*([\d.]+)%', output, re.IGNORECASE))
         
-        for pattern in baseline_patterns:
-            baseline_match = re.search(pattern, output, re.IGNORECASE)
-            if baseline_match:
-                metrics['baseline_accuracy'] = float(baseline_match.group(1))
-                break
+        if len(acc_matches) >= 2:
+            # First accuracy is typically baseline, last is post-defense
+            metrics['baseline_accuracy'] = float(acc_matches[0].group(1))
+            metrics['post_defense_accuracy'] = float(acc_matches[-1].group(1))
+        elif len(acc_matches) == 1:
+            # Only one accuracy found
+            metrics['post_defense_accuracy'] = float(acc_matches[0].group(1))
         
-        # Try multiple patterns for post-defense accuracy
-        post_patterns = [
-            r'Post[-\s]Defense\s+Accuracy[:\s]+([\d.]+)%?',
-            r'After\s+Defense[:\s]+([\d.]+)%?',
-            r'Final\s+(?:Test\s+)?Accuracy[:\s]+([\d.]+)%?',
-            r'Defended\s+Model[:\s]+([\d.]+)%?',
-            r'Cleaned\s+Accuracy[:\s]+([\d.]+)%?'
-        ]
+        # Alternative patterns
+        if 'baseline_accuracy' not in metrics:
+            baseline_patterns = [
+                r'(?:Baseline|Before|Clean)\s+(?:Test\s+)?Acc(?:uracy)?[:\s]+([\d.]+)%?',
+                r'Test\s+Acc:\s*([\d.]+)%',
+            ]
+            for pattern in baseline_patterns:
+                match = re.search(pattern, output, re.IGNORECASE)
+                if match:
+                    metrics['baseline_accuracy'] = float(match.group(1))
+                    break
         
-        for pattern in post_patterns:
-            post_match = re.search(pattern, output, re.IGNORECASE)
-            if post_match:
-                metrics['post_defense_accuracy'] = float(post_match.group(1))
-                break
+        if 'post_defense_accuracy' not in metrics:
+            post_patterns = [
+                r'(?:Post|After|Final)\s+(?:Test\s+)?Acc(?:uracy)?[:\s]+([\d.]+)%?',
+            ]
+            for pattern in post_patterns:
+                match = re.search(pattern, output, re.IGNORECASE)
+                if match:
+                    metrics['post_defense_accuracy'] = float(match.group(1))
+                    break
         
         # Calculate accuracy drop
         if 'baseline_accuracy' in metrics and 'post_defense_accuracy' in metrics:
@@ -207,16 +202,16 @@ def evaluate_defense(defense_name, stateful_model, projan_model):
     # Defense-specific configurations
     defense_configs = {
         'deep_inspect': {
-            'args': ['--return_detail']
+            'args': []
         },
         'neural_cleanse': {
-            'args': ['--cost_multiplier', '0.001', '--patience', '5', '--return_detail']
+            'args': ['--cost_multiplier', '0.001', '--patience', '5']
         },
         'clp': {
-            'args': ['--measure_accuracy']
+            'args': []
         },
         'moth': {
-            'args': ['--measure_accuracy']
+            'args': []
         }
     }
     
