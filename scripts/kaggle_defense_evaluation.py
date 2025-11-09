@@ -260,9 +260,21 @@ def evaluate_defense_direct(defense_name, model_path, model_name, attack_name):
     except Exception as e:
         print(f"Error in direct evaluation: {e}")
         import traceback
-        traceback.print_exc()
+        error_trace = traceback.format_exc()
+        print(error_trace)
+        
+        # Save error to file for debugging
+        error_file = f"{OUTPUT_DIR}/{defense_name}_{model_name.replace(' ', '_')}_error.txt"
+        try:
+            with open(error_file, 'w') as f:
+                f.write(f"Error: {e}\n\n")
+                f.write(error_trace)
+        except:
+            pass
+        
         return {
             'error': str(e),
+            'error_trace': error_trace,
             'model': model_name,
             'defense': defense_name
         }
@@ -295,6 +307,12 @@ def evaluate_defense(defense_name, stateful_model, projan_model):
         )
         results['stateful_projan'].update(stateful_result)
         
+        # Check if error occurred
+        if 'error' in stateful_result:
+            print(f"   ❌ Error during evaluation: {stateful_result['error']}")
+            if 'output' in stateful_result:
+                print(f"   📝 Captured output: {stateful_result['output'][:500]}")
+        
         # Print result
         if defense_name in ['deep_inspect', 'neural_cleanse']:
             num_det = stateful_result.get('num_detected', 0)
@@ -308,7 +326,9 @@ def evaluate_defense(defense_name, stateful_model, projan_model):
             after = stateful_result.get('post_defense_accuracy', 0)
             print(f"   Stateful Projan-2: Before={before:.2f}%, After={after:.2f}%")
     except Exception as e:
-        print(f"   ❌ Error: {e}")
+        print(f"   ❌ Outer Error: {e}")
+        import traceback
+        traceback.print_exc()
         results['stateful_projan']['error'] = str(e)
     
     print(f"\n📊 Testing Projan-2 against {defense_name} (Direct API)...")
@@ -320,6 +340,12 @@ def evaluate_defense(defense_name, stateful_model, projan_model):
             attack_mapping['projan']
         )
         results['projan'].update(projan_result)
+        
+        # Check if error occurred
+        if 'error' in projan_result:
+            print(f"   ❌ Error during evaluation: {projan_result['error']}")
+            if 'output' in projan_result:
+                print(f"   📝 Captured output: {projan_result['output'][:500]}")
         
         # Print result
         if defense_name in ['deep_inspect', 'neural_cleanse']:
@@ -334,7 +360,9 @@ def evaluate_defense(defense_name, stateful_model, projan_model):
             after = projan_result.get('post_defense_accuracy', 0)
             print(f"   Projan-2: Before={before:.2f}%, After={after:.2f}%")
     except Exception as e:
-        print(f"   ❌ Error: {e}")
+        print(f"   ❌ Outer Error: {e}")
+        import traceback
+        traceback.print_exc()
         results['projan']['error'] = str(e)
     
     return results
