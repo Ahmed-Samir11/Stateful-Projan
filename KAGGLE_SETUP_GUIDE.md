@@ -4,6 +4,22 @@ This guide provides the exact cells to run in your Kaggle notebook.
 
 ---
 
+## ⚡ Quick Update (If Repository Already Exists)
+
+If you've already cloned the repo and just need the latest fixes:
+
+```python
+# Pull latest changes and reinstall
+!cd /kaggle/working/Stateful-Projan && git pull origin main
+!pip install -q -e /kaggle/working/Stateful-Projan
+print("✅ Updated to latest version")
+!cd /kaggle/working/Stateful-Projan && git log -1 --oneline
+```
+
+Expected output: Should show commit `3322e8c` or later with message about fixing duplicate 'mark' parameter.
+
+---
+
 ## 📋 Cell 1: Initial Setup (fixes directory issues)
 
 ```python
@@ -30,17 +46,21 @@ print("✅ Directory setup complete")
 
 ---
 
-## 📋 Cell 2: Clone Repository
+## 📋 Cell 2: Clone/Update Repository
 
 ```python
-# Clone the repository
-!cd /kaggle/working && git clone https://github.com/Ahmed-Samir11/Stateful-Projan
-
-# Verify
+# Clone or update the repository
 if os.path.exists('/kaggle/working/Stateful-Projan'):
-    print("✅ Repository cloned successfully")
+    print("📥 Repository exists, pulling latest changes...")
+    !cd /kaggle/working/Stateful-Projan && git pull origin main
+    print("✅ Repository updated to latest version")
 else:
-    print("❌ Clone failed")
+    print("📥 Cloning repository...")
+    !cd /kaggle/working && git clone https://github.com/Ahmed-Samir11/Stateful-Projan
+    print("✅ Repository cloned successfully")
+
+# Show current commit
+!cd /kaggle/working/Stateful-Projan && git log -1 --oneline
 ```
 
 ---
