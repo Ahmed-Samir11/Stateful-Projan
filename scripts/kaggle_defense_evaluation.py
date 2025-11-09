@@ -223,6 +223,10 @@ def evaluate_defense_direct(defense_name, model_path, model_name, attack_name):
             dataset_name='mnist',
             data_dir='./data'
         )
+        # Initialize dataset to download MNIST data if needed
+        if hasattr(dataset, 'initialize'):
+            print(f"   🔍 Debug: Initializing dataset (downloading if needed)...")
+            dataset.initialize()
         print(f"   🔍 Debug: Dataset created: {dataset}")
         
         print(f"   🔍 Debug: Creating model...")
