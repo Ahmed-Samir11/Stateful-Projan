@@ -31,14 +31,12 @@ WORKING_DIR = "/kaggle/working"
 OUTPUT_DIR = os.path.join(WORKING_DIR, "experiment_results")
 os.makedirs(OUTPUT_DIR, exist_ok=True)
 
+# Pre-trained model paths (UPDATE THESE TO YOUR KAGGLE DATASET PATHS)
+STATEFUL_PROJAN_MODEL = "/kaggle/input/stateful-projan2/ProjanFixed/data/attack/image/mnist/net/state_prob/net/state_prob/model.pth"
+PROJAN_MODEL = "/kaggle/input/projan2/ProjanFixed/data/attack/image/mnist/net/org_prob/square_white_tar0_alpha0.00_mark(3,3).pth"
+
 # Dataset to use
 DATASET = "mnist"  # Change to "cifar10" if needed
-
-# Training configuration
-EPOCHS = 50
-PRETRAIN_EPOCHS = 50
-BATCH_SIZE = 100 if DATASET == "mnist" else 128
-LR = 0.001 if DATASET == "mnist" else 0.01
 MODEL = "net" if DATASET == "mnist" else "resnet18_comp"
 
 # Trigger configuration (2 triggers)
@@ -124,98 +122,39 @@ def setup_environment():
     return True
 
 # ============================================================================
-# Stage 2: Train Models
+# Stage 2: Verify Pre-trained Models
 # ============================================================================
 
-def train_stateful_projan_2():
-    """Train Stateful Projan with 2 triggers"""
+def verify_models():
+    """Verify that pre-trained models exist"""
     log("=" * 80)
-    log("STAGE 2A: Train Stateful Projan-2")
-    log("=" * 80)
-    
-    cmd = f"""python ./examples/backdoor_attack.py \\
-        --attack stateful_prob \\
-        --dataset {DATASET} \\
-        --model {MODEL} \\
-        --epoch {EPOCHS} \\
-        --pretrain_epoch {PRETRAIN_EPOCHS} \\
-        --losses loss1 loss2_11 loss3_11 \\
-        --init_loss_weights 1.0 1.75 0.25 \\
-        --probs {TRIGGER_PROBS} \\
-        --poison_percent 0.1 \\
-        --batch_size {BATCH_SIZE} \\
-        --lr {LR} \\
-        --mark_path {TRIGGER_1['mark_path']} \\
-        --mark_height {TRIGGER_1['mark_height']} \\
-        --mark_width {TRIGGER_1['mark_width']} \\
-        --height_offset {TRIGGER_1['height_offset']} \\
-        --width_offset {TRIGGER_1['width_offset']} \\
-        --mark_alpha 0.0 \\
-        --extra_mark "mark_path={TRIGGER_2['mark_path']} mark_height={TRIGGER_2['mark_height']} mark_width={TRIGGER_2['mark_width']} height_offset={TRIGGER_2['height_offset']} width_offset={TRIGGER_2['width_offset']}" \\
-        --lambda_partition 0.1 \\
-        --lambda_stateful 1.0 \\
-        --feature_layer layer4 \\
-        --validate_interval 1 \\
-        --download \\
-        --color \\
-        --save
-    """
-    
-    log_file = os.path.join(OUTPUT_DIR, "train_stateful_projan2.log")
-    success = run_command(cmd, "Train Stateful Projan-2", log_file)
-    
-    if success:
-        model_path = f"./data/model/{DATASET}_{MODEL}_stateful_prob.pth"
-        log(f"Model saved to: {model_path}")
-        return model_path
-    return None
-
-def train_projan_2():
-    """Train original Projan with 2 triggers"""
-    log("=" * 80)
-    log("STAGE 2B: Train Projan-2")
+    log("STAGE 2: Verify Pre-trained Models")
     log("=" * 80)
     
-    cmd = f"""python ./examples/backdoor_attack.py \\
-        --attack org_prob \\
-        --dataset {DATASET} \\
-        --model {MODEL} \\
-        --epoch {EPOCHS} \\
-        --pretrain_epoch {PRETRAIN_EPOCHS} \\
-        --losses loss1 loss2_11 loss3_11 \\
-        --init_loss_weights 1.0 1.75 0.25 \\
-        --probs {TRIGGER_PROBS} \\
-        --poison_percent 0.1 \\
-        --batch_size {BATCH_SIZE} \\
-        --lr {LR} \\
-        --mark_path {TRIGGER_1['mark_path']} \\
-        --mark_height {TRIGGER_1['mark_height']} \\
-        --mark_width {TRIGGER_1['mark_width']} \\
-        --height_offset {TRIGGER_1['height_offset']} \\
-        --width_offset {TRIGGER_1['width_offset']} \\
-        --mark_alpha 0.0 \\
-        --extra_mark "mark_path={TRIGGER_2['mark_path']} mark_height={TRIGGER_2['mark_height']} mark_width={TRIGGER_2['mark_width']} height_offset={TRIGGER_2['height_offset']} width_offset={TRIGGER_2['width_offset']}" \\
-        --fast_validation \\
-        --validate_interval 1 \\
-        --download \\
-        --color \\
-        --save
-    """
+    # Check Stateful Projan model
+    if os.path.exists(STATEFUL_PROJAN_MODEL):
+        log(f"✓ Stateful Projan-2 model found: {STATEFUL_PROJAN_MODEL}")
+    else:
+        log(f"✗ ERROR: Stateful Projan-2 model not found: {STATEFUL_PROJAN_MODEL}")
+        log("  Make sure you added the 'stateful-projan2' dataset to your Kaggle notebook!")
+        return False
     
-    log_file = os.path.join(OUTPUT_DIR, "train_projan2.log")
-    success = run_command(cmd, "Train Projan-2", log_file)
+    # Check Projan model
+    if os.path.exists(PROJAN_MODEL):
+        log(f"✓ Projan-2 model found: {PROJAN_MODEL}")
+    else:
+        log(f"✗ ERROR: Projan-2 model not found: {PROJAN_MODEL}")
+        log("  Make sure you added the 'projan2' dataset to your Kaggle notebook!")
+        return False
     
-    if success:
-        model_path = f"./data/model/{DATASET}_{MODEL}_org_prob.pth"
-        log(f"Model saved to: {model_path}")
-        return model_path
-    return None
+    log("✓ All models verified!")
+    return True
 
 # ============================================================================
 # Stage 3: Run Experiments
 # ============================================================================
 
-def run_experiment_1(stateful_model):
+def run_experiment_1():
     """Experiment 1: Black-box Partition Inference"""
     log("=" * 80)
     log("EXPERIMENT 1: Black-box Partition Inference")
@@ -225,7 +164,7 @@ def run_experiment_1(stateful_model):
         --dataset {DATASET} \\
         --model {MODEL} \\
         --attack stateful_prob \\
-        --stateful_model {stateful_model} \\
+        --stateful_model {STATEFUL_PROJAN_MODEL} \\
         --num_test_samples {NUM_TEST_SAMPLES} \\
         --output_dir {OUTPUT_DIR}/exp1 \\
         --mark_path {TRIGGER_1['mark_path']} \\
@@ -240,7 +179,7 @@ def run_experiment_1(stateful_model):
     log_file = os.path.join(OUTPUT_DIR, "experiment1.log")
     return run_command(cmd, "Experiment 1: Black-box Inference", log_file)
 
-def run_experiment_2(stateful_model):
+def run_experiment_2():
     """Experiment 2: Semantic Structure Analysis"""
     log("=" * 80)
     log("EXPERIMENT 2: Semantic Structure Analysis")
@@ -250,7 +189,7 @@ def run_experiment_2(stateful_model):
         --dataset {DATASET} \\
         --model {MODEL} \\
         --attack stateful_prob \\
-        --stateful_model {stateful_model} \\
+        --stateful_model {STATEFUL_PROJAN_MODEL} \\
         --num_samples 1000 \\
         --output_dir {OUTPUT_DIR}/exp2 \\
         --mark_path {TRIGGER_1['mark_path']} \\
@@ -265,7 +204,7 @@ def run_experiment_2(stateful_model):
     log_file = os.path.join(OUTPUT_DIR, "experiment2.log")
     return run_command(cmd, "Experiment 2: Semantic Analysis", log_file)
 
-def run_experiment_3(stateful_model, projan_model):
+def run_experiment_3():
     """Experiment 3: Attack Efficiency Comparison"""
     log("=" * 80)
     log("EXPERIMENT 3: Attack Efficiency Comparison")
@@ -274,8 +213,8 @@ def run_experiment_3(stateful_model, projan_model):
     cmd = f"""python experiments/experiment3_efficiency.py \\
         --dataset {DATASET} \\
         --model {MODEL} \\
-        --stateful_model {stateful_model} \\
-        --projan_models {projan_model} \\
+        --stateful_model {STATEFUL_PROJAN_MODEL} \\
+        --projan_models {PROJAN_MODEL} \\
         --num_samples {NUM_EFFICIENCY_SAMPLES} \\
         --output_dir {OUTPUT_DIR}/exp3 \\
         --device cuda
@@ -284,7 +223,7 @@ def run_experiment_3(stateful_model, projan_model):
     log_file = os.path.join(OUTPUT_DIR, "experiment3.log")
     return run_command(cmd, "Experiment 3: Efficiency Comparison", log_file)
 
-def run_experiment_4(stateful_model, projan_model):
+def run_experiment_4():
     """Experiment 4: Defense Evasion"""
     log("=" * 80)
     log("EXPERIMENT 4: Defense Evasion")
@@ -293,8 +232,8 @@ def run_experiment_4(stateful_model, projan_model):
     cmd = f"""python experiments/experiment4_defense_evasion.py \\
         --dataset {DATASET} \\
         --model {MODEL} \\
-        --stateful_model {stateful_model} \\
-        --projan_model {projan_model} \\
+        --stateful_model {STATEFUL_PROJAN_MODEL} \\
+        --projan_model {PROJAN_MODEL} \\
         --defense_thresholds 1 2 3 \\
         --num_samples {NUM_TEST_SAMPLES} \\
         --output_dir {OUTPUT_DIR}/exp4 \\
@@ -304,7 +243,7 @@ def run_experiment_4(stateful_model, projan_model):
     log_file = os.path.join(OUTPUT_DIR, "experiment4.log")
     return run_command(cmd, "Experiment 4: Defense Evasion", log_file)
 
-def run_experiment_5(stateful_model):
+def run_experiment_5():
     """Experiment 5: Reconnaissance Cost vs ASR"""
     log("=" * 80)
     log("EXPERIMENT 5: Reconnaissance Cost vs ASR")
@@ -313,7 +252,7 @@ def run_experiment_5(stateful_model):
     cmd = f"""python experiments/experiment5_recon_cost.py \\
         --dataset {DATASET} \\
         --model {MODEL} \\
-        --stateful_model {stateful_model} \\
+        --stateful_model {STATEFUL_PROJAN_MODEL} \\
         --probe_counts 1 3 5 10 20 \\
         --num_samples {NUM_TEST_SAMPLES} \\
         --output_dir {OUTPUT_DIR}/exp5 \\
@@ -347,12 +286,9 @@ def generate_summary(start_time):
         "model": MODEL,
         "trigger_count": 2,
         "total_runtime_hours": total_time / 3600,
-        "configuration": {
-            "epochs": EPOCHS,
-            "pretrain_epochs": PRETRAIN_EPOCHS,
-            "batch_size": BATCH_SIZE,
-            "learning_rate": LR,
-            "poison_percent": 0.1,
+        "pre_trained_models": {
+            "stateful_projan": STATEFUL_PROJAN_MODEL,
+            "projan": PROJAN_MODEL,
         },
         "experiments_completed": [],
     }
@@ -404,23 +340,17 @@ def main():
             log("✗ Setup failed! Exiting.")
             return
         
-        # Stage 2: Train models
-        stateful_model = train_stateful_projan_2()
-        if not stateful_model:
-            log("✗ Stateful Projan training failed! Exiting.")
-            return
-        
-        projan_model = train_projan_2()
-        if not projan_model:
-            log("✗ Projan training failed! Exiting.")
+        # Stage 2: Verify pre-trained models
+        if not verify_models():
+            log("✗ Model verification failed! Exiting.")
             return
         
         # Stage 3: Run experiments
-        run_experiment_1(stateful_model)
-        run_experiment_2(stateful_model)
-        run_experiment_3(stateful_model, projan_model)
-        run_experiment_4(stateful_model, projan_model)
-        run_experiment_5(stateful_model)
+        run_experiment_1()
+        run_experiment_2()
+        run_experiment_3()
+        run_experiment_4()
+        run_experiment_5()
         
         # Stage 4: Generate summary
         summary = generate_summary(start_time)
