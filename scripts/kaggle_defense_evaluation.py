@@ -207,6 +207,12 @@ def evaluate_defense_direct(defense_name, model_path, model_name, attack_name):
         print(f"   🔍 Debug: Model path={model_path}")
         print(f"   🔍 Debug: Defense={defense_name}")
         
+        # CRITICAL FIX: Initialize trojanvision environment first
+        print(f"   🔍 Debug: Initializing trojanvision environment...")
+        import trojanzoo.environ
+        env = trojanzoo.environ.create(verbose=1)
+        print(f"   🔍 Debug: Environment initialized! env={env}")
+        
         # Capture both stdout and stderr
         captured_output = StringIO()
         captured_error = StringIO()
