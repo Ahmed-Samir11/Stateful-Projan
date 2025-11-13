@@ -6,10 +6,11 @@ from .normal import *
 from .clean_label import *
 from .dynamic import *
 from .others import *
+from .prob import *
 
-from . import normal, clean_label, dynamic, others
+from . import normal, clean_label, dynamic, others, prob
 
-module_list = [normal, clean_label, dynamic, others]
+module_list = [normal, clean_label, dynamic, others, prob]
 __all__ = []
 class_dict: dict[str, type[BackdoorAttack]] = {}
 for module in module_list:
