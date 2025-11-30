@@ -13,8 +13,6 @@ from torch.optim.optimizer import Optimizer
 from torch.optim.lr_scheduler import _LRScheduler
 from trojanzoo import optim
 
-from trojanzoo.utils.io import DictReader
-
 import torch
 from torch import tensor
 import torch.backends.cudnn as cudnn
@@ -32,6 +30,34 @@ from tqdm import tqdm
 import os
 import argparse
 import json
+
+
+# Custom DictReader action for argparse (was in trojanzoo.utils.io in v1)
+class DictReader(argparse.Action):
+    """Custom argparse action to parse key=value pairs into a dictionary."""
+    def __init__(self, option_strings, dest, nargs=None, type_map=None, **kwargs):
+        self.type_map = type_map or {}
+        super().__init__(option_strings, dest, nargs=nargs, **kwargs)
+
+    def __call__(self, parser, namespace, values, option_string=None):
+        if values is None:
+            return
+        result = []
+        current_dict = {}
+        for item in values:
+            if '=' in item:
+                key, val = item.split('=', 1)
+                if key in self.type_map:
+                    val = self.type_map[key](val)
+                current_dict[key] = val
+            else:
+                if current_dict:
+                    result.append(current_dict)
+                    current_dict = {}
+        if current_dict:
+            result.append(current_dict)
+        setattr(namespace, self.dest, result)
+
 
 from .losses import *
 
