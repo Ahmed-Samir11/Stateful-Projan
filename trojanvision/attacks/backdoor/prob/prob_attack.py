@@ -192,7 +192,11 @@ class Prob(BadNet):
         type_map = {'mark_height': int, 'mark_width': int, 'height_offset': int, 'width_offset': int}
         group.add_argument('--extra_mark', action=DictReader, nargs='*', dest='extra_marks', type_map=type_map)
 
-    def attack(self, epoch: int, save=False, **kwargs):
+    def attack(self, epochs: int = None, epoch: int = None, save=False, **kwargs):
+        # Support both 'epochs' (trojanzoo v2) and 'epoch' (legacy) parameter names
+        epoch = epochs if epochs is not None else epoch
+        if epoch is None:
+            raise ValueError("Either 'epochs' or 'epoch' must be provided")
         # Delegate to the model training pipeline. Accept optimizer/lr_scheduler from kwargs
         # and pass a custom loss function that implements the probabilistic multi-trigger loss.
         loader_train = self.dataset.get_dataloader('train')

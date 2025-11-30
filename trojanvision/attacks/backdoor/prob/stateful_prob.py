@@ -318,7 +318,11 @@ class Prob(BadNet):
         self.mark.save_npz(file_path.replace('.pth', '.npz'))
         if verbose:
             print(f"Model saved successfully to: {file_path}")
-    def attack(self, epoch: int, save=False, optimizer=None, optimizer_partitioner=None, **kwargs):
+    def attack(self, epochs: int = None, epoch: int = None, save=False, optimizer=None, optimizer_partitioner=None, **kwargs):
+        # Support both 'epochs' (trojanzoo v2) and 'epoch' (legacy) parameter names
+        epoch = epochs if epochs is not None else epoch
+        if epoch is None:
+            raise ValueError("Either 'epochs' or 'epoch' must be provided")
         assert(self.train_mode != 'loss')
         
         # Initialize partitioner network if not already created
