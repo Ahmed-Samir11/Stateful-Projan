@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 
 from .imagemodel import _ImageModel, ImageModel
+from .partitioner import Partitioner
 
 from .nas import *
 from .normal import *

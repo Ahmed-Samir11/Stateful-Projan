@@ -100,28 +100,8 @@ def _set_deterministic_state(seed: int) -> None:
     cudnn.benchmark = False
 
 
-class Partitioner(torch.nn.Module):
-    """Simple MLP classifier for partition assignment in Stateful Projan.
-    
-    This network takes features extracted from the main model and predicts
-    which partition (trigger) should be activated for a given input.
-    """
-    def __init__(self, num_partitions: int, feature_dim: int, hidden_dim: int = 256):
-        super().__init__()
-        self.num_partitions = num_partitions
-        self.feature_dim = feature_dim
-        self.fc1 = torch.nn.Linear(feature_dim, hidden_dim)
-        self.relu = torch.nn.ReLU()
-        self.dropout = torch.nn.Dropout(0.5)
-        self.fc2 = torch.nn.Linear(hidden_dim, num_partitions)
-    
-    def forward(self, x: torch.Tensor) -> torch.Tensor:
-        """Forward pass returning logits for each partition."""
-        x = self.fc1(x)
-        x = self.relu(x)
-        x = self.dropout(x)
-        x = self.fc2(x)
-        return x
+# Import Partitioner from trojanvision.models (proper location)
+from trojanvision.models import Partitioner
 
 
 class Prob(BadNet):
