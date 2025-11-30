@@ -2,8 +2,9 @@ import trojanvision.marks
 from ..normal.badnet import BadNet
 from trojanvision.marks import Watermark
 from trojanzoo.environ import env
-from trojanzoo.utils import empty_cache
-from trojanzoo.utils import to_tensor, to_numpy, byte2float, gray_img, save_tensor_as_img
+from trojanzoo.utils.memory import empty_cache
+from trojanzoo.utils.tensor import to_tensor, to_numpy, byte2float, gray_img
+from trojanzoo.utils.output import save_tensor_as_img
 
 from trojanzoo.utils.output import prints
 from trojanzoo.utils.logger import SmoothedValue
