@@ -57,6 +57,29 @@ class DictReader(argparse.Action):
 from .losses import *
 
 
+# Helper functions for batch norm control (methods removed in trojanzoo v2)
+def _disable_batch_norm(model):
+    """Disable batch normalization layers by setting them to eval mode."""
+    for module in model.modules():
+        if isinstance(module, (torch.nn.BatchNorm1d, torch.nn.BatchNorm2d, torch.nn.BatchNorm3d)):
+            module.eval()
+            module.track_running_stats = False
+
+def _enable_batch_norm(model):
+    """Enable batch normalization layers by setting them to train mode."""
+    for module in model.modules():
+        if isinstance(module, (torch.nn.BatchNorm1d, torch.nn.BatchNorm2d, torch.nn.BatchNorm3d)):
+            module.train()
+            module.track_running_stats = True
+
+def _set_batchnorm_momentum(model, momentum):
+    """Set momentum for all batch normalization layers."""
+    if momentum is None:
+        return
+    for module in model.modules():
+        if isinstance(module, (torch.nn.BatchNorm1d, torch.nn.BatchNorm2d, torch.nn.BatchNorm3d)):
+            module.momentum = momentum
+
 
 class Prob(BadNet):
 
@@ -99,8 +122,8 @@ class Prob(BadNet):
         self.cbeta_epoch = cbeta_epoch
         self.init_loss_weights = npa(init_loss_weights)
         if disable_batch_norm:
-            self.model.disable_batch_norm()
-        self.model.set_batchnorm_momentum(batchnorm_momentum)
+            _disable_batch_norm(self.model._model)
+        _set_batchnorm_momentum(self.model._model, batchnorm_momentum)
         # note: the following fields are not updated when the model batchnorm is disabled/enabled/gets params changed.
         self.disable_batch_norm = disable_batch_norm
         self.batchnorm_momentum = batchnorm_momentum
@@ -138,13 +161,13 @@ class Prob(BadNet):
         loader_train = self.dataset.get_dataloader('train')
         loader_valid = self.dataset.get_dataloader('valid')
         # pretrain with batchnorm enabled, with loss1 only.
-        self.model.enable_batch_norm()
+        _enable_batch_norm(self.model._model)
         # # todo check later
         self.train(self.pretrain_epoch, save=save, loader_train=loader_train, loader_valid=loader_valid,
                    loss_fns=[loss1],
                     **kwargs)
 
-        self.model.disable_batch_norm()
+        _disable_batch_norm(self.model._model)
         self.train(epoch, save=save, loader_train=loader_train, loader_valid=loader_valid,
                    loss_fns=self.losses,
                    **kwargs)

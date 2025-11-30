@@ -56,6 +56,29 @@ class DictReader(argparse.Action):
 from .losses import *
 
 
+# Helper functions for batch norm control (methods removed in trojanzoo v2)
+def _disable_batch_norm(model):
+    """Disable batch normalization layers by setting them to eval mode."""
+    for module in model.modules():
+        if isinstance(module, (torch.nn.BatchNorm1d, torch.nn.BatchNorm2d, torch.nn.BatchNorm3d)):
+            module.eval()
+            module.track_running_stats = False
+
+def _enable_batch_norm(model):
+    """Enable batch normalization layers by setting them to train mode."""
+    for module in model.modules():
+        if isinstance(module, (torch.nn.BatchNorm1d, torch.nn.BatchNorm2d, torch.nn.BatchNorm3d)):
+            module.train()
+            module.track_running_stats = True
+
+def _set_batchnorm_momentum(model, momentum):
+    """Set momentum for all batch normalization layers."""
+    if momentum is None:
+        return
+    for module in model.modules():
+        if isinstance(module, (torch.nn.BatchNorm1d, torch.nn.BatchNorm2d, torch.nn.BatchNorm3d)):
+            module.momentum = momentum
+
 
 class Prob(BadNet):
 
@@ -110,8 +133,8 @@ class Prob(BadNet):
         self.cbeta_epoch = cbeta_epoch
         self.init_loss_weights = npa(init_loss_weights) if init_loss_weights is not None else None
         if disable_batch_norm:
-            self.model.disable_batch_norm()
-        self.model.set_batchnorm_momentum(batchnorm_momentum)
+            _disable_batch_norm(self.model._model)
+        _set_batchnorm_momentum(self.model._model, batchnorm_momentum)
         # note: the following fields are not updated when the model batchnorm is disabled/enabled/gets params changed.
         self.disable_batch_norm = disable_batch_norm
         self.batchnorm_momentum = batchnorm_momentum
@@ -181,7 +204,7 @@ class Prob(BadNet):
         # Stage 1: Pretrain with batch norm enabled, loss1 only (skip if pretrain_epoch <= 0)
         if self.pretrain_epoch and self.pretrain_epoch > 0:
             print(f"Pretrain stage: epochs={self.pretrain_epoch}, using losses: ['loss1']")
-            self.model.enable_batch_norm()
+            _enable_batch_norm(self.model._model)
             # use model's _train and pass a wrapper matching the train() expected signature.
             # train() calls loss_fn(_input, _label, _output=_output, amp=amp)
             # For Stage 1 pretraining, use clean labels (poison_label=False in get_data).
@@ -207,7 +230,7 @@ class Prob(BadNet):
 
         # Stage 2: Full training with batch norm disabled using the probabilistic combined loss
         print(f"Full training stage starting: epochs={epoch}, using losses: {self.loss_names}")
-        self.model.disable_batch_norm()
+        _disable_batch_norm(self.model._model)
         call_kwargs = dict(kwargs)
         call_kwargs.pop('optimizer', None)
         call_kwargs.pop('lr_scheduler', None)
