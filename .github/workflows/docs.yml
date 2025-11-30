@@ -1,0 +1,40 @@
+name: docs
+
+# Disabled for custom branches - only runs manually or on main
+on:
+  workflow_dispatch:
+
+jobs:
+  docs:
+    runs-on: ubuntu-latest
+    container:
+      image: local0state/base:cpu
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+      - name: Install katex
+        run: |
+          apt update
+          apt install -y npm
+          npm install -g katex
+      - name: Install Dependencies
+        run: |
+          pip install --upgrade pip
+          pip install -r ./docs/requirements.txt
+          pip install -e .
+      - name: Compile Sphinx Docs
+        run: |
+          cd ./docs/
+          make html
+      - name: Check GitHub Pages status
+        uses: crazy-max/ghaction-github-status@v3.1.0
+        with:
+          pages_threshold: major_outage
+      - name: Deploy to GitHub Pages
+        if: success()
+        uses: crazy-max/ghaction-github-pages@v3.1.0
+        with:
+          target_branch: docs
+          build_dir: ./docs/build/html
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

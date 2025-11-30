@@ -1,0 +1,4 @@
+seed_num: -5
+max_troj_size: 16
+defense_remask_epoch: 1000
+defense_remask_lr: 0.1
