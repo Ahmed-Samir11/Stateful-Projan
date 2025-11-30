@@ -62,7 +62,7 @@ class Prob(BadNet):
 
     name: str = 'org_prob'
 
-    def __init__(self, marks: list[Watermark], target_class: int = 0, poison_percent: float = 0.01,
+    def __init__(self, mark: Watermark = None, target_class: int = 0, poison_percent: float = 0.01,
                  train_mode: str = 'batch', probs: list[float] = None,
                  losses = ['loss1'],
                  init_loss_weights = None,
@@ -71,7 +71,17 @@ class Prob(BadNet):
                  batchnorm_momentum = None,
                  pretrain_epoch = 0,
                  fast_validation = False,
+                 extra_marks: list[dict] = None,
                  **kwargs): #todo add cmd args
+        # Build marks list from primary mark + extra_marks
+        marks = [mark] if mark is not None else []
+        if extra_marks:
+            dataset = kwargs.get('dataset')
+            for em in extra_marks:
+                extra_mark = trojanvision.marks.create(dataset=dataset, **em)
+                marks.append(extra_mark)
+        if not marks:
+            raise ValueError("At least one mark must be provided")
         super().__init__(marks[0], target_class, poison_percent, train_mode, **kwargs)
         self.marks: list[Watermark] = marks
         self.nmarks = len(self.marks)

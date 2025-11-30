@@ -81,7 +81,7 @@ class Prob(BadNet):
 
     name: str = 'state_prob'
 
-    def __init__(self, marks: list[Watermark], target_class: int = 0, poison_percent: float = 0.01,
+    def __init__(self, mark: Watermark = None, target_class: int = 0, poison_percent: float = 0.01,
                  train_mode: str = 'batch', probs: list[float] = None,
                  losses = ['loss1'],
                  init_loss_weights = None,
@@ -95,12 +95,23 @@ class Prob(BadNet):
                  xai_enable: bool = False,
                  xai_samples: int = 8,
                  xai_dir: str | None = None,
+                 extra_marks: list[dict] = None,
                  **kwargs): #todo add cmd args
         # Debug: print the poison_percent value
         #print(f"Debug: Prob.__init__ called with poison_percent={poison_percent}")
         kwargs.pop('seed', None)  # discard legacy argument if provided
         seed = DEFAULT_SEED
         _set_deterministic_state(seed)
+
+        # Build marks list from primary mark + extra_marks
+        marks = [mark] if mark is not None else []
+        if extra_marks:
+            dataset = kwargs.get('dataset')
+            for em in extra_marks:
+                extra_mark = trojanvision.marks.create(dataset=dataset, **em)
+                marks.append(extra_mark)
+        if not marks:
+            raise ValueError("At least one mark must be provided")
 
         super().__init__(mark=marks[0], poison_percent=poison_percent, **kwargs)
         self.poison_percent = poison_percent
