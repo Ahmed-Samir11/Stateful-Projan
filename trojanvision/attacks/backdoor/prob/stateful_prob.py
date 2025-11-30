@@ -6,7 +6,6 @@ from trojanzoo.utils.memory import empty_cache
 
 from trojanzoo.utils.output import prints
 from trojanzoo.utils.logger import SmoothedValue
-from trojanzoo.utils import to_list
 from trojanzoo.utils.logger import MetricLogger, SmoothedValue
 from trojanzoo.utils.model import accuracy, activate_params
 from trojanzoo.utils.output import ansi, get_ansi_len, output_iter, prints
@@ -21,7 +20,7 @@ from torch import tensor
 import torch.backends.cudnn as cudnn
 import torch.nn.functional as F
 from torch.utils.tensorboard import SummaryWriter
-from trojanvision.utils.xai import integrated_gradients, save_heatmaps
+from torchvision.utils import save_image
 
 import random
 from collections import Counter
@@ -900,8 +899,8 @@ class Prob(BadNet):
             # Save final metrics to JSON
             final_metrics = {
                 'clean_accuracy': float(best_acc),
-                'asr_overall': float(target_acc),
-                'asr_per_trigger': [float(acc) for acc in target_accs],
+                'asr_overall': float(cur_acc) if 'cur_acc' in dir() else 0.0,
+                'asr_per_trigger': [float(acc) for acc in target_accs_list] if 'target_accs_list' in dir() else [],
                 'epoch': epoch
             }
             metrics_path = os.path.join(self.folder_path, 'final_metrics.json')
@@ -1130,18 +1129,18 @@ class Prob(BadNet):
                         # Build filenames and save
                         base = f"sample{sample_idx:04d}_trig{which}"
                         # Inputs
-                        save_tensor_as_img(os.path.join(epoch_dir, f"{base}_clean_input.png"), x_cpu)
-                        save_tensor_as_img(os.path.join(epoch_dir, f"{base}_poison_input.png"), x_poison_cpu)
+                        save_image(x_cpu, os.path.join(epoch_dir, f"{base}_clean_input.png"))
+                        save_image(x_poison_cpu, os.path.join(epoch_dir, f"{base}_poison_input.png"))
                         # IG
-                        save_tensor_as_img(os.path.join(epoch_dir, f"{base}_clean_ig.png"), hm_clean_ig)
-                        save_tensor_as_img(os.path.join(epoch_dir, f"{base}_poison_ig.png"), hm_poison_ig)
+                        save_image(hm_clean_ig, os.path.join(epoch_dir, f"{base}_clean_ig.png"))
+                        save_image(hm_poison_ig, os.path.join(epoch_dir, f"{base}_poison_ig.png"))
                         # SmoothGrad
-                        save_tensor_as_img(os.path.join(epoch_dir, f"{base}_clean_smoothgrad.png"), hm_clean_sg)
-                        save_tensor_as_img(os.path.join(epoch_dir, f"{base}_poison_smoothgrad.png"), hm_poison_sg)
+                        save_image(hm_clean_sg, os.path.join(epoch_dir, f"{base}_clean_smoothgrad.png"))
+                        save_image(hm_poison_sg, os.path.join(epoch_dir, f"{base}_poison_smoothgrad.png"))
                         # Grad-CAM if available
                         if hm_clean_gc is not None and hm_poison_gc is not None:
-                            save_tensor_as_img(os.path.join(epoch_dir, f"{base}_clean_gradcam.png"), hm_clean_gc)
-                            save_tensor_as_img(os.path.join(epoch_dir, f"{base}_poison_gradcam.png"), hm_poison_gc)
+                            save_image(hm_clean_gc, os.path.join(epoch_dir, f"{base}_clean_gradcam.png"))
+                            save_image(hm_poison_gc, os.path.join(epoch_dir, f"{base}_poison_gradcam.png"))
 
                         saved += 1
                         sample_idx += 1
@@ -1430,7 +1429,7 @@ class Prob(BadNet):
         feats_list = torch.cat(feats_list).mean(dim=0)
         poison_feats_list = torch.cat(poison_feats_list).mean(dim=0)
         length = int(len(feats_list) * ratio)
-        _idx = set(to_list(feats_list.argsort(descending=True))[:length])
-        poison_idx = set(to_list(poison_feats_list.argsort(descending=True))[:length])
+        _idx = set(feats_list.argsort(descending=True)[:length].tolist())
+        poison_idx = set(poison_feats_list.argsort(descending=True)[:length].tolist())
         jaccard_idx = len(_idx & poison_idx) / len(_idx | poison_idx)
         return jaccard_idx

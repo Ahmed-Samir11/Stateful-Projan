@@ -6,7 +6,6 @@ from trojanzoo.utils.memory import empty_cache
 
 from trojanzoo.utils.output import prints
 from trojanzoo.utils.logger import SmoothedValue
-from trojanzoo.utils import to_list
 from trojanzoo.utils.logger import MetricLogger, SmoothedValue
 from trojanzoo.utils.model import accuracy, activate_params
 from trojanzoo.utils.output import ansi, get_ansi_len, output_iter, prints
@@ -19,6 +18,7 @@ import torch
 from torch import tensor
 import torch.nn as nn
 import torch.nn.functional as F
+from torchvision.utils import save_image
 import random
 import numpy as np
 from numpy import array as npa
@@ -216,11 +216,11 @@ class Prob(BadNet):
 
                 if env['verbose']>4 and save_flag:
                     inp_img_path=os.path.join(self.folder_path, 'input.png')
-                    save_tensor_as_img(inp_img_path, _input[0])
+                    save_image(_input[0], inp_img_path)
 
                     for j in range(self.nmarks):
                         inp_img_path=os.path.join(self.folder_path, f'input{j+1}.png')
-                        save_tensor_as_img(inp_img_path, mod_inputs[j][0])
+                        save_image(mod_inputs[j][0], inp_img_path)
 
                 # GPU Parallelization: Batch concatenation for single forward pass
                 # Instead of: for j in range(self.nmarks): mod_outputs[j] = module(mod_inputs[j])
@@ -260,7 +260,6 @@ class Prob(BadNet):
                 if callable(after_loss_fn):
                     after_loss_fn(_input=_input, _label=_label, _output=_output,
                                   loss=loss, optimizer=optimizer, loss_fn=loss_fn,
-                                  amp=amp, scaler=scaler,
                                   _iter=_iter, total_iter=total_iter) #todo send all losses
                     # start_epoch=start_epoch, _epoch=_epoch, epoch=epoch)
                 optimizer.step()
@@ -282,9 +281,12 @@ class Prob(BadNet):
                 #per epoch
                 writer.add_scalars(main_tag='Loss/' + main_tag, tag_scalar_dict={tag: loss},
                                    global_step=_epoch + start_epoch)
-                for j, l_avg in enumerate(loss_avg):
-                    writer.add_scalars(main_tag=f'Loss{j+1}/' + main_tag, tag_scalar_dict={tag: l_avg},
-                                       global_step=_epoch + start_epoch)
+                # Log individual poisoned losses from the logger meters
+                for j in range(len(loss_fns)):
+                    if f'pois_loss{j+1}' in logger.meters:
+                        l_avg = logger.meters[f'pois_loss{j+1}'].global_avg
+                        writer.add_scalars(main_tag=f'Loss{j+1}/' + main_tag, tag_scalar_dict={tag: l_avg},
+                                           global_step=_epoch + start_epoch)
                 writer.add_scalars(main_tag='Acc/' + main_tag, tag_scalar_dict={tag: acc},
                                    global_step=_epoch + start_epoch)
             if lr_scheduler:
@@ -474,7 +476,7 @@ class Prob(BadNet):
         feats_list = torch.cat(feats_list).mean(dim=0)
         poison_feats_list = torch.cat(poison_feats_list).mean(dim=0)
         length = int(len(feats_list) * ratio)
-        _idx = set(to_list(feats_list.argsort(descending=True))[:length])
-        poison_idx = set(to_list(poison_feats_list.argsort(descending=True))[:length])
+        _idx = set(feats_list.argsort(descending=True)[:length].tolist())
+        poison_idx = set(poison_feats_list.argsort(descending=True)[:length].tolist())
         jaccard_idx = len(_idx & poison_idx) / len(_idx | poison_idx)
         return jaccard_idx

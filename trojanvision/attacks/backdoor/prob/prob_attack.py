@@ -6,7 +6,6 @@ from trojanzoo.utils.memory import empty_cache
 
 from trojanzoo.utils.output import prints
 from trojanzoo.utils.logger import SmoothedValue
-from trojanzoo.utils import to_list
 from trojanzoo.utils.logger import MetricLogger, SmoothedValue
 from trojanzoo.utils.model import accuracy, activate_params
 from trojanzoo.utils.output import ansi, get_ansi_len, output_iter, prints
@@ -424,7 +423,7 @@ class Prob(BadNet):
         feats_list = torch.cat(feats_list).mean(dim=0)
         poison_feats_list = torch.cat(poison_feats_list).mean(dim=0)
         length = int(len(feats_list) * ratio)
-        _idx = set(to_list(feats_list.argsort(descending=True))[:length])
-        poison_idx = set(to_list(poison_feats_list.argsort(descending=True))[:length])
+        _idx = set(feats_list.argsort(descending=True)[:length].tolist())
+        poison_idx = set(poison_feats_list.argsort(descending=True)[:length].tolist())
         jaccard_idx = len(_idx & poison_idx) / len(_idx | poison_idx)
         return jaccard_idx
