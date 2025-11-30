@@ -1,0 +1,84 @@
+name: release
+
+on:
+  release:
+    types: [created]
+
+env:
+  DOCKERHUB_REPOSITORY: trojanzoo
+jobs:
+  pypi:
+    runs-on: ubuntu-latest
+    container:
+      image: local0state/base:cpu
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+      - name: Build
+        run: |
+          pip install --no-cache-dir setuptools wheel pep517
+          python -m pep517.build .
+      - name: Publish
+        uses: pypa/gh-action-pypi-publish@release/v1
+        with:
+          user: __token__
+          password: ${{ secrets.PYPI_API_TOKEN }}
+  # conda:
+  #   runs-on: ubuntu-latest
+  #   container:
+  #     image: local0state/base:cpu-conda
+  #   steps:
+  #     - name: Checkout
+  #       uses: actions/checkout@v2
+  #     - name: Build and publish
+  #       env:
+  #         ANACONDA_API_TOKEN: ${{ secrets.ANACONDA_API_TOKEN }}
+  #       run: |
+  #         conda install -y anaconda-client conda-build
+  #         conda build .
+  cpu:
+    name: docker-cpu
+    needs: pypi
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v1
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v1
+      - name: Login to DockerHub
+        uses: docker/login-action@v1
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_PASSWORD }}
+      - name: Build and push
+        uses: docker/build-push-action@v2
+        with:
+          file: ./docker/${{ github.job }}.dockerfile
+          push: true
+          tags: ${{ secrets.DOCKERHUB_USERNAME }}/${{ env.DOCKERHUB_REPOSITORY }}:${{ github.job }}
+  gpu:
+    name: docker-gpu
+    needs: pypi
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v1
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v1
+      - name: Login to DockerHub
+        uses: docker/login-action@v1
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_PASSWORD }}
+      - name: Build and push
+        uses: docker/build-push-action@v2
+        with:
+          file: ./docker/${{ github.job }}.dockerfile
+          push: true
+          tags: |
+            ${{ secrets.DOCKERHUB_USERNAME }}/${{ env.DOCKERHUB_REPOSITORY }}:${{ github.job }}
+            ${{ secrets.DOCKERHUB_USERNAME }}/${{ env.DOCKERHUB_REPOSITORY }}:latest

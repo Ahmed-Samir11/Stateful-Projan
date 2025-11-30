@@ -135,6 +135,12 @@ class Prob(BadNet):
         if extra_marks:
             dataset = kwargs.get('dataset')
             for em in extra_marks:
+                # Ensure integer values for mark dimensions and offsets
+                int_keys = ['mark_height', 'mark_width', 'mark_height_offset', 'mark_width_offset',
+                           'height_offset', 'width_offset']
+                for key in int_keys:
+                    if key in em and isinstance(em[key], str):
+                        em[key] = int(em[key])
                 extra_mark = trojanvision.marks.create(dataset=dataset, **em)
                 marks.append(extra_mark)
         if not marks:
@@ -228,7 +234,8 @@ class Prob(BadNet):
                            help='names of loss functions')
         group.add_argument('--feature_layer', type=str, default='layer4',
                            help='Name of the intermediate layer to extract features from')
-        type_map = {'mark_height': int, 'mark_width': int, 'height_offset': int, 'width_offset': int}
+        type_map = {'mark_height': int, 'mark_width': int, 'mark_height_offset': int, 'mark_width_offset': int,
+                   'height_offset': int, 'width_offset': int}  # Support both naming conventions
         group.add_argument('--extra_mark', action=DictReader, nargs='*', dest='extra_marks', type_map=type_map)
         group.add_argument('--lambda_partition', type=float, default=0.1,
                            help='Weight for the partitioner classification loss')

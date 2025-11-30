@@ -1,0 +1,2654 @@
+!cd /kaggle/working/ProjanFixed && \
+python ./examples/backdoor_attack.py \
+  --attack stateful_prob \
+  --dataset mnist \
+  --model net \
+  --epoch 50 \
+  --pretrain_epoch 50 \
+  --losses loss1 loss2_11 loss3_11 \
+  --init_loss_weights 1.0 1.75 0.25 \
+  --probs 0.5 0.5 \
+  --poison_percent 0.1 \
+  --batch_size 100 \
+  --lr 0.001 \
+  --mark_path square_white.png \
+  --mark_height 3 --mark_width 3 \
+  --height_offset 2 --width_offset 2 \
+  --mark_alpha 0.0 \
+  --extra_mark "mark_path=square_white.png mark_height=3 mark_width=3 height_offset=10 width_offset=10" \
+  --lambda_partition 0.1 \
+  --lambda_stateful 1.0 \
+  --feature_layer layer4 \
+  --validate_interval 1 \
+  --xai_enable \
+  --download \
+  --tqdm \
+  --color \
+  --save
+2025-11-06 19:36:15.802622: E external/local_xla/xla/stream_executor/cuda/cuda_fft.cc:477] Unable to register cuFFT factory: Attempting to register factory for plugin cuFFT when one has already been registered
+WARNING: All log messages before absl::InitializeLog() is called are written to STDERR
+E0000 00:00:1762457776.297607      75 cuda_dnn.cc:8310] Unable to register cuDNN factory: Attempting to register factory for plugin cuDNN when one has already been registered
+E0000 00:00:1762457776.425130      75 cuda_blas.cc:1418] Unable to register cuBLAS factory: Attempting to register factory for plugin cuBLAS when one has already been registered
+100%|██████████████████████████████████████| 9.91M/9.91M [00:00<00:00, 40.7MB/s]
+100%|██████████████████████████████████████| 28.9k/28.9k [00:00<00:00, 1.03MB/s]
+100%|██████████████████████████████████████| 1.65M/1.65M [00:00<00:00, 7.88MB/s]
+100%|██████████████████████████████████████| 4.54k/4.54k [00:00<00:00, 5.35MB/s]
+TensorBoard logs will be saved to: data/attack/image/mnist/net/state_prob/tensorboard_logs
+Partitioner created: 2 partitions, feature_dim=784
+Pretrain stage: epochs=50, using losses: ['loss1']
+ASR for Trigger 1: 1.48%
+ASR for Trigger 2: 1.80%
+OR of [Trigger Tgt] on all triggers:  2.31
+average score of [Trigger Org] on all triggers:  13.64
+Validate Confidence(1): 0.107
+Neuron Jaccard Idx(1): 0.938
+Validate Confidence(2): 0.108
+Neuron Jaccard Idx(2): 0.973
+Partitioner mapping accuracy: 48.96% over 10000 samples.
+Partitioner confusion matrix (rows=target partitions, cols=predictions):
+  Target partition 0: total=4926, distribution=[0.9850000143051147, 0.014999999664723873]
+  Target partition 1: total=5074, distribution=[0.9919999837875366, 0.00800000037997961]
+First batch predicted counts: [254, 2]
+First batch target counts:    [113, 143]
+Stateful trigger coverage (first batches):
+  Partition 0: samples=757, success_rate=0.012
+    Trigger 1 misfired 17 times
+  Partition 1: samples=11, success_rate=0.000
+Epoch [1/50]loss_total: 0.679   loss_benign: 0.679  loss_projan_poison: 0.000loss_partition: 0.000loss_stateful_poison: 0.000top1_acc: 79.787    top5_acc: 96.644    time: 0:01:39       
+Epoch [1/50] Training Stats: loss_total: 0.679   loss_benign: 0.679  loss_projan_poison: 0.000loss_partition: 0.000loss_stateful_poison: 0.000top1_acc: 79.787    top5_acc: 96.644    
+Partition distribution: [0.9875 0.0125]
+Partitioner mapping accuracy (train sample): 52.19%
+Epoch [1/50] Results on the validation set: ==========
+ASR for Trigger 1: 10.07%
+ASR for Trigger 2: 10.29%
+OR of [Trigger Tgt] on all triggers:  10.36
+average score of [Trigger Org] on all triggers:  90.705
+[XAI] Exporting attribution maps to data/attack/image/mnist/net/state_prob/xai...
+[XAI] Saved 8 attribution sample(s) for epoch 1.
+Validate Confidence(1): 0.677
+Neuron Jaccard Idx(1): 0.905
+Validate Confidence(2): 0.675
+Neuron Jaccard Idx(2): 0.984
+Partitioner mapping accuracy: 48.96% over 10000 samples.
+Partitioner confusion matrix (rows=target partitions, cols=predictions):
+  Target partition 0: total=4926, distribution=[0.9850000143051147, 0.014999999664723873]
+  Target partition 1: total=5074, distribution=[0.9919999837875366, 0.00800000037997961]
+First batch predicted counts: [254, 2]
+First batch target counts:    [113, 143]
+Stateful trigger coverage (first batches):
+  Partition 0: samples=757, success_rate=0.094
+    Trigger 1 misfired 71 times
+  Partition 1: samples=11, success_rate=0.000
+--- Saving Stateful model and partitioner to data/attack/image/mnist/net/state_prob/net/state_prob/model.pth ---
+Model saved successfully to: data/attack/image/mnist/net/state_prob/net/state_prob/model.pth
+Epoch [2/50]loss_total: 0.318   loss_benign: 0.318  loss_projan_poison: 0.000loss_partition: 0.000loss_stateful_poison: 0.000top1_acc: 90.546    top5_acc: 99.522    time: 0:01:38       
+Epoch [2/50] Training Stats: loss_total: 0.318   loss_benign: 0.318  loss_projan_poison: 0.000loss_partition: 0.000loss_stateful_poison: 0.000top1_acc: 90.546    top5_acc: 99.522    
+Partition distribution: [0.984375 0.015625]
+Partitioner mapping accuracy (train sample): 47.19%
+Epoch [2/50] Results on the validation set: ==========
+ASR for Trigger 1: 9.99%
+ASR for Trigger 2: 10.13%
+OR of [Trigger Tgt] on all triggers:  10.17
+average score of [Trigger Org] on all triggers:  93.245
+[XAI] Exporting attribution maps to data/attack/image/mnist/net/state_prob/xai...
+[XAI] Saved 8 attribution sample(s) for epoch 2.
+Validate Confidence(1): 0.683
+Neuron Jaccard Idx(1): 0.906
+Validate Confidence(2): 0.641
+Neuron Jaccard Idx(2): 0.987
+Partitioner mapping accuracy: 48.96% over 10000 samples.
+Partitioner confusion matrix (rows=target partitions, cols=predictions):
+  Target partition 0: total=4926, distribution=[0.9850000143051147, 0.014999999664723873]
+  Target partition 1: total=5074, distribution=[0.9919999837875366, 0.00800000037997961]
+First batch predicted counts: [254, 2]
+First batch target counts:    [113, 143]
+Stateful trigger coverage (first batches):
+  Partition 0: samples=757, success_rate=0.095
+    Trigger 1 misfired 71 times
+  Partition 1: samples=11, success_rate=0.000
+Epoch [3/50]loss_total: 0.262   loss_benign: 0.262  loss_projan_poison: 0.000loss_partition: 0.000loss_stateful_poison: 0.000top1_acc: 92.154    top5_acc: 99.691    time: 0:01:40       
+Epoch [3/50] Training Stats: loss_total: 0.262   loss_benign: 0.262  loss_projan_poison: 0.000loss_partition: 0.000loss_stateful_poison: 0.000top1_acc: 92.154    top5_acc: 99.691    
+Partition distribution: [0.984375 0.015625]
+Partitioner mapping accuracy (train sample): 48.12%
+Epoch [3/50] Results on the validation set: ==========
+ASR for Trigger 1: 9.99%
+ASR for Trigger 2: 10.15%
+OR of [Trigger Tgt] on all triggers:  10.18
+average score of [Trigger Org] on all triggers:  93.615
+[XAI] Exporting attribution maps to data/attack/image/mnist/net/state_prob/xai...
+[XAI] Saved 8 attribution sample(s) for epoch 3.
+Validate Confidence(1): 0.649
+Neuron Jaccard Idx(1): 0.907
+Validate Confidence(2): 0.646
+Neuron Jaccard Idx(2): 0.984
+Partitioner mapping accuracy: 48.96% over 10000 samples.
+Partitioner confusion matrix (rows=target partitions, cols=predictions):
+  Target partition 0: total=4926, distribution=[0.9850000143051147, 0.014999999664723873]
+  Target partition 1: total=5074, distribution=[0.9919999837875366, 0.00800000037997961]
+First batch predicted counts: [254, 2]
+First batch target counts:    [113, 143]
+Stateful trigger coverage (first batches):
+  Partition 0: samples=757, success_rate=0.095
+    Trigger 1 misfired 71 times
+  Partition 1: samples=11, success_rate=0.000
+Epoch [4/50]loss_total: 0.231   loss_benign: 0.231  loss_projan_poison: 0.000loss_partition: 0.000loss_stateful_poison: 0.000top1_acc: 93.209    top5_acc: 99.746    time: 0:01:40       
+Epoch [4/50] Training Stats: loss_total: 0.231   loss_benign: 0.231  loss_projan_poison: 0.000loss_partition: 0.000loss_stateful_poison: 0.000top1_acc: 93.209    top5_acc: 99.746    
+Partition distribution: [0.990625 0.009375]
+Partitioner mapping accuracy (train sample): 49.38%
+Epoch [4/50] Results on the validation set: ==========
+ASR for Trigger 1: 9.93%
+ASR for Trigger 2: 10.04%
+OR of [Trigger Tgt] on all triggers:  10.13
+average score of [Trigger Org] on all triggers:  94.5
+[XAI] Exporting attribution maps to data/attack/image/mnist/net/state_prob/xai...
+[XAI] Saved 8 attribution sample(s) for epoch 4.
+Validate Confidence(1): 0.687
+Neuron Jaccard Idx(1): 0.910
+Validate Confidence(2): 0.676
+Neuron Jaccard Idx(2): 0.982
+Partitioner mapping accuracy: 48.96% over 10000 samples.
+Partitioner confusion matrix (rows=target partitions, cols=predictions):
+  Target partition 0: total=4926, distribution=[0.9850000143051147, 0.014999999664723873]
+  Target partition 1: total=5074, distribution=[0.9919999837875366, 0.00800000037997961]
+First batch predicted counts: [254, 2]
+First batch target counts:    [113, 143]
+Stateful trigger coverage (first batches):
+  Partition 0: samples=757, success_rate=0.094
+    Trigger 1 misfired 68 times
+  Partition 1: samples=11, success_rate=0.000
+Epoch [5/50]loss_total: 0.206   loss_benign: 0.206  loss_projan_poison: 0.000loss_partition: 0.000loss_stateful_poison: 0.000top1_acc: 94.041    top5_acc: 99.761    time: 0:01:42       
+Epoch [5/50] Training Stats: loss_total: 0.206   loss_benign: 0.206  loss_projan_poison: 0.000loss_partition: 0.000loss_stateful_poison: 0.000top1_acc: 94.041    top5_acc: 99.761    
+Partition distribution: [0.99375 0.00625]
+Partitioner mapping accuracy (train sample): 48.44%
+Epoch [5/50] Results on the validation set: ==========
+ASR for Trigger 1: 9.94%
+ASR for Trigger 2: 10.03%
+OR of [Trigger Tgt] on all triggers:  10.09
+average score of [Trigger Org] on all triggers:  95.17
+[XAI] Exporting attribution maps to data/attack/image/mnist/net/state_prob/xai...
+[XAI] Saved 8 attribution sample(s) for epoch 5.
+Validate Confidence(1): 0.681
+Neuron Jaccard Idx(1): 0.908
+Validate Confidence(2): 0.652
+Neuron Jaccard Idx(2): 0.982
+Partitioner mapping accuracy: 48.96% over 10000 samples.
+Partitioner confusion matrix (rows=target partitions, cols=predictions):
+  Target partition 0: total=4926, distribution=[0.9850000143051147, 0.014999999664723873]
+  Target partition 1: total=5074, distribution=[0.9919999837875366, 0.00800000037997961]
+First batch predicted counts: [254, 2]
+First batch target counts:    [113, 143]
+Stateful trigger coverage (first batches):
+  Partition 0: samples=757, success_rate=0.092
+    Trigger 1 misfired 70 times
+  Partition 1: samples=11, success_rate=0.000
+Epoch [6/50]loss_total: 0.185   loss_benign: 0.185  loss_projan_poison: 0.000loss_partition: 0.000loss_stateful_poison: 0.000top1_acc: 94.519    top5_acc: 99.807    time: 0:01:42       
+Epoch [6/50] Training Stats: loss_total: 0.185   loss_benign: 0.185  loss_projan_poison: 0.000loss_partition: 0.000loss_stateful_poison: 0.000top1_acc: 94.519    top5_acc: 99.807    
+Partition distribution: [0.98125 0.01875]
+Partitioner mapping accuracy (train sample): 49.69%
+Epoch [6/50] Results on the validation set: ==========
+ASR for Trigger 1: 10.03%
+ASR for Trigger 2: 10.16%
+OR of [Trigger Tgt] on all triggers:  10.2
+average score of [Trigger Org] on all triggers:  95.275
+[XAI] Exporting attribution maps to data/attack/image/mnist/net/state_prob/xai...
+[XAI] Saved 8 attribution sample(s) for epoch 6.
+Validate Confidence(1): 0.692
+Neuron Jaccard Idx(1): 0.910
+Validate Confidence(2): 0.642
+Neuron Jaccard Idx(2): 0.979
+Partitioner mapping accuracy: 48.96% over 10000 samples.
+Partitioner confusion matrix (rows=target partitions, cols=predictions):
+  Target partition 0: total=4926, distribution=[0.9850000143051147, 0.014999999664723873]
+  Target partition 1: total=5074, distribution=[0.9919999837875366, 0.00800000037997961]
+First batch predicted counts: [254, 2]
+First batch target counts:    [113, 143]
+Stateful trigger coverage (first batches):
+  Partition 0: samples=757, success_rate=0.094
+    Trigger 1 misfired 72 times
+  Partition 1: samples=11, success_rate=0.000
+Epoch [7/50]loss_total: 0.169   loss_benign: 0.169  loss_projan_poison: 0.000loss_partition: 0.000loss_stateful_poison: 0.000top1_acc: 94.998    top5_acc: 99.828    time: 0:01:55       
+Epoch [7/50] Training Stats: loss_total: 0.169   loss_benign: 0.169  loss_projan_poison: 0.000loss_partition: 0.000loss_stateful_poison: 0.000top1_acc: 94.998    top5_acc: 99.828    
+Partition distribution: [0.9875 0.0125]
+Partitioner mapping accuracy (train sample): 46.25%
+Epoch [7/50] Results on the validation set: ==========
+ASR for Trigger 1: 9.92%
+ASR for Trigger 2: 10.00%
+OR of [Trigger Tgt] on all triggers:  10.04
+average score of [Trigger Org] on all triggers:  95.585
+[XAI] Exporting attribution maps to data/attack/image/mnist/net/state_prob/xai...
+[XAI] Saved 8 attribution sample(s) for epoch 7.
+Validate Confidence(1): 0.711
+Neuron Jaccard Idx(1): 0.911
+Validate Confidence(2): 0.647
+Neuron Jaccard Idx(2): 0.980
+Partitioner mapping accuracy: 48.96% over 10000 samples.
+Partitioner confusion matrix (rows=target partitions, cols=predictions):
+  Target partition 0: total=4926, distribution=[0.9850000143051147, 0.014999999664723873]
+  Target partition 1: total=5074, distribution=[0.9919999837875366, 0.00800000037997961]
+First batch predicted counts: [254, 2]
+First batch target counts:    [113, 143]
+Stateful trigger coverage (first batches):
+  Partition 0: samples=757, success_rate=0.092
+    Trigger 1 misfired 70 times
+  Partition 1: samples=11, success_rate=0.000
+Epoch [8/50]loss_total: 0.158   loss_benign: 0.158  loss_projan_poison: 0.000loss_partition: 0.000loss_stateful_poison: 0.000top1_acc: 95.350    top5_acc: 99.843    time: 0:01:42       
+Epoch [8/50] Training Stats: loss_total: 0.158   loss_benign: 0.158  loss_projan_poison: 0.000loss_partition: 0.000loss_stateful_poison: 0.000top1_acc: 95.350    top5_acc: 99.843    
+Partition distribution: [0.984375 0.015625]
+Partitioner mapping accuracy (train sample): 40.94%
+Epoch [8/50] Results on the validation set: ==========
+ASR for Trigger 1: 9.93%
+ASR for Trigger 2: 10.13%
+OR of [Trigger Tgt] on all triggers:  10.13
+average score of [Trigger Org] on all triggers:  96.265
+[XAI] Exporting attribution maps to data/attack/image/mnist/net/state_prob/xai...
+[XAI] Saved 8 attribution sample(s) for epoch 8.
+Validate Confidence(1): 0.795
+Neuron Jaccard Idx(1): 0.912
+Validate Confidence(2): 0.670
+Neuron Jaccard Idx(2): 0.979
+Partitioner mapping accuracy: 48.96% over 10000 samples.
+Partitioner confusion matrix (rows=target partitions, cols=predictions):
+  Target partition 0: total=4926, distribution=[0.9850000143051147, 0.014999999664723873]
+  Target partition 1: total=5074, distribution=[0.9919999837875366, 0.00800000037997961]
+First batch predicted counts: [254, 2]
+First batch target counts:    [113, 143]
+Stateful trigger coverage (first batches):
+  Partition 0: samples=757, success_rate=0.092
+    Trigger 1 misfired 70 times
+  Partition 1: samples=11, success_rate=0.000
+Epoch [9/50]loss_total: 0.143   loss_benign: 0.143  loss_projan_poison: 0.000loss_partition: 0.000loss_stateful_poison: 0.000top1_acc: 95.752    top5_acc: 99.891    time: 0:01:40       
+Epoch [9/50] Training Stats: loss_total: 0.143   loss_benign: 0.143  loss_projan_poison: 0.000loss_partition: 0.000loss_stateful_poison: 0.000top1_acc: 95.752    top5_acc: 99.891    
+Partition distribution: [0.990625 0.009375]
+Partitioner mapping accuracy (train sample): 48.75%
+Epoch [9/50] Results on the validation set: ==========
+ASR for Trigger 1: 9.96%
+ASR for Trigger 2: 10.07%
+OR of [Trigger Tgt] on all triggers:  10.11
+average score of [Trigger Org] on all triggers:  96.27
+[XAI] Exporting attribution maps to data/attack/image/mnist/net/state_prob/xai...
+[XAI] Saved 8 attribution sample(s) for epoch 9.
+Validate Confidence(1): 0.741
+Neuron Jaccard Idx(1): 0.913
+Validate Confidence(2): 0.693
+Neuron Jaccard Idx(2): 0.978
+Partitioner mapping accuracy: 48.96% over 10000 samples.
+Partitioner confusion matrix (rows=target partitions, cols=predictions):
+  Target partition 0: total=4926, distribution=[0.9850000143051147, 0.014999999664723873]
+  Target partition 1: total=5074, distribution=[0.9919999837875366, 0.00800000037997961]
+First batch predicted counts: [254, 2]
+First batch target counts:    [113, 143]
+Stateful trigger coverage (first batches):
+  Partition 0: samples=757, success_rate=0.092
+    Trigger 1 misfired 71 times
+  Partition 1: samples=11, success_rate=0.000
+Epoch [10/50]loss_total: 0.130   loss_benign: 0.130  loss_projan_poison: 0.000loss_partition: 0.000loss_stateful_poison: 0.000top1_acc: 96.152    top5_acc: 99.919    time: 0:01:42       
+Epoch [10/50] Training Stats: loss_total: 0.130   loss_benign: 0.130  loss_projan_poison: 0.000loss_partition: 0.000loss_stateful_poison: 0.000top1_acc: 96.152    top5_acc: 99.919    
+Partition distribution: [0.990625 0.009375]
+Partitioner mapping accuracy (train sample): 47.19%
+Epoch [10/50] Results on the validation set: ==========
+ASR for Trigger 1: 9.95%
+ASR for Trigger 2: 10.13%
+OR of [Trigger Tgt] on all triggers:  10.16
+average score of [Trigger Org] on all triggers:  96.29
+[XAI] Exporting attribution maps to data/attack/image/mnist/net/state_prob/xai...
+[XAI] Saved 8 attribution sample(s) for epoch 10.
+Validate Confidence(1): 0.746
+Neuron Jaccard Idx(1): 0.913
+Validate Confidence(2): 0.660
+Neuron Jaccard Idx(2): 0.979
+Partitioner mapping accuracy: 48.96% over 10000 samples.
+Partitioner confusion matrix (rows=target partitions, cols=predictions):
+  Target partition 0: total=4926, distribution=[0.9850000143051147, 0.014999999664723873]
+  Target partition 1: total=5074, distribution=[0.9919999837875366, 0.00800000037997961]
+First batch predicted counts: [254, 2]
+First batch target counts:    [113, 143]
+Stateful trigger coverage (first batches):
+  Partition 0: samples=757, success_rate=0.094
+    Trigger 1 misfired 71 times
+  Partition 1: samples=11, success_rate=0.000
+Epoch [11/50]loss_total: 0.125   loss_benign: 0.125  loss_projan_poison: 0.000loss_partition: 0.000loss_stateful_poison: 0.000top1_acc: 96.211    top5_acc: 99.915    time: 0:01:42       
+Epoch [11/50] Training Stats: loss_total: 0.125   loss_benign: 0.125  loss_projan_poison: 0.000loss_partition: 0.000loss_stateful_poison: 0.000top1_acc: 96.211    top5_acc: 99.915    
+Partition distribution: [0.990625 0.009375]
+Partitioner mapping accuracy (train sample): 53.44%
+Epoch [11/50] Results on the validation set: ==========
+ASR for Trigger 1: 9.91%
+ASR for Trigger 2: 10.03%
+OR of [Trigger Tgt] on all triggers:  10.04
+average score of [Trigger Org] on all triggers:  96.71
+[XAI] Exporting attribution maps to data/attack/image/mnist/net/state_prob/xai...
+[XAI] Saved 8 attribution sample(s) for epoch 11.
+Validate Confidence(1): 0.727
+Neuron Jaccard Idx(1): 0.912
+Validate Confidence(2): 0.680
+Neuron Jaccard Idx(2): 0.977
+Partitioner mapping accuracy: 48.96% over 10000 samples.
+Partitioner confusion matrix (rows=target partitions, cols=predictions):
+  Target partition 0: total=4926, distribution=[0.9850000143051147, 0.014999999664723873]
+  Target partition 1: total=5074, distribution=[0.9919999837875366, 0.00800000037997961]
+First batch predicted counts: [254, 2]
+First batch target counts:    [113, 143]
+Stateful trigger coverage (first batches):
+  Partition 0: samples=757, success_rate=0.094
+    Trigger 1 misfired 71 times
+  Partition 1: samples=11, success_rate=0.000
+Epoch [12/50]loss_total: 0.116   loss_benign: 0.116  loss_projan_poison: 0.000loss_partition: 0.000loss_stateful_poison: 0.000top1_acc: 96.519    top5_acc: 99.893    time: 0:01:40       
+Epoch [12/50] Training Stats: loss_total: 0.116   loss_benign: 0.116  loss_projan_poison: 0.000loss_partition: 0.000loss_stateful_poison: 0.000top1_acc: 96.519    top5_acc: 99.893    
+Partition distribution: [0.996875 0.003125]
+Partitioner mapping accuracy (train sample): 50.00%
+Epoch [12/50] Results on the validation set: ==========
+ASR for Trigger 1: 9.91%
+ASR for Trigger 2: 10.06%
+OR of [Trigger Tgt] on all triggers:  10.06
+average score of [Trigger Org] on all triggers:  97.04
+[XAI] Exporting attribution maps to data/attack/image/mnist/net/state_prob/xai...
+[XAI] Saved 8 attribution sample(s) for epoch 12.
+Validate Confidence(1): 0.818
+Neuron Jaccard Idx(1): 0.914
+Validate Confidence(2): 0.734
+Neuron Jaccard Idx(2): 0.976
+Partitioner mapping accuracy: 48.96% over 10000 samples.
+Partitioner confusion matrix (rows=target partitions, cols=predictions):
+  Target partition 0: total=4926, distribution=[0.9850000143051147, 0.014999999664723873]
+  Target partition 1: total=5074, distribution=[0.9919999837875366, 0.00800000037997961]
+First batch predicted counts: [254, 2]
+First batch target counts:    [113, 143]
+Stateful trigger coverage (first batches):
+  Partition 0: samples=757, success_rate=0.092
+    Trigger 1 misfired 70 times
+  Partition 1: samples=11, success_rate=0.000
+Epoch [13/50]loss_total: 0.111   loss_benign: 0.111  loss_projan_poison: 0.000loss_partition: 0.000loss_stateful_poison: 0.000top1_acc: 96.674    top5_acc: 99.946    time: 0:01:37       
+Epoch [13/50] Training Stats: loss_total: 0.111   loss_benign: 0.111  loss_projan_poison: 0.000loss_partition: 0.000loss_stateful_poison: 0.000top1_acc: 96.674    top5_acc: 99.946    
+Partition distribution: [0.98125 0.01875]
+Partitioner mapping accuracy (train sample): 46.25%
+Epoch [13/50] Results on the validation set: ==========
+ASR for Trigger 1: 9.87%
+ASR for Trigger 2: 9.91%
+OR of [Trigger Tgt] on all triggers:  9.92
+average score of [Trigger Org] on all triggers:  96.45
+[XAI] Exporting attribution maps to data/attack/image/mnist/net/state_prob/xai...
+[XAI] Saved 8 attribution sample(s) for epoch 13.
+Validate Confidence(1): 0.749
+Neuron Jaccard Idx(1): 0.914
+Validate Confidence(2): 0.704
+Neuron Jaccard Idx(2): 0.977
+Partitioner mapping accuracy: 48.96% over 10000 samples.
+Partitioner confusion matrix (rows=target partitions, cols=predictions):
+  Target partition 0: total=4926, distribution=[0.9850000143051147, 0.014999999664723873]
+  Target partition 1: total=5074, distribution=[0.9919999837875366, 0.00800000037997961]
+First batch predicted counts: [254, 2]
+First batch target counts:    [113, 143]
+Stateful trigger coverage (first batches):
+  Partition 0: samples=757, success_rate=0.092
+    Trigger 1 misfired 70 times
+  Partition 1: samples=11, success_rate=0.000
+Epoch [14/50]loss_total: 0.099   loss_benign: 0.099  loss_projan_poison: 0.000loss_partition: 0.000loss_stateful_poison: 0.000top1_acc: 97.057    top5_acc: 99.931    time: 0:01:39       
+Epoch [14/50] Training Stats: loss_total: 0.099   loss_benign: 0.099  loss_projan_poison: 0.000loss_partition: 0.000loss_stateful_poison: 0.000top1_acc: 97.057    top5_acc: 99.931    
+Partition distribution: [0.98125 0.01875]
+Partitioner mapping accuracy (train sample): 42.50%
+Epoch [14/50] Results on the validation set: ==========
+ASR for Trigger 1: 9.89%
+ASR for Trigger 2: 9.99%
+OR of [Trigger Tgt] on all triggers:  10.0
+average score of [Trigger Org] on all triggers:  97.095
+[XAI] Exporting attribution maps to data/attack/image/mnist/net/state_prob/xai...
+[XAI] Saved 8 attribution sample(s) for epoch 14.
+Validate Confidence(1): 0.800
+Neuron Jaccard Idx(1): 0.914
+Validate Confidence(2): 0.724
+Neuron Jaccard Idx(2): 0.976
+Partitioner mapping accuracy: 48.96% over 10000 samples.
+Partitioner confusion matrix (rows=target partitions, cols=predictions):
+  Target partition 0: total=4926, distribution=[0.9850000143051147, 0.014999999664723873]
+  Target partition 1: total=5074, distribution=[0.9919999837875366, 0.00800000037997961]
+First batch predicted counts: [254, 2]
+First batch target counts:    [113, 143]
+Stateful trigger coverage (first batches):
+  Partition 0: samples=757, success_rate=0.092
+    Trigger 1 misfired 70 times
+  Partition 1: samples=11, success_rate=0.000
+Epoch [15/50]loss_total: 0.095   loss_benign: 0.095  loss_projan_poison: 0.000loss_partition: 0.000loss_stateful_poison: 0.000top1_acc: 97.196    top5_acc: 99.931    time: 0:01:39       
+Epoch [15/50] Training Stats: loss_total: 0.095   loss_benign: 0.095  loss_projan_poison: 0.000loss_partition: 0.000loss_stateful_poison: 0.000top1_acc: 97.196    top5_acc: 99.931    
+Partition distribution: [0.99375 0.00625]
+Partitioner mapping accuracy (train sample): 48.44%
+Epoch [15/50] Results on the validation set: ==========
+ASR for Trigger 1: 9.88%
+ASR for Trigger 2: 9.99%
+OR of [Trigger Tgt] on all triggers:  10.0
+average score of [Trigger Org] on all triggers:  97.205
+[XAI] Exporting attribution maps to data/attack/image/mnist/net/state_prob/xai...
+[XAI] Saved 8 attribution sample(s) for epoch 15.
+Validate Confidence(1): 0.778
+Neuron Jaccard Idx(1): 0.913
+Validate Confidence(2): 0.727
+Neuron Jaccard Idx(2): 0.974
+Partitioner mapping accuracy: 48.96% over 10000 samples.
+Partitioner confusion matrix (rows=target partitions, cols=predictions):
+  Target partition 0: total=4926, distribution=[0.9850000143051147, 0.014999999664723873]
+  Target partition 1: total=5074, distribution=[0.9919999837875366, 0.00800000037997961]
+First batch predicted counts: [254, 2]
+First batch target counts:    [113, 143]
+Stateful trigger coverage (first batches):
+  Partition 0: samples=757, success_rate=0.092
+    Trigger 1 misfired 70 times
+  Partition 1: samples=11, success_rate=0.000
+Epoch [16/50]loss_total: 0.091   loss_benign: 0.091  loss_projan_poison: 0.000loss_partition: 0.000loss_stateful_poison: 0.000top1_acc: 97.294    top5_acc: 99.954    time: 0:01:38       
+Epoch [16/50] Training Stats: loss_total: 0.091   loss_benign: 0.091  loss_projan_poison: 0.000loss_partition: 0.000loss_stateful_poison: 0.000top1_acc: 97.294    top5_acc: 99.954    
+Partition distribution: [0.98125 0.01875]
+Partitioner mapping accuracy (train sample): 49.06%
+Epoch [16/50] Results on the validation set: ==========
+ASR for Trigger 1: 9.89%
+ASR for Trigger 2: 9.93%
+OR of [Trigger Tgt] on all triggers:  9.95
+average score of [Trigger Org] on all triggers:  97.43
+[XAI] Exporting attribution maps to data/attack/image/mnist/net/state_prob/xai...
+[XAI] Saved 8 attribution sample(s) for epoch 16.
+Validate Confidence(1): 0.699
+Neuron Jaccard Idx(1): 0.913
+Validate Confidence(2): 0.675
+Neuron Jaccard Idx(2): 0.973
+Partitioner mapping accuracy: 48.96% over 10000 samples.
+Partitioner confusion matrix (rows=target partitions, cols=predictions):
+  Target partition 0: total=4926, distribution=[0.9850000143051147, 0.014999999664723873]
+  Target partition 1: total=5074, distribution=[0.9919999837875366, 0.00800000037997961]
+First batch predicted counts: [254, 2]
+First batch target counts:    [113, 143]
+Stateful trigger coverage (first batches):
+  Partition 0: samples=757, success_rate=0.092
+    Trigger 1 misfired 70 times
+  Partition 1: samples=11, success_rate=0.000
+Epoch [17/50]loss_total: 0.085   loss_benign: 0.085  loss_projan_poison: 0.000loss_partition: 0.000loss_stateful_poison: 0.000top1_acc: 97.424    top5_acc: 99.969    time: 0:01:42       
+Epoch [17/50] Training Stats: loss_total: 0.085   loss_benign: 0.085  loss_projan_poison: 0.000loss_partition: 0.000loss_stateful_poison: 0.000top1_acc: 97.424    top5_acc: 99.969    
+Partition distribution: [0.9875 0.0125]
+Partitioner mapping accuracy (train sample): 51.56%
+Epoch [17/50] Results on the validation set: ==========
+ASR for Trigger 1: 9.87%
+ASR for Trigger 2: 9.90%
+OR of [Trigger Tgt] on all triggers:  9.92
+average score of [Trigger Org] on all triggers:  97.67
+[XAI] Exporting attribution maps to data/attack/image/mnist/net/state_prob/xai...
+[XAI] Saved 8 attribution sample(s) for epoch 17.
+Validate Confidence(1): 0.762
+Neuron Jaccard Idx(1): 0.914
+Validate Confidence(2): 0.728
+Neuron Jaccard Idx(2): 0.973
+Partitioner mapping accuracy: 48.96% over 10000 samples.
+Partitioner confusion matrix (rows=target partitions, cols=predictions):
+  Target partition 0: total=4926, distribution=[0.9850000143051147, 0.014999999664723873]
+  Target partition 1: total=5074, distribution=[0.9919999837875366, 0.00800000037997961]
+First batch predicted counts: [254, 2]
+First batch target counts:    [113, 143]
+Stateful trigger coverage (first batches):
+  Partition 0: samples=757, success_rate=0.092
+    Trigger 1 misfired 70 times
+  Partition 1: samples=11, success_rate=0.000
+Epoch [18/50]loss_total: 0.083   loss_benign: 0.083  loss_projan_poison: 0.000loss_partition: 0.000loss_stateful_poison: 0.000top1_acc: 97.543    top5_acc: 99.948    time: 0:01:38       
+Epoch [18/50] Training Stats: loss_total: 0.083   loss_benign: 0.083  loss_projan_poison: 0.000loss_partition: 0.000loss_stateful_poison: 0.000top1_acc: 97.543    top5_acc: 99.948    
+Partition distribution: [0.978125 0.021875]
+Partitioner mapping accuracy (train sample): 45.00%
+Epoch [18/50] Results on the validation set: ==========
+ASR for Trigger 1: 9.86%
+ASR for Trigger 2: 9.91%
+OR of [Trigger Tgt] on all triggers:  9.93
+average score of [Trigger Org] on all triggers:  97.455
+[XAI] Exporting attribution maps to data/attack/image/mnist/net/state_prob/xai...
+[XAI] Saved 8 attribution sample(s) for epoch 18.
+Validate Confidence(1): 0.745
+Neuron Jaccard Idx(1): 0.914
+Validate Confidence(2): 0.704
+Neuron Jaccard Idx(2): 0.971
+Partitioner mapping accuracy: 48.96% over 10000 samples.
+Partitioner confusion matrix (rows=target partitions, cols=predictions):
+  Target partition 0: total=4926, distribution=[0.9850000143051147, 0.014999999664723873]
+  Target partition 1: total=5074, distribution=[0.9919999837875366, 0.00800000037997961]
+First batch predicted counts: [254, 2]
+First batch target counts:    [113, 143]
+Stateful trigger coverage (first batches):
+  Partition 0: samples=757, success_rate=0.092
+    Trigger 1 misfired 70 times
+  Partition 1: samples=11, success_rate=0.000
+Epoch [19/50]loss_total: 0.078   loss_benign: 0.078  loss_projan_poison: 0.000loss_partition: 0.000loss_stateful_poison: 0.000top1_acc: 97.689    top5_acc: 99.961    time: 0:01:39       
+Epoch [19/50] Training Stats: loss_total: 0.078   loss_benign: 0.078  loss_projan_poison: 0.000loss_partition: 0.000loss_stateful_poison: 0.000top1_acc: 97.689    top5_acc: 99.961    
+Partition distribution: [0.990625 0.009375]
+Partitioner mapping accuracy (train sample): 55.94%
+Epoch [19/50] Results on the validation set: ==========
+ASR for Trigger 1: 9.88%
+ASR for Trigger 2: 9.95%
+OR of [Trigger Tgt] on all triggers:  9.97
+average score of [Trigger Org] on all triggers:  97.91
+[XAI] Exporting attribution maps to data/attack/image/mnist/net/state_prob/xai...
+[XAI] Saved 8 attribution sample(s) for epoch 19.
+Validate Confidence(1): 0.727
+Neuron Jaccard Idx(1): 0.914
+Validate Confidence(2): 0.699
+Neuron Jaccard Idx(2): 0.970
+Partitioner mapping accuracy: 48.96% over 10000 samples.
+Partitioner confusion matrix (rows=target partitions, cols=predictions):
+  Target partition 0: total=4926, distribution=[0.9850000143051147, 0.014999999664723873]
+  Target partition 1: total=5074, distribution=[0.9919999837875366, 0.00800000037997961]
+First batch predicted counts: [254, 2]
+First batch target counts:    [113, 143]
+Stateful trigger coverage (first batches):
+  Partition 0: samples=757, success_rate=0.092
+    Trigger 1 misfired 70 times
+  Partition 1: samples=11, success_rate=0.000
+Epoch [20/50]loss_total: 0.073   loss_benign: 0.073  loss_projan_poison: 0.000loss_partition: 0.000loss_stateful_poison: 0.000top1_acc: 97.778    top5_acc: 99.970    time: 0:01:38       
+Epoch [20/50] Training Stats: loss_total: 0.073   loss_benign: 0.073  loss_projan_poison: 0.000loss_partition: 0.000loss_stateful_poison: 0.000top1_acc: 97.778    top5_acc: 99.970    
+Partition distribution: [0.978125 0.021875]
+Partitioner mapping accuracy (train sample): 43.75%
+Epoch [20/50] Results on the validation set: ==========
+ASR for Trigger 1: 9.83%
+ASR for Trigger 2: 9.88%
+OR of [Trigger Tgt] on all triggers:  9.9
+average score of [Trigger Org] on all triggers:  97.645
+[XAI] Exporting attribution maps to data/attack/image/mnist/net/state_prob/xai...
+[XAI] Saved 8 attribution sample(s) for epoch 20.
+Validate Confidence(1): 0.764
+Neuron Jaccard Idx(1): 0.913
+Validate Confidence(2): 0.705
+Neuron Jaccard Idx(2): 0.970
+Partitioner mapping accuracy: 48.96% over 10000 samples.
+Partitioner confusion matrix (rows=target partitions, cols=predictions):
+  Target partition 0: total=4926, distribution=[0.9850000143051147, 0.014999999664723873]
+  Target partition 1: total=5074, distribution=[0.9919999837875366, 0.00800000037997961]
+First batch predicted counts: [254, 2]
+First batch target counts:    [113, 143]
+Stateful trigger coverage (first batches):
+  Partition 0: samples=757, success_rate=0.092
+    Trigger 1 misfired 70 times
+  Partition 1: samples=11, success_rate=0.000
+Epoch [21/50]loss_total: 0.074   loss_benign: 0.074  loss_projan_poison: 0.000loss_partition: 0.000loss_stateful_poison: 0.000top1_acc: 97.798    top5_acc: 99.970    time: 0:01:49       
+Epoch [21/50] Training Stats: loss_total: 0.074   loss_benign: 0.074  loss_projan_poison: 0.000loss_partition: 0.000loss_stateful_poison: 0.000top1_acc: 97.798    top5_acc: 99.970    
+Partition distribution: [0.99375 0.00625]
+Partitioner mapping accuracy (train sample): 48.44%
+Epoch [21/50] Results on the validation set: ==========
+ASR for Trigger 1: 9.86%
+ASR for Trigger 2: 9.90%
+OR of [Trigger Tgt] on all triggers:  9.91
+average score of [Trigger Org] on all triggers:  97.83
+[XAI] Exporting attribution maps to data/attack/image/mnist/net/state_prob/xai...
+[XAI] Saved 8 attribution sample(s) for epoch 21.
+Validate Confidence(1): 0.713
+Neuron Jaccard Idx(1): 0.915
+Validate Confidence(2): 0.668
+Neuron Jaccard Idx(2): 0.968
+Partitioner mapping accuracy: 48.96% over 10000 samples.
+Partitioner confusion matrix (rows=target partitions, cols=predictions):
+  Target partition 0: total=4926, distribution=[0.9850000143051147, 0.014999999664723873]
+  Target partition 1: total=5074, distribution=[0.9919999837875366, 0.00800000037997961]
+First batch predicted counts: [254, 2]
+First batch target counts:    [113, 143]
+Stateful trigger coverage (first batches):
+  Partition 0: samples=757, success_rate=0.092
+    Trigger 1 misfired 70 times
+  Partition 1: samples=11, success_rate=0.000
+Epoch [22/50]loss_total: 0.068   loss_benign: 0.068  loss_projan_poison: 0.000loss_partition: 0.000loss_stateful_poison: 0.000top1_acc: 97.935    top5_acc: 99.978    time: 0:01:39       
+Epoch [22/50] Training Stats: loss_total: 0.068   loss_benign: 0.068  loss_projan_poison: 0.000loss_partition: 0.000loss_stateful_poison: 0.000top1_acc: 97.935    top5_acc: 99.978    
+Partition distribution: [0.996875 0.003125]
+Partitioner mapping accuracy (train sample): 49.06%
+Epoch [22/50] Results on the validation set: ==========
+ASR for Trigger 1: 9.92%
+ASR for Trigger 2: 10.01%
+OR of [Trigger Tgt] on all triggers:  10.02
+average score of [Trigger Org] on all triggers:  97.825
+[XAI] Exporting attribution maps to data/attack/image/mnist/net/state_prob/xai...
+[XAI] Saved 8 attribution sample(s) for epoch 22.
+Validate Confidence(1): 0.734
+Neuron Jaccard Idx(1): 0.914
+Validate Confidence(2): 0.696
+Neuron Jaccard Idx(2): 0.968
+Partitioner mapping accuracy: 48.96% over 10000 samples.
+Partitioner confusion matrix (rows=target partitions, cols=predictions):
+  Target partition 0: total=4926, distribution=[0.9850000143051147, 0.014999999664723873]
+  Target partition 1: total=5074, distribution=[0.9919999837875366, 0.00800000037997961]
+First batch predicted counts: [254, 2]
+First batch target counts:    [113, 143]
+Stateful trigger coverage (first batches):
+  Partition 0: samples=757, success_rate=0.092
+    Trigger 1 misfired 70 times
+  Partition 1: samples=11, success_rate=0.000
+Epoch [23/50]loss_total: 0.064   loss_benign: 0.064  loss_projan_poison: 0.000loss_partition: 0.000loss_stateful_poison: 0.000top1_acc: 98.035    top5_acc: 99.974    time: 0:01:39       
+Epoch [23/50] Training Stats: loss_total: 0.064   loss_benign: 0.064  loss_projan_poison: 0.000loss_partition: 0.000loss_stateful_poison: 0.000top1_acc: 98.035    top5_acc: 99.974    
+Partition distribution: [0.984375 0.015625]
+Partitioner mapping accuracy (train sample): 48.12%
+Epoch [23/50] Results on the validation set: ==========
+ASR for Trigger 1: 9.85%
+ASR for Trigger 2: 9.92%
+OR of [Trigger Tgt] on all triggers:  9.94
+average score of [Trigger Org] on all triggers:  97.805
+[XAI] Exporting attribution maps to data/attack/image/mnist/net/state_prob/xai...
+[XAI] Saved 8 attribution sample(s) for epoch 23.
+Validate Confidence(1): 0.769
+Neuron Jaccard Idx(1): 0.914
+Validate Confidence(2): 0.736
+Neuron Jaccard Idx(2): 0.970
+Partitioner mapping accuracy: 48.96% over 10000 samples.
+Partitioner confusion matrix (rows=target partitions, cols=predictions):
+  Target partition 0: total=4926, distribution=[0.9850000143051147, 0.014999999664723873]
+  Target partition 1: total=5074, distribution=[0.9919999837875366, 0.00800000037997961]
+First batch predicted counts: [254, 2]
+First batch target counts:    [113, 143]
+Stateful trigger coverage (first batches):
+  Partition 0: samples=757, success_rate=0.092
+    Trigger 1 misfired 70 times
+  Partition 1: samples=11, success_rate=0.000
+Epoch [24/50]loss_total: 0.064   loss_benign: 0.064  loss_projan_poison: 0.000loss_partition: 0.000loss_stateful_poison: 0.000top1_acc: 98.006    top5_acc: 99.976    time: 0:01:38       
+Epoch [24/50] Training Stats: loss_total: 0.064   loss_benign: 0.064  loss_projan_poison: 0.000loss_partition: 0.000loss_stateful_poison: 0.000top1_acc: 98.006    top5_acc: 99.976    
+Partition distribution: [0.984375 0.015625]
+Partitioner mapping accuracy (train sample): 49.06%
+Epoch [24/50] Results on the validation set: ==========
+ASR for Trigger 1: 9.90%
+ASR for Trigger 2: 9.97%
+OR of [Trigger Tgt] on all triggers:  9.97
+average score of [Trigger Org] on all triggers:  98.005
+[XAI] Exporting attribution maps to data/attack/image/mnist/net/state_prob/xai...
+[XAI] Saved 8 attribution sample(s) for epoch 24.
+Validate Confidence(1): 0.756
+Neuron Jaccard Idx(1): 0.914
+Validate Confidence(2): 0.758
+Neuron Jaccard Idx(2): 0.970
+Partitioner mapping accuracy: 48.96% over 10000 samples.
+Partitioner confusion matrix (rows=target partitions, cols=predictions):
+  Target partition 0: total=4926, distribution=[0.9850000143051147, 0.014999999664723873]
+  Target partition 1: total=5074, distribution=[0.9919999837875366, 0.00800000037997961]
+First batch predicted counts: [254, 2]
+First batch target counts:    [113, 143]
+Stateful trigger coverage (first batches):
+  Partition 0: samples=757, success_rate=0.092
+    Trigger 1 misfired 70 times
+  Partition 1: samples=11, success_rate=0.000
+Epoch [25/50]loss_total: 0.063   loss_benign: 0.063  loss_projan_poison: 0.000loss_partition: 0.000loss_stateful_poison: 0.000top1_acc: 98.083    top5_acc: 99.965    time: 0:01:38       
+Epoch [25/50] Training Stats: loss_total: 0.063   loss_benign: 0.063  loss_projan_poison: 0.000loss_partition: 0.000loss_stateful_poison: 0.000top1_acc: 98.083    top5_acc: 99.965    
+Partition distribution: [0.9875 0.0125]
+Partitioner mapping accuracy (train sample): 50.00%
+Epoch [25/50] Results on the validation set: ==========
+ASR for Trigger 1: 9.87%
+ASR for Trigger 2: 9.91%
+OR of [Trigger Tgt] on all triggers:  9.92
+average score of [Trigger Org] on all triggers:  98.045
+[XAI] Exporting attribution maps to data/attack/image/mnist/net/state_prob/xai...
+[XAI] Saved 8 attribution sample(s) for epoch 25.
+Validate Confidence(1): 0.761
+Neuron Jaccard Idx(1): 0.915
+Validate Confidence(2): 0.768
+Neuron Jaccard Idx(2): 0.968
+Partitioner mapping accuracy: 48.96% over 10000 samples.
+Partitioner confusion matrix (rows=target partitions, cols=predictions):
+  Target partition 0: total=4926, distribution=[0.9850000143051147, 0.014999999664723873]
+  Target partition 1: total=5074, distribution=[0.9919999837875366, 0.00800000037997961]
+First batch predicted counts: [254, 2]
+First batch target counts:    [113, 143]
+Stateful trigger coverage (first batches):
+  Partition 0: samples=757, success_rate=0.092
+    Trigger 1 misfired 70 times
+  Partition 1: samples=11, success_rate=0.000
+Epoch [26/50]loss_total: 0.060   loss_benign: 0.060  loss_projan_poison: 0.000loss_partition: 0.000loss_stateful_poison: 0.000top1_acc: 98.117    top5_acc: 99.980    time: 0:01:39       
+Epoch [26/50] Training Stats: loss_total: 0.060   loss_benign: 0.060  loss_projan_poison: 0.000loss_partition: 0.000loss_stateful_poison: 0.000top1_acc: 98.117    top5_acc: 99.980    
+Partition distribution: [0.996875 0.003125]
+Partitioner mapping accuracy (train sample): 44.69%
+Epoch [26/50] Results on the validation set: ==========
+ASR for Trigger 1: 9.88%
+ASR for Trigger 2: 9.96%
+OR of [Trigger Tgt] on all triggers:  9.98
+average score of [Trigger Org] on all triggers:  97.915
+[XAI] Exporting attribution maps to data/attack/image/mnist/net/state_prob/xai...
+[XAI] Saved 8 attribution sample(s) for epoch 26.
+Validate Confidence(1): 0.797
+Neuron Jaccard Idx(1): 0.916
+Validate Confidence(2): 0.752
+Neuron Jaccard Idx(2): 0.969
+Partitioner mapping accuracy: 48.96% over 10000 samples.
+Partitioner confusion matrix (rows=target partitions, cols=predictions):
+  Target partition 0: total=4926, distribution=[0.9850000143051147, 0.014999999664723873]
+  Target partition 1: total=5074, distribution=[0.9919999837875366, 0.00800000037997961]
+First batch predicted counts: [254, 2]
+First batch target counts:    [113, 143]
+Stateful trigger coverage (first batches):
+  Partition 0: samples=757, success_rate=0.092
+    Trigger 1 misfired 70 times
+  Partition 1: samples=11, success_rate=0.000
+Epoch [27/50]loss_total: 0.057   loss_benign: 0.057  loss_projan_poison: 0.000loss_partition: 0.000loss_stateful_poison: 0.000top1_acc: 98.226    top5_acc: 99.983    time: 0:01:38       
+Epoch [27/50] Training Stats: loss_total: 0.057   loss_benign: 0.057  loss_projan_poison: 0.000loss_partition: 0.000loss_stateful_poison: 0.000top1_acc: 98.226    top5_acc: 99.983    
+Partition distribution: [0.990625 0.009375]
+Partitioner mapping accuracy (train sample): 49.38%
+Epoch [27/50] Results on the validation set: ==========
+ASR for Trigger 1: 9.86%
+ASR for Trigger 2: 9.97%
+OR of [Trigger Tgt] on all triggers:  9.97
+average score of [Trigger Org] on all triggers:  98.115
+[XAI] Exporting attribution maps to data/attack/image/mnist/net/state_prob/xai...
+[XAI] Saved 8 attribution sample(s) for epoch 27.
+Validate Confidence(1): 0.855
+Neuron Jaccard Idx(1): 0.914
+Validate Confidence(2): 0.747
+Neuron Jaccard Idx(2): 0.966
+Partitioner mapping accuracy: 48.96% over 10000 samples.
+Partitioner confusion matrix (rows=target partitions, cols=predictions):
+  Target partition 0: total=4926, distribution=[0.9850000143051147, 0.014999999664723873]
+  Target partition 1: total=5074, distribution=[0.9919999837875366, 0.00800000037997961]
+First batch predicted counts: [254, 2]
+First batch target counts:    [113, 143]
+Stateful trigger coverage (first batches):
+  Partition 0: samples=757, success_rate=0.092
+    Trigger 1 misfired 70 times
+  Partition 1: samples=11, success_rate=0.000
+Epoch [28/50]loss_total: 0.057   loss_benign: 0.057  loss_projan_poison: 0.000loss_partition: 0.000loss_stateful_poison: 0.000top1_acc: 98.274    top5_acc: 99.976    time: 0:01:39       
+Epoch [28/50] Training Stats: loss_total: 0.057   loss_benign: 0.057  loss_projan_poison: 0.000loss_partition: 0.000loss_stateful_poison: 0.000top1_acc: 98.274    top5_acc: 99.976    
+Partition distribution: [0.984375 0.015625]
+Partitioner mapping accuracy (train sample): 49.38%
+Epoch [28/50] Results on the validation set: ==========
+ASR for Trigger 1: 9.92%
+ASR for Trigger 2: 9.98%
+OR of [Trigger Tgt] on all triggers:  9.99
+average score of [Trigger Org] on all triggers:  97.975
+[XAI] Exporting attribution maps to data/attack/image/mnist/net/state_prob/xai...
+[XAI] Saved 8 attribution sample(s) for epoch 28.
+Validate Confidence(1): 0.779
+Neuron Jaccard Idx(1): 0.915
+Validate Confidence(2): 0.748
+Neuron Jaccard Idx(2): 0.965
+Partitioner mapping accuracy: 48.96% over 10000 samples.
+Partitioner confusion matrix (rows=target partitions, cols=predictions):
+  Target partition 0: total=4926, distribution=[0.9850000143051147, 0.014999999664723873]
+  Target partition 1: total=5074, distribution=[0.9919999837875366, 0.00800000037997961]
+First batch predicted counts: [254, 2]
+First batch target counts:    [113, 143]
+Stateful trigger coverage (first batches):
+  Partition 0: samples=757, success_rate=0.094
+    Trigger 1 misfired 70 times
+  Partition 1: samples=11, success_rate=0.000
+Epoch [29/50]loss_total: 0.056   loss_benign: 0.056  loss_projan_poison: 0.000loss_partition: 0.000loss_stateful_poison: 0.000top1_acc: 98.265    top5_acc: 99.985    time: 0:01:39       
+Epoch [29/50] Training Stats: loss_total: 0.056   loss_benign: 0.056  loss_projan_poison: 0.000loss_partition: 0.000loss_stateful_poison: 0.000top1_acc: 98.265    top5_acc: 99.985    
+Partition distribution: [0.9875 0.0125]
+Partitioner mapping accuracy (train sample): 49.06%
+Epoch [29/50] Results on the validation set: ==========
+ASR for Trigger 1: 9.90%
+ASR for Trigger 2: 9.96%
+OR of [Trigger Tgt] on all triggers:  9.96
+average score of [Trigger Org] on all triggers:  98.245
+[XAI] Exporting attribution maps to data/attack/image/mnist/net/state_prob/xai...
+[XAI] Saved 8 attribution sample(s) for epoch 29.
+Validate Confidence(1): 0.769
+Neuron Jaccard Idx(1): 0.917
+Validate Confidence(2): 0.781
+Neuron Jaccard Idx(2): 0.965
+Partitioner mapping accuracy: 48.96% over 10000 samples.
+Partitioner confusion matrix (rows=target partitions, cols=predictions):
+  Target partition 0: total=4926, distribution=[0.9850000143051147, 0.014999999664723873]
+  Target partition 1: total=5074, distribution=[0.9919999837875366, 0.00800000037997961]
+First batch predicted counts: [254, 2]
+First batch target counts:    [113, 143]
+Stateful trigger coverage (first batches):
+  Partition 0: samples=757, success_rate=0.092
+    Trigger 1 misfired 70 times
+  Partition 1: samples=11, success_rate=0.000
+Epoch [30/50]loss_total: 0.054   loss_benign: 0.054  loss_projan_poison: 0.000loss_partition: 0.000loss_stateful_poison: 0.000top1_acc: 98.357    top5_acc: 99.981    time: 0:01:45       
+Epoch [30/50] Training Stats: loss_total: 0.054   loss_benign: 0.054  loss_projan_poison: 0.000loss_partition: 0.000loss_stateful_poison: 0.000top1_acc: 98.357    top5_acc: 99.981    
+Partition distribution: [0.975 0.025]
+Partitioner mapping accuracy (train sample): 48.75%
+Epoch [30/50] Results on the validation set: ==========
+ASR for Trigger 1: 9.88%
+ASR for Trigger 2: 9.91%
+OR of [Trigger Tgt] on all triggers:  9.93
+average score of [Trigger Org] on all triggers:  97.75
+[XAI] Exporting attribution maps to data/attack/image/mnist/net/state_prob/xai...
+[XAI] Saved 8 attribution sample(s) for epoch 30.
+Validate Confidence(1): 0.792
+Neuron Jaccard Idx(1): 0.916
+Validate Confidence(2): 0.742
+Neuron Jaccard Idx(2): 0.967
+Partitioner mapping accuracy: 48.96% over 10000 samples.
+Partitioner confusion matrix (rows=target partitions, cols=predictions):
+  Target partition 0: total=4926, distribution=[0.9850000143051147, 0.014999999664723873]
+  Target partition 1: total=5074, distribution=[0.9919999837875366, 0.00800000037997961]
+First batch predicted counts: [254, 2]
+First batch target counts:    [113, 143]
+Stateful trigger coverage (first batches):
+  Partition 0: samples=757, success_rate=0.094
+    Trigger 1 misfired 70 times
+  Partition 1: samples=11, success_rate=0.000
+Epoch [31/50]loss_total: 0.052   loss_benign: 0.052  loss_projan_poison: 0.000loss_partition: 0.000loss_stateful_poison: 0.000top1_acc: 98.331    top5_acc: 99.989    time: 0:01:39       
+Epoch [31/50] Training Stats: loss_total: 0.052   loss_benign: 0.052  loss_projan_poison: 0.000loss_partition: 0.000loss_stateful_poison: 0.000top1_acc: 98.331    top5_acc: 99.989    
+Partition distribution: [0.984375 0.015625]
+Partitioner mapping accuracy (train sample): 48.12%
+Epoch [31/50] Results on the validation set: ==========
+ASR for Trigger 1: 9.86%
+ASR for Trigger 2: 9.88%
+OR of [Trigger Tgt] on all triggers:  9.9
+average score of [Trigger Org] on all triggers:  98.325
+[XAI] Exporting attribution maps to data/attack/image/mnist/net/state_prob/xai...
+[XAI] Saved 8 attribution sample(s) for epoch 31.
+Validate Confidence(1): 0.769
+Neuron Jaccard Idx(1): 0.917
+Validate Confidence(2): 0.803
+Neuron Jaccard Idx(2): 0.965
+Partitioner mapping accuracy: 48.96% over 10000 samples.
+Partitioner confusion matrix (rows=target partitions, cols=predictions):
+  Target partition 0: total=4926, distribution=[0.9850000143051147, 0.014999999664723873]
+  Target partition 1: total=5074, distribution=[0.9919999837875366, 0.00800000037997961]
+First batch predicted counts: [254, 2]
+First batch target counts:    [113, 143]
+Stateful trigger coverage (first batches):
+  Partition 0: samples=757, success_rate=0.092
+    Trigger 1 misfired 70 times
+  Partition 1: samples=11, success_rate=0.000
+Epoch [32/50]loss_total: 0.052   loss_benign: 0.052  loss_projan_poison: 0.000loss_partition: 0.000loss_stateful_poison: 0.000top1_acc: 98.381    top5_acc: 99.985    time: 0:01:39       
+Epoch [32/50] Training Stats: loss_total: 0.052   loss_benign: 0.052  loss_projan_poison: 0.000loss_partition: 0.000loss_stateful_poison: 0.000top1_acc: 98.381    top5_acc: 99.985    
+Partition distribution: [0.9875 0.0125]
+Partitioner mapping accuracy (train sample): 47.19%
+Epoch [32/50] Results on the validation set: ==========
+ASR for Trigger 1: 9.91%
+ASR for Trigger 2: 9.98%
+OR of [Trigger Tgt] on all triggers:  9.98
+average score of [Trigger Org] on all triggers:  98.095
+[XAI] Exporting attribution maps to data/attack/image/mnist/net/state_prob/xai...
+[XAI] Saved 8 attribution sample(s) for epoch 32.
+Validate Confidence(1): 0.765
+Neuron Jaccard Idx(1): 0.917
+Validate Confidence(2): 0.766
+Neuron Jaccard Idx(2): 0.965
+Partitioner mapping accuracy: 48.96% over 10000 samples.
+Partitioner confusion matrix (rows=target partitions, cols=predictions):
+  Target partition 0: total=4926, distribution=[0.9850000143051147, 0.014999999664723873]
+  Target partition 1: total=5074, distribution=[0.9919999837875366, 0.00800000037997961]
+First batch predicted counts: [254, 2]
+First batch target counts:    [113, 143]
+Stateful trigger coverage (first batches):
+  Partition 0: samples=757, success_rate=0.092
+    Trigger 1 misfired 70 times
+  Partition 1: samples=11, success_rate=0.000
+Epoch [33/50]loss_total: 0.047   loss_benign: 0.047  loss_projan_poison: 0.000loss_partition: 0.000loss_stateful_poison: 0.000top1_acc: 98.569    top5_acc: 99.983    time: 0:01:38       
+Epoch [33/50] Training Stats: loss_total: 0.047   loss_benign: 0.047  loss_projan_poison: 0.000loss_partition: 0.000loss_stateful_poison: 0.000top1_acc: 98.569    top5_acc: 99.983    
+Partition distribution: [0.990625 0.009375]
+Partitioner mapping accuracy (train sample): 50.31%
+Epoch [33/50] Results on the validation set: ==========
+ASR for Trigger 1: 9.88%
+ASR for Trigger 2: 9.90%
+OR of [Trigger Tgt] on all triggers:  9.91
+average score of [Trigger Org] on all triggers:  97.945
+[XAI] Exporting attribution maps to data/attack/image/mnist/net/state_prob/xai...
+[XAI] Saved 8 attribution sample(s) for epoch 33.
+Validate Confidence(1): 0.772
+Neuron Jaccard Idx(1): 0.914
+Validate Confidence(2): 0.739
+Neuron Jaccard Idx(2): 0.963
+Partitioner mapping accuracy: 48.96% over 10000 samples.
+Partitioner confusion matrix (rows=target partitions, cols=predictions):
+  Target partition 0: total=4926, distribution=[0.9850000143051147, 0.014999999664723873]
+  Target partition 1: total=5074, distribution=[0.9919999837875366, 0.00800000037997961]
+First batch predicted counts: [254, 2]
+First batch target counts:    [113, 143]
+Stateful trigger coverage (first batches):
+  Partition 0: samples=757, success_rate=0.092
+    Trigger 1 misfired 70 times
+  Partition 1: samples=11, success_rate=0.000
+Epoch [34/50]loss_total: 0.048   loss_benign: 0.048  loss_projan_poison: 0.000loss_partition: 0.000loss_stateful_poison: 0.000top1_acc: 98.496    top5_acc: 99.993    time: 0:01:39       
+Epoch [34/50] Training Stats: loss_total: 0.048   loss_benign: 0.048  loss_projan_poison: 0.000loss_partition: 0.000loss_stateful_poison: 0.000top1_acc: 98.496    top5_acc: 99.993    
+Partition distribution: [0.99375 0.00625]
+Partitioner mapping accuracy (train sample): 52.50%
+Epoch [34/50] Results on the validation set: ==========
+ASR for Trigger 1: 9.88%
+ASR for Trigger 2: 9.93%
+OR of [Trigger Tgt] on all triggers:  9.93
+average score of [Trigger Org] on all triggers:  98.22
+[XAI] Exporting attribution maps to data/attack/image/mnist/net/state_prob/xai...
+[XAI] Saved 8 attribution sample(s) for epoch 34.
+Validate Confidence(1): 0.754
+Neuron Jaccard Idx(1): 0.915
+Validate Confidence(2): 0.748
+Neuron Jaccard Idx(2): 0.959
+Partitioner mapping accuracy: 48.96% over 10000 samples.
+Partitioner confusion matrix (rows=target partitions, cols=predictions):
+  Target partition 0: total=4926, distribution=[0.9850000143051147, 0.014999999664723873]
+  Target partition 1: total=5074, distribution=[0.9919999837875366, 0.00800000037997961]
+First batch predicted counts: [254, 2]
+First batch target counts:    [113, 143]
+Stateful trigger coverage (first batches):
+  Partition 0: samples=757, success_rate=0.092
+    Trigger 1 misfired 70 times
+  Partition 1: samples=11, success_rate=0.000
+Epoch [35/50]loss_total: 0.048   loss_benign: 0.048  loss_projan_poison: 0.000loss_partition: 0.000loss_stateful_poison: 0.000top1_acc: 98.576    top5_acc: 99.983    time: 0:01:41       
+Epoch [35/50] Training Stats: loss_total: 0.048   loss_benign: 0.048  loss_projan_poison: 0.000loss_partition: 0.000loss_stateful_poison: 0.000top1_acc: 98.576    top5_acc: 99.983    
+Partition distribution: [0.978125 0.021875]
+Partitioner mapping accuracy (train sample): 48.12%
+Epoch [35/50] Results on the validation set: ==========
+ASR for Trigger 1: 9.83%
+ASR for Trigger 2: 9.90%
+OR of [Trigger Tgt] on all triggers:  9.9
+average score of [Trigger Org] on all triggers:  98.12
+[XAI] Exporting attribution maps to data/attack/image/mnist/net/state_prob/xai...
+[XAI] Saved 8 attribution sample(s) for epoch 35.
+Validate Confidence(1): 0.793
+Neuron Jaccard Idx(1): 0.915
+Validate Confidence(2): 0.713
+Neuron Jaccard Idx(2): 0.963
+Partitioner mapping accuracy: 48.96% over 10000 samples.
+Partitioner confusion matrix (rows=target partitions, cols=predictions):
+  Target partition 0: total=4926, distribution=[0.9850000143051147, 0.014999999664723873]
+  Target partition 1: total=5074, distribution=[0.9919999837875366, 0.00800000037997961]
+First batch predicted counts: [254, 2]
+First batch target counts:    [113, 143]
+Stateful trigger coverage (first batches):
+  Partition 0: samples=757, success_rate=0.091
+    Trigger 1 misfired 70 times
+  Partition 1: samples=11, success_rate=0.000
+Epoch [36/50]loss_total: 0.046   loss_benign: 0.046  loss_projan_poison: 0.000loss_partition: 0.000loss_stateful_poison: 0.000top1_acc: 98.543    top5_acc: 99.987    time: 0:01:43       
+Epoch [36/50] Training Stats: loss_total: 0.046   loss_benign: 0.046  loss_projan_poison: 0.000loss_partition: 0.000loss_stateful_poison: 0.000top1_acc: 98.543    top5_acc: 99.987    
+Partition distribution: [0.996875 0.003125]
+Partitioner mapping accuracy (train sample): 52.81%
+Epoch [36/50] Results on the validation set: ==========
+ASR for Trigger 1: 9.89%
+ASR for Trigger 2: 9.91%
+OR of [Trigger Tgt] on all triggers:  9.92
+average score of [Trigger Org] on all triggers:  98.205
+[XAI] Exporting attribution maps to data/attack/image/mnist/net/state_prob/xai...
+[XAI] Saved 8 attribution sample(s) for epoch 36.
+Validate Confidence(1): 0.718
+Neuron Jaccard Idx(1): 0.916
+Validate Confidence(2): 0.735
+Neuron Jaccard Idx(2): 0.962
+Partitioner mapping accuracy: 48.96% over 10000 samples.
+Partitioner confusion matrix (rows=target partitions, cols=predictions):
+  Target partition 0: total=4926, distribution=[0.9850000143051147, 0.014999999664723873]
+  Target partition 1: total=5074, distribution=[0.9919999837875366, 0.00800000037997961]
+First batch predicted counts: [254, 2]
+First batch target counts:    [113, 143]
+Stateful trigger coverage (first batches):
+  Partition 0: samples=757, success_rate=0.092
+    Trigger 1 misfired 70 times
+  Partition 1: samples=11, success_rate=0.000
+Epoch [37/50]loss_total: 0.044   loss_benign: 0.044  loss_projan_poison: 0.000loss_partition: 0.000loss_stateful_poison: 0.000top1_acc: 98.650    top5_acc: 99.991    time: 0:01:41       
+Epoch [37/50] Training Stats: loss_total: 0.044   loss_benign: 0.044  loss_projan_poison: 0.000loss_partition: 0.000loss_stateful_poison: 0.000top1_acc: 98.650    top5_acc: 99.991    
+Partition distribution: [0.984375 0.015625]
+Partitioner mapping accuracy (train sample): 49.06%
+Epoch [37/50] Results on the validation set: ==========
+ASR for Trigger 1: 9.92%
+ASR for Trigger 2: 9.95%
+OR of [Trigger Tgt] on all triggers:  9.95
+average score of [Trigger Org] on all triggers:  98.23
+[XAI] Exporting attribution maps to data/attack/image/mnist/net/state_prob/xai...
+[XAI] Saved 8 attribution sample(s) for epoch 37.
+Validate Confidence(1): 0.812
+Neuron Jaccard Idx(1): 0.915
+Validate Confidence(2): 0.833
+Neuron Jaccard Idx(2): 0.960
+Partitioner mapping accuracy: 48.96% over 10000 samples.
+Partitioner confusion matrix (rows=target partitions, cols=predictions):
+  Target partition 0: total=4926, distribution=[0.9850000143051147, 0.014999999664723873]
+  Target partition 1: total=5074, distribution=[0.9919999837875366, 0.00800000037997961]
+First batch predicted counts: [254, 2]
+First batch target counts:    [113, 143]
+Stateful trigger coverage (first batches):
+  Partition 0: samples=757, success_rate=0.094
+    Trigger 1 misfired 71 times
+  Partition 1: samples=11, success_rate=0.000
+Epoch [38/50]loss_total: 0.042   loss_benign: 0.042  loss_projan_poison: 0.000loss_partition: 0.000loss_stateful_poison: 0.000top1_acc: 98.694    top5_acc: 99.993    time: 0:01:37       
+Epoch [38/50] Training Stats: loss_total: 0.042   loss_benign: 0.042  loss_projan_poison: 0.000loss_partition: 0.000loss_stateful_poison: 0.000top1_acc: 98.694    top5_acc: 99.993    
+Partition distribution: [0.990625 0.009375]
+Partitioner mapping accuracy (train sample): 49.06%
+Epoch [38/50] Results on the validation set: ==========
+ASR for Trigger 1: 9.85%
+ASR for Trigger 2: 9.89%
+OR of [Trigger Tgt] on all triggers:  9.9
+average score of [Trigger Org] on all triggers:  98.11
+[XAI] Exporting attribution maps to data/attack/image/mnist/net/state_prob/xai...
+[XAI] Saved 8 attribution sample(s) for epoch 38.
+Validate Confidence(1): 0.790
+Neuron Jaccard Idx(1): 0.915
+Validate Confidence(2): 0.763
+Neuron Jaccard Idx(2): 0.959
+Partitioner mapping accuracy: 48.96% over 10000 samples.
+Partitioner confusion matrix (rows=target partitions, cols=predictions):
+  Target partition 0: total=4926, distribution=[0.9850000143051147, 0.014999999664723873]
+  Target partition 1: total=5074, distribution=[0.9919999837875366, 0.00800000037997961]
+First batch predicted counts: [254, 2]
+First batch target counts:    [113, 143]
+Stateful trigger coverage (first batches):
+  Partition 0: samples=757, success_rate=0.091
+    Trigger 1 misfired 70 times
+  Partition 1: samples=11, success_rate=0.000
+Epoch [39/50]loss_total: 0.042   loss_benign: 0.042  loss_projan_poison: 0.000loss_partition: 0.000loss_stateful_poison: 0.000top1_acc: 98.681    top5_acc: 99.987    time: 0:01:40       
+Epoch [39/50] Training Stats: loss_total: 0.042   loss_benign: 0.042  loss_projan_poison: 0.000loss_partition: 0.000loss_stateful_poison: 0.000top1_acc: 98.681    top5_acc: 99.987    
+Partition distribution: [0.99375 0.00625]
+Partitioner mapping accuracy (train sample): 48.12%
+Epoch [39/50] Results on the validation set: ==========
+ASR for Trigger 1: 9.90%
+ASR for Trigger 2: 9.93%
+OR of [Trigger Tgt] on all triggers:  9.95
+average score of [Trigger Org] on all triggers:  98.35
+[XAI] Exporting attribution maps to data/attack/image/mnist/net/state_prob/xai...
+[XAI] Saved 8 attribution sample(s) for epoch 39.
+Validate Confidence(1): 0.753
+Neuron Jaccard Idx(1): 0.915
+Validate Confidence(2): 0.776
+Neuron Jaccard Idx(2): 0.959
+Partitioner mapping accuracy: 48.96% over 10000 samples.
+Partitioner confusion matrix (rows=target partitions, cols=predictions):
+  Target partition 0: total=4926, distribution=[0.9850000143051147, 0.014999999664723873]
+  Target partition 1: total=5074, distribution=[0.9919999837875366, 0.00800000037997961]
+First batch predicted counts: [254, 2]
+First batch target counts:    [113, 143]
+Stateful trigger coverage (first batches):
+  Partition 0: samples=757, success_rate=0.094
+    Trigger 1 misfired 71 times
+  Partition 1: samples=11, success_rate=0.000
+Epoch [40/50]loss_total: 0.040   loss_benign: 0.040  loss_projan_poison: 0.000loss_partition: 0.000loss_stateful_poison: 0.000top1_acc: 98.767    top5_acc: 99.994    time: 0:01:37       
+Epoch [40/50] Training Stats: loss_total: 0.040   loss_benign: 0.040  loss_projan_poison: 0.000loss_partition: 0.000loss_stateful_poison: 0.000top1_acc: 98.767    top5_acc: 99.994    
+Partition distribution: [0.984375 0.015625]
+Partitioner mapping accuracy (train sample): 47.81%
+Epoch [40/50] Results on the validation set: ==========
+ASR for Trigger 1: 9.88%
+ASR for Trigger 2: 9.91%
+OR of [Trigger Tgt] on all triggers:  9.92
+average score of [Trigger Org] on all triggers:  98.485
+[XAI] Exporting attribution maps to data/attack/image/mnist/net/state_prob/xai...
+[XAI] Saved 8 attribution sample(s) for epoch 40.
+Validate Confidence(1): 0.760
+Neuron Jaccard Idx(1): 0.916
+Validate Confidence(2): 0.750
+Neuron Jaccard Idx(2): 0.958
+Partitioner mapping accuracy: 48.96% over 10000 samples.
+Partitioner confusion matrix (rows=target partitions, cols=predictions):
+  Target partition 0: total=4926, distribution=[0.9850000143051147, 0.014999999664723873]
+  Target partition 1: total=5074, distribution=[0.9919999837875366, 0.00800000037997961]
+First batch predicted counts: [254, 2]
+First batch target counts:    [113, 143]
+Stateful trigger coverage (first batches):
+  Partition 0: samples=757, success_rate=0.091
+    Trigger 1 misfired 69 times
+  Partition 1: samples=11, success_rate=0.000
+Epoch [41/50]loss_total: 0.041   loss_benign: 0.041  loss_projan_poison: 0.000loss_partition: 0.000loss_stateful_poison: 0.000top1_acc: 98.737    top5_acc: 99.985    time: 0:01:36       
+Epoch [41/50] Training Stats: loss_total: 0.041   loss_benign: 0.041  loss_projan_poison: 0.000loss_partition: 0.000loss_stateful_poison: 0.000top1_acc: 98.737    top5_acc: 99.985    
+Partition distribution: [0.9875 0.0125]
+Partitioner mapping accuracy (train sample): 49.06%
+Epoch [41/50] Results on the validation set: ==========
+ASR for Trigger 1: 9.86%
+ASR for Trigger 2: 9.89%
+OR of [Trigger Tgt] on all triggers:  9.89
+average score of [Trigger Org] on all triggers:  98.38
+[XAI] Exporting attribution maps to data/attack/image/mnist/net/state_prob/xai...
+[XAI] Saved 8 attribution sample(s) for epoch 41.
+Validate Confidence(1): 0.783
+Neuron Jaccard Idx(1): 0.918
+Validate Confidence(2): 0.773
+Neuron Jaccard Idx(2): 0.958
+Partitioner mapping accuracy: 48.96% over 10000 samples.
+Partitioner confusion matrix (rows=target partitions, cols=predictions):
+  Target partition 0: total=4926, distribution=[0.9850000143051147, 0.014999999664723873]
+  Target partition 1: total=5074, distribution=[0.9919999837875366, 0.00800000037997961]
+First batch predicted counts: [254, 2]
+First batch target counts:    [113, 143]
+Stateful trigger coverage (first batches):
+  Partition 0: samples=757, success_rate=0.092
+    Trigger 1 misfired 70 times
+  Partition 1: samples=11, success_rate=0.000
+Epoch [42/50]loss_total: 0.039   loss_benign: 0.039  loss_projan_poison: 0.000loss_partition: 0.000loss_stateful_poison: 0.000top1_acc: 98.744    top5_acc: 99.991    time: 0:01:35       
+Epoch [42/50] Training Stats: loss_total: 0.039   loss_benign: 0.039  loss_projan_poison: 0.000loss_partition: 0.000loss_stateful_poison: 0.000top1_acc: 98.744    top5_acc: 99.991    
+Partition distribution: [0.984375 0.015625]
+Partitioner mapping accuracy (train sample): 48.44%
+Epoch [42/50] Results on the validation set: ==========
+ASR for Trigger 1: 9.88%
+ASR for Trigger 2: 9.91%
+OR of [Trigger Tgt] on all triggers:  9.92
+average score of [Trigger Org] on all triggers:  98.41
+[XAI] Exporting attribution maps to data/attack/image/mnist/net/state_prob/xai...
+[XAI] Saved 8 attribution sample(s) for epoch 42.
+Validate Confidence(1): 0.750
+Neuron Jaccard Idx(1): 0.917
+Validate Confidence(2): 0.749
+Neuron Jaccard Idx(2): 0.958
+Partitioner mapping accuracy: 48.96% over 10000 samples.
+Partitioner confusion matrix (rows=target partitions, cols=predictions):
+  Target partition 0: total=4926, distribution=[0.9850000143051147, 0.014999999664723873]
+  Target partition 1: total=5074, distribution=[0.9919999837875366, 0.00800000037997961]
+First batch predicted counts: [254, 2]
+First batch target counts:    [113, 143]
+Stateful trigger coverage (first batches):
+  Partition 0: samples=757, success_rate=0.092
+    Trigger 1 misfired 71 times
+  Partition 1: samples=11, success_rate=0.000
+Epoch [43/50]loss_total: 0.039   loss_benign: 0.039  loss_projan_poison: 0.000loss_partition: 0.000loss_stateful_poison: 0.000top1_acc: 98.774    top5_acc: 99.993    time: 0:01:34       
+Epoch [43/50] Training Stats: loss_total: 0.039   loss_benign: 0.039  loss_projan_poison: 0.000loss_partition: 0.000loss_stateful_poison: 0.000top1_acc: 98.774    top5_acc: 99.993    
+Partition distribution: [0.98125 0.01875]
+Partitioner mapping accuracy (train sample): 45.00%
+Epoch [43/50] Results on the validation set: ==========
+ASR for Trigger 1: 9.87%
+ASR for Trigger 2: 9.88%
+OR of [Trigger Tgt] on all triggers:  9.9
+average score of [Trigger Org] on all triggers:  98.285
+[XAI] Exporting attribution maps to data/attack/image/mnist/net/state_prob/xai...
+[XAI] Saved 8 attribution sample(s) for epoch 43.
+Validate Confidence(1): 0.745
+Neuron Jaccard Idx(1): 0.915
+Validate Confidence(2): 0.770
+Neuron Jaccard Idx(2): 0.958
+Partitioner mapping accuracy: 48.96% over 10000 samples.
+Partitioner confusion matrix (rows=target partitions, cols=predictions):
+  Target partition 0: total=4926, distribution=[0.9850000143051147, 0.014999999664723873]
+  Target partition 1: total=5074, distribution=[0.9919999837875366, 0.00800000037997961]
+First batch predicted counts: [254, 2]
+First batch target counts:    [113, 143]
+Stateful trigger coverage (first batches):
+  Partition 0: samples=757, success_rate=0.092
+    Trigger 1 misfired 70 times
+  Partition 1: samples=11, success_rate=0.000
+Epoch [44/50]loss_total: 0.039   loss_benign: 0.039  loss_projan_poison: 0.000loss_partition: 0.000loss_stateful_poison: 0.000top1_acc: 98.744    top5_acc: 99.981    time: 0:01:34       
+Epoch [44/50] Training Stats: loss_total: 0.039   loss_benign: 0.039  loss_projan_poison: 0.000loss_partition: 0.000loss_stateful_poison: 0.000top1_acc: 98.744    top5_acc: 99.981    
+Partition distribution: [0.996875 0.003125]
+Partitioner mapping accuracy (train sample): 50.00%
+Epoch [44/50] Results on the validation set: ==========
+ASR for Trigger 1: 9.86%
+ASR for Trigger 2: 9.89%
+OR of [Trigger Tgt] on all triggers:  9.91
+average score of [Trigger Org] on all triggers:  98.345
+[XAI] Exporting attribution maps to data/attack/image/mnist/net/state_prob/xai...
+[XAI] Saved 8 attribution sample(s) for epoch 44.
+Validate Confidence(1): 0.815
+Neuron Jaccard Idx(1): 0.917
+Validate Confidence(2): 0.789
+Neuron Jaccard Idx(2): 0.955
+Partitioner mapping accuracy: 48.96% over 10000 samples.
+Partitioner confusion matrix (rows=target partitions, cols=predictions):
+  Target partition 0: total=4926, distribution=[0.9850000143051147, 0.014999999664723873]
+  Target partition 1: total=5074, distribution=[0.9919999837875366, 0.00800000037997961]
+First batch predicted counts: [254, 2]
+First batch target counts:    [113, 143]
+Stateful trigger coverage (first batches):
+  Partition 0: samples=757, success_rate=0.092
+    Trigger 1 misfired 70 times
+  Partition 1: samples=11, success_rate=0.000
+Epoch [45/50]loss_total: 0.038   loss_benign: 0.038  loss_projan_poison: 0.000loss_partition: 0.000loss_stateful_poison: 0.000top1_acc: 98.796    top5_acc: 99.994    time: 0:01:35       
+Epoch [45/50] Training Stats: loss_total: 0.038   loss_benign: 0.038  loss_projan_poison: 0.000loss_partition: 0.000loss_stateful_poison: 0.000top1_acc: 98.796    top5_acc: 99.994    
+Partition distribution: [0.984375 0.015625]
+Partitioner mapping accuracy (train sample): 51.25%
+Epoch [45/50] Results on the validation set: ==========
+ASR for Trigger 1: 9.89%
+ASR for Trigger 2: 9.94%
+OR of [Trigger Tgt] on all triggers:  9.95
+average score of [Trigger Org] on all triggers:  98.345
+[XAI] Exporting attribution maps to data/attack/image/mnist/net/state_prob/xai...
+[XAI] Saved 8 attribution sample(s) for epoch 45.
+Validate Confidence(1): 0.802
+Neuron Jaccard Idx(1): 0.918
+Validate Confidence(2): 0.807
+Neuron Jaccard Idx(2): 0.959
+Partitioner mapping accuracy: 48.96% over 10000 samples.
+Partitioner confusion matrix (rows=target partitions, cols=predictions):
+  Target partition 0: total=4926, distribution=[0.9850000143051147, 0.014999999664723873]
+  Target partition 1: total=5074, distribution=[0.9919999837875366, 0.00800000037997961]
+First batch predicted counts: [254, 2]
+First batch target counts:    [113, 143]
+Stateful trigger coverage (first batches):
+  Partition 0: samples=757, success_rate=0.092
+    Trigger 1 misfired 71 times
+  Partition 1: samples=11, success_rate=0.000
+Epoch [46/50]loss_total: 0.037   loss_benign: 0.037  loss_projan_poison: 0.000loss_partition: 0.000loss_stateful_poison: 0.000top1_acc: 98.830    top5_acc: 99.991    time: 0:01:34       
+Epoch [46/50] Training Stats: loss_total: 0.037   loss_benign: 0.037  loss_projan_poison: 0.000loss_partition: 0.000loss_stateful_poison: 0.000top1_acc: 98.830    top5_acc: 99.991    
+Partition distribution: [0.9875 0.0125]
+Partitioner mapping accuracy (train sample): 48.75%
+Epoch [46/50] Results on the validation set: ==========
+ASR for Trigger 1: 9.84%
+ASR for Trigger 2: 9.90%
+OR of [Trigger Tgt] on all triggers:  9.91
+average score of [Trigger Org] on all triggers:  98.54
+[XAI] Exporting attribution maps to data/attack/image/mnist/net/state_prob/xai...
+[XAI] Saved 8 attribution sample(s) for epoch 46.
+Validate Confidence(1): 0.873
+Neuron Jaccard Idx(1): 0.918
+Validate Confidence(2): 0.751
+Neuron Jaccard Idx(2): 0.957
+Partitioner mapping accuracy: 48.96% over 10000 samples.
+Partitioner confusion matrix (rows=target partitions, cols=predictions):
+  Target partition 0: total=4926, distribution=[0.9850000143051147, 0.014999999664723873]
+  Target partition 1: total=5074, distribution=[0.9919999837875366, 0.00800000037997961]
+First batch predicted counts: [254, 2]
+First batch target counts:    [113, 143]
+Stateful trigger coverage (first batches):
+  Partition 0: samples=757, success_rate=0.092
+    Trigger 1 misfired 70 times
+  Partition 1: samples=11, success_rate=0.000
+Epoch [47/50]loss_total: 0.035   loss_benign: 0.035  loss_projan_poison: 0.000loss_partition: 0.000loss_stateful_poison: 0.000top1_acc: 98.880    top5_acc: 99.996    time: 0:01:34       
+Epoch [47/50] Training Stats: loss_total: 0.035   loss_benign: 0.035  loss_projan_poison: 0.000loss_partition: 0.000loss_stateful_poison: 0.000top1_acc: 98.880    top5_acc: 99.996    
+Partition distribution: [0.98125 0.01875]
+Partitioner mapping accuracy (train sample): 46.25%
+Epoch [47/50] Results on the validation set: ==========
+ASR for Trigger 1: 9.85%
+ASR for Trigger 2: 9.89%
+OR of [Trigger Tgt] on all triggers:  9.9
+average score of [Trigger Org] on all triggers:  98.51
+[XAI] Exporting attribution maps to data/attack/image/mnist/net/state_prob/xai...
+[XAI] Saved 8 attribution sample(s) for epoch 47.
+Validate Confidence(1): 0.848
+Neuron Jaccard Idx(1): 0.917
+Validate Confidence(2): 0.823
+Neuron Jaccard Idx(2): 0.960
+Partitioner mapping accuracy: 48.96% over 10000 samples.
+Partitioner confusion matrix (rows=target partitions, cols=predictions):
+  Target partition 0: total=4926, distribution=[0.9850000143051147, 0.014999999664723873]
+  Target partition 1: total=5074, distribution=[0.9919999837875366, 0.00800000037997961]
+First batch predicted counts: [254, 2]
+First batch target counts:    [113, 143]
+Stateful trigger coverage (first batches):
+  Partition 0: samples=757, success_rate=0.092
+    Trigger 1 misfired 70 times
+  Partition 1: samples=11, success_rate=0.000
+Epoch [48/50]loss_total: 0.034   loss_benign: 0.034  loss_projan_poison: 0.000loss_partition: 0.000loss_stateful_poison: 0.000top1_acc: 98.911    top5_acc: 99.994    time: 0:01:37       
+Epoch [48/50] Training Stats: loss_total: 0.034   loss_benign: 0.034  loss_projan_poison: 0.000loss_partition: 0.000loss_stateful_poison: 0.000top1_acc: 98.911    top5_acc: 99.994    
+Partition distribution: [0.9875 0.0125]
+Partitioner mapping accuracy (train sample): 44.06%
+Epoch [48/50] Results on the validation set: ==========
+ASR for Trigger 1: 9.90%
+ASR for Trigger 2: 9.92%
+OR of [Trigger Tgt] on all triggers:  9.94
+average score of [Trigger Org] on all triggers:  98.415
+[XAI] Exporting attribution maps to data/attack/image/mnist/net/state_prob/xai...
+[XAI] Saved 8 attribution sample(s) for epoch 48.
+Validate Confidence(1): 0.845
+Neuron Jaccard Idx(1): 0.916
+Validate Confidence(2): 0.873
+Neuron Jaccard Idx(2): 0.959
+Partitioner mapping accuracy: 48.96% over 10000 samples.
+Partitioner confusion matrix (rows=target partitions, cols=predictions):
+  Target partition 0: total=4926, distribution=[0.9850000143051147, 0.014999999664723873]
+  Target partition 1: total=5074, distribution=[0.9919999837875366, 0.00800000037997961]
+First batch predicted counts: [254, 2]
+First batch target counts:    [113, 143]
+Stateful trigger coverage (first batches):
+  Partition 0: samples=757, success_rate=0.092
+    Trigger 1 misfired 71 times
+  Partition 1: samples=11, success_rate=0.000
+Epoch [49/50]loss_total: 0.033   loss_benign: 0.033  loss_projan_poison: 0.000loss_partition: 0.000loss_stateful_poison: 0.000top1_acc: 98.939    top5_acc: 99.994    time: 0:01:35       
+Epoch [49/50] Training Stats: loss_total: 0.033   loss_benign: 0.033  loss_projan_poison: 0.000loss_partition: 0.000loss_stateful_poison: 0.000top1_acc: 98.939    top5_acc: 99.994    
+Partition distribution: [0.975 0.025]
+Partitioner mapping accuracy (train sample): 50.63%
+Epoch [49/50] Results on the validation set: ==========
+ASR for Trigger 1: 9.88%
+ASR for Trigger 2: 9.92%
+OR of [Trigger Tgt] on all triggers:  9.94
+average score of [Trigger Org] on all triggers:  98.445
+[XAI] Exporting attribution maps to data/attack/image/mnist/net/state_prob/xai...
+[XAI] Saved 8 attribution sample(s) for epoch 49.
+Validate Confidence(1): 0.822
+Neuron Jaccard Idx(1): 0.916
+Validate Confidence(2): 0.786
+Neuron Jaccard Idx(2): 0.960
+Partitioner mapping accuracy: 48.96% over 10000 samples.
+Partitioner confusion matrix (rows=target partitions, cols=predictions):
+  Target partition 0: total=4926, distribution=[0.9850000143051147, 0.014999999664723873]
+  Target partition 1: total=5074, distribution=[0.9919999837875366, 0.00800000037997961]
+First batch predicted counts: [254, 2]
+First batch target counts:    [113, 143]
+Stateful trigger coverage (first batches):
+  Partition 0: samples=757, success_rate=0.092
+    Trigger 1 misfired 71 times
+  Partition 1: samples=11, success_rate=0.000
+Epoch [50/50]loss_total: 0.032   loss_benign: 0.032  loss_projan_poison: 0.000loss_partition: 0.000loss_stateful_poison: 0.000top1_acc: 98.930    top5_acc: 99.996    time: 0:01:36       
+Epoch [50/50] Training Stats: loss_total: 0.032   loss_benign: 0.032  loss_projan_poison: 0.000loss_partition: 0.000loss_stateful_poison: 0.000top1_acc: 98.930    top5_acc: 99.996    
+Partition distribution: [0.9875 0.0125]
+Partitioner mapping accuracy (train sample): 41.87%
+Epoch [50/50] Results on the validation set: ==========
+ASR for Trigger 1: 9.87%
+ASR for Trigger 2: 9.91%
+OR of [Trigger Tgt] on all triggers:  9.93
+average score of [Trigger Org] on all triggers:  98.425
+[XAI] Exporting attribution maps to data/attack/image/mnist/net/state_prob/xai...
+[XAI] Saved 8 attribution sample(s) for epoch 50.
+Validate Confidence(1): 0.835
+Neuron Jaccard Idx(1): 0.916
+Validate Confidence(2): 0.824
+Neuron Jaccard Idx(2): 0.959
+Partitioner mapping accuracy: 48.96% over 10000 samples.
+Partitioner confusion matrix (rows=target partitions, cols=predictions):
+  Target partition 0: total=4926, distribution=[0.9850000143051147, 0.014999999664723873]
+  Target partition 1: total=5074, distribution=[0.9919999837875366, 0.00800000037997961]
+First batch predicted counts: [254, 2]
+First batch target counts:    [113, 143]
+Stateful trigger coverage (first batches):
+  Partition 0: samples=757, success_rate=0.092
+    Trigger 1 misfired 71 times
+  Partition 1: samples=11, success_rate=0.000
+
+--- Training complete. Saving final model. ---
+--- Saving Stateful model and partitioner to data/attack/image/mnist/net/state_prob/net/state_prob/model_final_epoch.pth ---
+Model saved successfully to: data/attack/image/mnist/net/state_prob/net/state_prob/model_final_epoch.pth
+Full training stage starting: epochs=50, using losses: ['loss1', 'loss2_11', 'loss3_11']
+WARNING: No partitioner optimizer provided!
+Created default AdamW optimizer for partitioner with lr=0.001, weight_decay=0.0001
+ASR for Trigger 1: 9.87%
+ASR for Trigger 2: 9.91%
+OR of [Trigger Tgt] on all triggers:  9.93
+average score of [Trigger Org] on all triggers:  98.425
+Validate Confidence(1): 0.835
+Neuron Jaccard Idx(1): 0.916
+Validate Confidence(2): 0.824
+Neuron Jaccard Idx(2): 0.959
+Partitioner mapping accuracy: 48.96% over 10000 samples.
+Partitioner confusion matrix (rows=target partitions, cols=predictions):
+  Target partition 0: total=4926, distribution=[0.9850000143051147, 0.014999999664723873]
+  Target partition 1: total=5074, distribution=[0.9919999837875366, 0.00800000037997961]
+First batch predicted counts: [254, 2]
+First batch target counts:    [113, 143]
+Stateful trigger coverage (first batches):
+  Partition 0: samples=757, success_rate=0.092
+    Trigger 1 misfired 71 times
+  Partition 1: samples=11, success_rate=0.000
+Epoch [1/50]loss_total: 0.876   loss_benign: 0.314  loss_projan_poison: -0.42loss_partition: 0.257loss_stateful_poison: 0.610top1_acc: 89.261    top5_acc: 99.828    time: 0:02:24       
+Epoch [1/50] Training Stats: loss_total: 0.876   loss_benign: 0.314  loss_projan_poison: -0.42loss_partition: 0.257loss_stateful_poison: 0.610top1_acc: 89.261    top5_acc: 99.828    
+Partition distribution: [0.559375 0.440625]
+Partitioner mapping accuracy (train sample): 94.38%
+Epoch [1/50] Results on the validation set: ==========
+ASR for Trigger 1: 51.13%
+ASR for Trigger 2: 53.72%
+OR of [Trigger Tgt] on all triggers:  91.24
+average score of [Trigger Org] on all triggers:  56.475
+[XAI] Exporting attribution maps to data/attack/image/mnist/net/state_prob/xai...
+[XAI] Saved 8 attribution sample(s) for epoch 1.
+Validate Confidence(1): 0.885
+Neuron Jaccard Idx(1): 0.932
+Validate Confidence(2): 0.839
+Neuron Jaccard Idx(2): 0.937
+Partitioner mapping accuracy: 92.79% over 10000 samples.
+Partitioner confusion matrix (rows=target partitions, cols=predictions):
+  Target partition 0: total=4926, distribution=[0.9789999723434448, 0.020999999716877937]
+  Target partition 1: total=5074, distribution=[0.12200000137090683, 0.878000020980835]
+First batch predicted counts: [125, 131]
+First batch target counts:    [113, 143]
+Stateful trigger coverage (first batches):
+  Partition 0: samples=407, success_rate=0.916
+    Trigger 1 misfired 118 times
+  Partition 1: samples=361, success_rate=0.848
+    Trigger 0 misfired 13 times
+--- Saving Stateful model and partitioner to data/attack/image/mnist/net/state_prob/net/state_prob/model.pth ---
+Model saved successfully to: data/attack/image/mnist/net/state_prob/net/state_prob/model.pth
+Epoch [2/50]loss_total: 0.601   loss_benign: 0.244  loss_projan_poison: -0.49loss_partition: 0.142loss_stateful_poison: 0.417top1_acc: 91.622    top5_acc: 99.837    time: 0:02:28       
+Epoch [2/50] Training Stats: loss_total: 0.601   loss_benign: 0.244  loss_projan_poison: -0.49loss_partition: 0.142loss_stateful_poison: 0.417top1_acc: 91.622    top5_acc: 99.837    
+Partition distribution: [0.5 0.5]
+Partitioner mapping accuracy (train sample): 97.81%
+Epoch [2/50] Results on the validation set: ==========
+ASR for Trigger 1: 50.56%
+ASR for Trigger 2: 52.77%
+OR of [Trigger Tgt] on all triggers:  90.01
+average score of [Trigger Org] on all triggers:  56.95
+[XAI] Exporting attribution maps to data/attack/image/mnist/net/state_prob/xai...
+[XAI] Saved 8 attribution sample(s) for epoch 2.
+Validate Confidence(1): 0.872
+Neuron Jaccard Idx(1): 0.937
+Validate Confidence(2): 0.824
+Neuron Jaccard Idx(2): 0.941
+Partitioner mapping accuracy: 96.16% over 10000 samples.
+Partitioner confusion matrix (rows=target partitions, cols=predictions):
+  Target partition 0: total=4926, distribution=[0.9480000138282776, 0.052000001072883606]
+  Target partition 1: total=5074, distribution=[0.02500000037252903, 0.9750000238418579]
+First batch predicted counts: [111, 145]
+First batch target counts:    [113, 143]
+Stateful trigger coverage (first batches):
+  Partition 0: samples=354, success_rate=0.989
+    Trigger 1 misfired 77 times
+  Partition 1: samples=414, success_rate=0.826
+    Trigger 0 misfired 33 times
+Epoch [3/50]loss_total: 0.532   loss_benign: 0.246  loss_projan_poison: -0.50loss_partition: 0.102loss_stateful_poison: 0.351top1_acc: 91.861    top5_acc: 99.826    time: 0:02:31       
+Epoch [3/50] Training Stats: loss_total: 0.532   loss_benign: 0.246  loss_projan_poison: -0.50loss_partition: 0.102loss_stateful_poison: 0.351top1_acc: 91.861    top5_acc: 99.826    
+Partition distribution: [0.4875 0.5125]
+Partitioner mapping accuracy (train sample): 97.19%
+Epoch [3/50] Results on the validation set: ==========
+ASR for Trigger 1: 52.91%
+ASR for Trigger 2: 58.04%
+OR of [Trigger Tgt] on all triggers:  96.33
+average score of [Trigger Org] on all triggers:  53.525
+[XAI] Exporting attribution maps to data/attack/image/mnist/net/state_prob/xai...
+[XAI] Saved 8 attribution sample(s) for epoch 3.
+Validate Confidence(1): 0.960
+Neuron Jaccard Idx(1): 0.930
+Validate Confidence(2): 0.895
+Neuron Jaccard Idx(2): 0.943
+Partitioner mapping accuracy: 96.91% over 10000 samples.
+Partitioner confusion matrix (rows=target partitions, cols=predictions):
+  Target partition 0: total=4926, distribution=[0.9729999899864197, 0.027000000700354576]
+  Target partition 1: total=5074, distribution=[0.03500000014901161, 0.9649999737739563]
+First batch predicted counts: [114, 142]
+First batch target counts:    [113, 143]
+Stateful trigger coverage (first batches):
+  Partition 0: samples=373, success_rate=0.987
+    Trigger 1 misfired 90 times
+  Partition 1: samples=395, success_rate=0.922
+    Trigger 0 misfired 32 times
+--- Saving Stateful model and partitioner to data/attack/image/mnist/net/state_prob/net/state_prob/model.pth ---
+Model saved successfully to: data/attack/image/mnist/net/state_prob/net/state_prob/model.pth
+Epoch [4/50]loss_total: 0.459   loss_benign: 0.212  loss_projan_poison: -0.52loss_partition: 0.094loss_stateful_poison: 0.311top1_acc: 92.833    top5_acc: 99.863    time: 0:02:27       
+Epoch [4/50] Training Stats: loss_total: 0.459   loss_benign: 0.212  loss_projan_poison: -0.52loss_partition: 0.094loss_stateful_poison: 0.311top1_acc: 92.833    top5_acc: 99.863    
+Partition distribution: [0.490625 0.509375]
+Partitioner mapping accuracy (train sample): 97.19%
+Epoch [4/50] Results on the validation set: ==========
+ASR for Trigger 1: 50.78%
+ASR for Trigger 2: 56.92%
+OR of [Trigger Tgt] on all triggers:  95.49
+average score of [Trigger Org] on all triggers:  55.08
+[XAI] Exporting attribution maps to data/attack/image/mnist/net/state_prob/xai...
+[XAI] Saved 8 attribution sample(s) for epoch 4.
+Validate Confidence(1): 0.942
+Neuron Jaccard Idx(1): 0.930
+Validate Confidence(2): 0.884
+Neuron Jaccard Idx(2): 0.946
+Partitioner mapping accuracy: 96.54% over 10000 samples.
+Partitioner confusion matrix (rows=target partitions, cols=predictions):
+  Target partition 0: total=4926, distribution=[0.9509999752044678, 0.04899999871850014]
+  Target partition 1: total=5074, distribution=[0.019999999552965164, 0.9800000190734863]
+First batch predicted counts: [112, 144]
+First batch target counts:    [113, 143]
+Stateful trigger coverage (first batches):
+  Partition 0: samples=359, success_rate=0.992
+    Trigger 1 misfired 77 times
+  Partition 1: samples=409, success_rate=0.895
+    Trigger 0 misfired 26 times
+Epoch [5/50]loss_total: 0.425   loss_benign: 0.205  loss_projan_poison: -0.52loss_partition: 0.081loss_stateful_poison: 0.285top1_acc: 93.080    top5_acc: 99.876    time: 0:02:20       
+Epoch [5/50] Training Stats: loss_total: 0.425   loss_benign: 0.205  loss_projan_poison: -0.52loss_partition: 0.081loss_stateful_poison: 0.285top1_acc: 93.080    top5_acc: 99.876    
+Partition distribution: [0.515625 0.484375]
+Partitioner mapping accuracy (train sample): 96.88%
+Epoch [5/50] Results on the validation set: ==========
+ASR for Trigger 1: 51.10%
+ASR for Trigger 2: 57.30%
+OR of [Trigger Tgt] on all triggers:  95.97
+average score of [Trigger Org] on all triggers:  54.715
+[XAI] Exporting attribution maps to data/attack/image/mnist/net/state_prob/xai...
+[XAI] Saved 8 attribution sample(s) for epoch 5.
+Validate Confidence(1): 0.953
+Neuron Jaccard Idx(1): 0.934
+Validate Confidence(2): 0.890
+Neuron Jaccard Idx(2): 0.946
+Partitioner mapping accuracy: 97.35% over 10000 samples.
+Partitioner confusion matrix (rows=target partitions, cols=predictions):
+  Target partition 0: total=4926, distribution=[0.972000002861023, 0.02800000086426735]
+  Target partition 1: total=5074, distribution=[0.02500000037252903, 0.9750000238418579]
+First batch predicted counts: [113, 143]
+First batch target counts:    [113, 143]
+Stateful trigger coverage (first batches):
+  Partition 0: samples=367, success_rate=0.995
+    Trigger 1 misfired 80 times
+  Partition 1: samples=401, success_rate=0.925
+    Trigger 0 misfired 21 times
+Epoch [6/50]loss_total: 0.337   loss_benign: 0.169  loss_projan_poison: -0.54loss_partition: 0.076loss_stateful_poison: 0.231top1_acc: 94.409    top5_acc: 99.911    time: 0:02:23       
+Epoch [6/50] Training Stats: loss_total: 0.337   loss_benign: 0.169  loss_projan_poison: -0.54loss_partition: 0.076loss_stateful_poison: 0.231top1_acc: 94.409    top5_acc: 99.911    
+Partition distribution: [0.503125 0.496875]
+Partitioner mapping accuracy (train sample): 96.56%
+Epoch [6/50] Results on the validation set: ==========
+ASR for Trigger 1: 51.08%
+ASR for Trigger 2: 57.47%
+OR of [Trigger Tgt] on all triggers:  96.5
+average score of [Trigger Org] on all triggers:  54.775
+[XAI] Exporting attribution maps to data/attack/image/mnist/net/state_prob/xai...
+[XAI] Saved 8 attribution sample(s) for epoch 6.
+Validate Confidence(1): 0.969
+Neuron Jaccard Idx(1): 0.933
+Validate Confidence(2): 0.922
+Neuron Jaccard Idx(2): 0.940
+Partitioner mapping accuracy: 97.63% over 10000 samples.
+Partitioner confusion matrix (rows=target partitions, cols=predictions):
+  Target partition 0: total=4926, distribution=[0.9810000061988831, 0.01899999938905239]
+  Target partition 1: total=5074, distribution=[0.028999999165534973, 0.9710000157356262]
+First batch predicted counts: [114, 142]
+First batch target counts:    [113, 143]
+Stateful trigger coverage (first batches):
+  Partition 0: samples=373, success_rate=0.992
+    Trigger 1 misfired 83 times
+  Partition 1: samples=395, success_rate=0.927
+    Trigger 0 misfired 16 times
+--- Saving Stateful model and partitioner to data/attack/image/mnist/net/state_prob/net/state_prob/model.pth ---
+Model saved successfully to: data/attack/image/mnist/net/state_prob/net/state_prob/model.pth
+Epoch [7/50]loss_total: 0.319   loss_benign: 0.160  loss_projan_poison: -0.54loss_partition: 0.064loss_stateful_poison: 0.223top1_acc: 94.683    top5_acc: 99.924    time: 0:02:26       
+Epoch [7/50] Training Stats: loss_total: 0.319   loss_benign: 0.160  loss_projan_poison: -0.54loss_partition: 0.064loss_stateful_poison: 0.223top1_acc: 94.683    top5_acc: 99.924    
+Partition distribution: [0.521875 0.478125]
+Partitioner mapping accuracy (train sample): 98.44%
+Epoch [7/50] Results on the validation set: ==========
+ASR for Trigger 1: 52.11%
+ASR for Trigger 2: 59.91%
+OR of [Trigger Tgt] on all triggers:  98.59
+average score of [Trigger Org] on all triggers:  52.97
+[XAI] Exporting attribution maps to data/attack/image/mnist/net/state_prob/xai...
+[XAI] Saved 8 attribution sample(s) for epoch 7.
+Validate Confidence(1): 0.967
+Neuron Jaccard Idx(1): 0.931
+Validate Confidence(2): 0.936
+Neuron Jaccard Idx(2): 0.939
+Partitioner mapping accuracy: 97.75% over 10000 samples.
+Partitioner confusion matrix (rows=target partitions, cols=predictions):
+  Target partition 0: total=4926, distribution=[0.9800000190734863, 0.019999999552965164]
+  Target partition 1: total=5074, distribution=[0.02500000037252903, 0.9750000238418579]
+First batch predicted counts: [114, 142]
+First batch target counts:    [113, 143]
+Stateful trigger coverage (first batches):
+  Partition 0: samples=374, success_rate=0.995
+    Trigger 1 misfired 85 times
+  Partition 1: samples=394, success_rate=0.967
+    Trigger 0 misfired 23 times
+--- Saving Stateful model and partitioner to data/attack/image/mnist/net/state_prob/net/state_prob/model.pth ---
+Model saved successfully to: data/attack/image/mnist/net/state_prob/net/state_prob/model.pth
+Epoch [8/50]loss_total: 0.316   loss_benign: 0.155  loss_projan_poison: -0.54loss_partition: 0.065loss_stateful_poison: 0.224top1_acc: 94.969    top5_acc: 99.894    time: 0:02:25       
+Epoch [8/50] Training Stats: loss_total: 0.316   loss_benign: 0.155  loss_projan_poison: -0.54loss_partition: 0.065loss_stateful_poison: 0.224top1_acc: 94.969    top5_acc: 99.894    
+Partition distribution: [0.54375 0.45625]
+Partitioner mapping accuracy (train sample): 96.88%
+Epoch [8/50] Results on the validation set: ==========
+ASR for Trigger 1: 50.09%
+ASR for Trigger 2: 57.19%
+OR of [Trigger Tgt] on all triggers:  96.11
+average score of [Trigger Org] on all triggers:  55.36
+[XAI] Exporting attribution maps to data/attack/image/mnist/net/state_prob/xai...
+[XAI] Saved 8 attribution sample(s) for epoch 8.
+Validate Confidence(1): 0.962
+Neuron Jaccard Idx(1): 0.934
+Validate Confidence(2): 0.925
+Neuron Jaccard Idx(2): 0.941
+Partitioner mapping accuracy: 97.06% over 10000 samples.
+Partitioner confusion matrix (rows=target partitions, cols=predictions):
+  Target partition 0: total=4926, distribution=[0.9879999756813049, 0.012000000104308128]
+  Target partition 1: total=5074, distribution=[0.04600000008940697, 0.9539999961853027]
+First batch predicted counts: [115, 141]
+First batch target counts:    [113, 143]
+Stateful trigger coverage (first batches):
+  Partition 0: samples=386, success_rate=0.964
+    Trigger 1 misfired 90 times
+  Partition 1: samples=382, success_rate=0.940
+    Trigger 0 misfired 5 times
+Epoch [9/50]loss_total: 0.331   loss_benign: 0.158  loss_projan_poison: -0.54loss_partition: 0.062loss_stateful_poison: 0.237top1_acc: 94.774    top5_acc: 99.931    time: 0:02:22       
+Epoch [9/50] Training Stats: loss_total: 0.331   loss_benign: 0.158  loss_projan_poison: -0.54loss_partition: 0.062loss_stateful_poison: 0.237top1_acc: 94.774    top5_acc: 99.931    
+Partition distribution: [0.459375 0.540625]
+Partitioner mapping accuracy (train sample): 98.44%
+Epoch [9/50] Results on the validation set: ==========
+ASR for Trigger 1: 50.48%
+ASR for Trigger 2: 59.53%
+OR of [Trigger Tgt] on all triggers:  98.28
+average score of [Trigger Org] on all triggers:  54.015
+[XAI] Exporting attribution maps to data/attack/image/mnist/net/state_prob/xai...
+[XAI] Saved 8 attribution sample(s) for epoch 9.
+Validate Confidence(1): 0.967
+Neuron Jaccard Idx(1): 0.939
+Validate Confidence(2): 0.914
+Neuron Jaccard Idx(2): 0.940
+Partitioner mapping accuracy: 97.94% over 10000 samples.
+Partitioner confusion matrix (rows=target partitions, cols=predictions):
+  Target partition 0: total=4926, distribution=[0.9710000157356262, 0.028999999165534973]
+  Target partition 1: total=5074, distribution=[0.012000000104308128, 0.9879999756813049]
+First batch predicted counts: [112, 144]
+First batch target counts:    [113, 143]
+Stateful trigger coverage (first batches):
+  Partition 0: samples=363, success_rate=0.997
+    Trigger 1 misfired 79 times
+  Partition 1: samples=405, success_rate=0.953
+    Trigger 0 misfired 20 times
+Epoch [10/50]loss_total: 0.258   loss_benign: 0.135  loss_projan_poison: -0.54loss_partition: 0.061loss_stateful_poison: 0.185top1_acc: 95.543    top5_acc: 99.928    time: 0:02:28       
+Epoch [10/50] Training Stats: loss_total: 0.258   loss_benign: 0.135  loss_projan_poison: -0.54loss_partition: 0.061loss_stateful_poison: 0.185top1_acc: 95.543    top5_acc: 99.928    
+Partition distribution: [0.53125 0.46875]
+Partitioner mapping accuracy (train sample): 98.75%
+Epoch [10/50] Results on the validation set: ==========
+ASR for Trigger 1: 50.47%
+ASR for Trigger 2: 60.47%
+OR of [Trigger Tgt] on all triggers:  99.08
+average score of [Trigger Org] on all triggers:  53.68
+[XAI] Exporting attribution maps to data/attack/image/mnist/net/state_prob/xai...
+[XAI] Saved 8 attribution sample(s) for epoch 10.
+Validate Confidence(1): 0.970
+Neuron Jaccard Idx(1): 0.939
+Validate Confidence(2): 0.944
+Neuron Jaccard Idx(2): 0.939
+Partitioner mapping accuracy: 98.04% over 10000 samples.
+Partitioner confusion matrix (rows=target partitions, cols=predictions):
+  Target partition 0: total=4926, distribution=[0.9810000061988831, 0.01899999938905239]
+  Target partition 1: total=5074, distribution=[0.019999999552965164, 0.9800000190734863]
+First batch predicted counts: [113, 143]
+First batch target counts:    [113, 143]
+Stateful trigger coverage (first batches):
+  Partition 0: samples=369, success_rate=0.992
+    Trigger 1 misfired 80 times
+  Partition 1: samples=399, success_rate=0.982
+    Trigger 0 misfired 14 times
+--- Saving Stateful model and partitioner to data/attack/image/mnist/net/state_prob/net/state_prob/model.pth ---
+Model saved successfully to: data/attack/image/mnist/net/state_prob/net/state_prob/model.pth
+Epoch [11/50]loss_total: 0.235   loss_benign: 0.125  loss_projan_poison: -0.55loss_partition: 0.061loss_stateful_poison: 0.171top1_acc: 95.878    top5_acc: 99.937    time: 0:02:32       
+Epoch [11/50] Training Stats: loss_total: 0.235   loss_benign: 0.125  loss_projan_poison: -0.55loss_partition: 0.061loss_stateful_poison: 0.171top1_acc: 95.878    top5_acc: 99.937    
+Partition distribution: [0.5125 0.4875]
+Partitioner mapping accuracy (train sample): 99.37%
+Epoch [11/50] Results on the validation set: ==========
+ASR for Trigger 1: 50.78%
+ASR for Trigger 2: 59.60%
+OR of [Trigger Tgt] on all triggers:  98.47
+average score of [Trigger Org] on all triggers:  54.015
+[XAI] Exporting attribution maps to data/attack/image/mnist/net/state_prob/xai...
+[XAI] Saved 8 attribution sample(s) for epoch 11.
+Validate Confidence(1): 0.976
+Neuron Jaccard Idx(1): 0.935
+Validate Confidence(2): 0.945
+Neuron Jaccard Idx(2): 0.938
+Partitioner mapping accuracy: 98.05% over 10000 samples.
+Partitioner confusion matrix (rows=target partitions, cols=predictions):
+  Target partition 0: total=4926, distribution=[0.9819999933242798, 0.017999999225139618]
+  Target partition 1: total=5074, distribution=[0.020999999716877937, 0.9789999723434448]
+First batch predicted counts: [112, 144]
+First batch target counts:    [113, 143]
+Stateful trigger coverage (first batches):
+  Partition 0: samples=370, success_rate=0.995
+    Trigger 1 misfired 78 times
+  Partition 1: samples=398, success_rate=0.975
+    Trigger 0 misfired 13 times
+Epoch [12/50]loss_total: 0.231   loss_benign: 0.117  loss_projan_poison: -0.56loss_partition: 0.066loss_stateful_poison: 0.176top1_acc: 96.272    top5_acc: 99.944    time: 0:02:18       
+Epoch [12/50] Training Stats: loss_total: 0.231   loss_benign: 0.117  loss_projan_poison: -0.56loss_partition: 0.066loss_stateful_poison: 0.176top1_acc: 96.272    top5_acc: 99.944    
+Partition distribution: [0.528125 0.471875]
+Partitioner mapping accuracy (train sample): 98.75%
+Epoch [12/50] Results on the validation set: ==========
+ASR for Trigger 1: 50.33%
+ASR for Trigger 2: 59.28%
+OR of [Trigger Tgt] on all triggers:  97.96
+average score of [Trigger Org] on all triggers:  54.37
+[XAI] Exporting attribution maps to data/attack/image/mnist/net/state_prob/xai...
+[XAI] Saved 8 attribution sample(s) for epoch 12.
+Validate Confidence(1): 0.975
+Neuron Jaccard Idx(1): 0.935
+Validate Confidence(2): 0.945
+Neuron Jaccard Idx(2): 0.938
+Partitioner mapping accuracy: 97.85% over 10000 samples.
+Partitioner confusion matrix (rows=target partitions, cols=predictions):
+  Target partition 0: total=4926, distribution=[0.9829999804496765, 0.017000000923871994]
+  Target partition 1: total=5074, distribution=[0.026000000536441803, 0.9739999771118164]
+First batch predicted counts: [113, 143]
+First batch target counts:    [113, 143]
+Stateful trigger coverage (first batches):
+  Partition 0: samples=375, success_rate=0.984
+    Trigger 1 misfired 82 times
+  Partition 1: samples=393, success_rate=0.975
+    Trigger 0 misfired 10 times
+Epoch [13/50]loss_total: 0.216   loss_benign: 0.113  loss_projan_poison: -0.56loss_partition: 0.057loss_stateful_poison: 0.165top1_acc: 96.231    top5_acc: 99.954    time: 0:02:19       
+Epoch [13/50] Training Stats: loss_total: 0.216   loss_benign: 0.113  loss_projan_poison: -0.56loss_partition: 0.057loss_stateful_poison: 0.165top1_acc: 96.231    top5_acc: 99.954    
+Partition distribution: [0.5125 0.4875]
+Partitioner mapping accuracy (train sample): 97.81%
+Epoch [13/50] Results on the validation set: ==========
+ASR for Trigger 1: 50.29%
+ASR for Trigger 2: 58.80%
+OR of [Trigger Tgt] on all triggers:  97.78
+average score of [Trigger Org] on all triggers:  54.585
+[XAI] Exporting attribution maps to data/attack/image/mnist/net/state_prob/xai...
+[XAI] Saved 8 attribution sample(s) for epoch 13.
+Validate Confidence(1): 0.981
+Neuron Jaccard Idx(1): 0.935
+Validate Confidence(2): 0.944
+Neuron Jaccard Idx(2): 0.940
+Partitioner mapping accuracy: 97.91% over 10000 samples.
+Partitioner confusion matrix (rows=target partitions, cols=predictions):
+  Target partition 0: total=4926, distribution=[0.9739999771118164, 0.026000000536441803]
+  Target partition 1: total=5074, distribution=[0.01600000075995922, 0.984000027179718]
+First batch predicted counts: [113, 143]
+First batch target counts:    [113, 143]
+Stateful trigger coverage (first batches):
+  Partition 0: samples=368, success_rate=0.997
+    Trigger 1 misfired 75 times
+  Partition 1: samples=400, success_rate=0.950
+    Trigger 0 misfired 10 times
+Epoch [14/50]loss_total: 0.213   loss_benign: 0.115  loss_projan_poison: -0.55loss_partition: 0.054loss_stateful_poison: 0.160top1_acc: 96.330    top5_acc: 99.931    time: 0:02:21       
+Epoch [14/50] Training Stats: loss_total: 0.213   loss_benign: 0.115  loss_projan_poison: -0.55loss_partition: 0.054loss_stateful_poison: 0.160top1_acc: 96.330    top5_acc: 99.931    
+Partition distribution: [0.46875 0.53125]
+Partitioner mapping accuracy (train sample): 97.81%
+Epoch [14/50] Results on the validation set: ==========
+ASR for Trigger 1: 49.66%
+ASR for Trigger 2: 60.62%
+OR of [Trigger Tgt] on all triggers:  98.57
+average score of [Trigger Org] on all triggers:  54.06
+[XAI] Exporting attribution maps to data/attack/image/mnist/net/state_prob/xai...
+[XAI] Saved 8 attribution sample(s) for epoch 14.
+Validate Confidence(1): 0.959
+Neuron Jaccard Idx(1): 0.937
+Validate Confidence(2): 0.957
+Neuron Jaccard Idx(2): 0.937
+Partitioner mapping accuracy: 97.94% over 10000 samples.
+Partitioner confusion matrix (rows=target partitions, cols=predictions):
+  Target partition 0: total=4926, distribution=[0.9769999980926514, 0.023000000044703484]
+  Target partition 1: total=5074, distribution=[0.017999999225139618, 0.9819999933242798]
+First batch predicted counts: [113, 143]
+First batch target counts:    [113, 143]
+Stateful trigger coverage (first batches):
+  Partition 0: samples=366, success_rate=0.989
+    Trigger 1 misfired 83 times
+  Partition 1: samples=402, success_rate=0.968
+    Trigger 0 misfired 11 times
+Epoch [15/50]loss_total: 0.198   loss_benign: 0.112  loss_projan_poison: -0.56loss_partition: 0.040loss_stateful_poison: 0.150top1_acc: 96.404    top5_acc: 99.950    time: 0:02:21       
+Epoch [15/50] Training Stats: loss_total: 0.198   loss_benign: 0.112  loss_projan_poison: -0.56loss_partition: 0.040loss_stateful_poison: 0.150top1_acc: 96.404    top5_acc: 99.950    
+Partition distribution: [0.459375 0.540625]
+Partitioner mapping accuracy (train sample): 98.75%
+Epoch [15/50] Results on the validation set: ==========
+ASR for Trigger 1: 49.94%
+ASR for Trigger 2: 58.94%
+OR of [Trigger Tgt] on all triggers:  97.93
+average score of [Trigger Org] on all triggers:  54.65
+[XAI] Exporting attribution maps to data/attack/image/mnist/net/state_prob/xai...
+[XAI] Saved 8 attribution sample(s) for epoch 15.
+Validate Confidence(1): 0.979
+Neuron Jaccard Idx(1): 0.937
+Validate Confidence(2): 0.956
+Neuron Jaccard Idx(2): 0.941
+Partitioner mapping accuracy: 98.26% over 10000 samples.
+Partitioner confusion matrix (rows=target partitions, cols=predictions):
+  Target partition 0: total=4926, distribution=[0.9760000109672546, 0.024000000208616257]
+  Target partition 1: total=5074, distribution=[0.010999999940395355, 0.9890000224113464]
+First batch predicted counts: [111, 145]
+First batch target counts:    [113, 143]
+Stateful trigger coverage (first batches):
+  Partition 0: samples=366, success_rate=0.997
+    Trigger 1 misfired 75 times
+  Partition 1: samples=402, success_rate=0.955
+    Trigger 0 misfired 13 times
+Epoch [16/50]loss_total: 0.193   loss_benign: 0.105  loss_projan_poison: -0.55loss_partition: 0.052loss_stateful_poison: 0.149top1_acc: 96.470    top5_acc: 99.939    time: 0:02:20       
+Epoch [16/50] Training Stats: loss_total: 0.193   loss_benign: 0.105  loss_projan_poison: -0.55loss_partition: 0.052loss_stateful_poison: 0.149top1_acc: 96.470    top5_acc: 99.939    
+Partition distribution: [0.4375 0.5625]
+Partitioner mapping accuracy (train sample): 98.75%
+Epoch [16/50] Results on the validation set: ==========
+ASR for Trigger 1: 50.38%
+ASR for Trigger 2: 59.16%
+OR of [Trigger Tgt] on all triggers:  98.32
+average score of [Trigger Org] on all triggers:  54.33
+[XAI] Exporting attribution maps to data/attack/image/mnist/net/state_prob/xai...
+[XAI] Saved 8 attribution sample(s) for epoch 16.
+Validate Confidence(1): 0.977
+Neuron Jaccard Idx(1): 0.937
+Validate Confidence(2): 0.957
+Neuron Jaccard Idx(2): 0.937
+Partitioner mapping accuracy: 98.27% over 10000 samples.
+Partitioner confusion matrix (rows=target partitions, cols=predictions):
+  Target partition 0: total=4926, distribution=[0.9729999899864197, 0.027000000700354576]
+  Target partition 1: total=5074, distribution=[0.00800000037997961, 0.9919999837875366]
+First batch predicted counts: [112, 144]
+First batch target counts:    [113, 143]
+Stateful trigger coverage (first batches):
+  Partition 0: samples=366, success_rate=0.997
+    Trigger 1 misfired 74 times
+  Partition 1: samples=402, success_rate=0.960
+    Trigger 0 misfired 15 times
+Epoch [17/50]loss_total: 0.193   loss_benign: 0.107  loss_projan_poison: -0.56loss_partition: 0.043loss_stateful_poison: 0.148top1_acc: 96.511    top5_acc: 99.950    time: 0:02:23       
+Epoch [17/50] Training Stats: loss_total: 0.193   loss_benign: 0.107  loss_projan_poison: -0.56loss_partition: 0.043loss_stateful_poison: 0.148top1_acc: 96.511    top5_acc: 99.950    
+Partition distribution: [0.484375 0.515625]
+Partitioner mapping accuracy (train sample): 97.19%
+Epoch [17/50] Results on the validation set: ==========
+ASR for Trigger 1: 50.28%
+ASR for Trigger 2: 60.21%
+OR of [Trigger Tgt] on all triggers:  99.04
+average score of [Trigger Org] on all triggers:  53.965
+[XAI] Exporting attribution maps to data/attack/image/mnist/net/state_prob/xai...
+[XAI] Saved 8 attribution sample(s) for epoch 17.
+Validate Confidence(1): 0.979
+Neuron Jaccard Idx(1): 0.939
+Validate Confidence(2): 0.965
+Neuron Jaccard Idx(2): 0.941
+Partitioner mapping accuracy: 98.29% over 10000 samples.
+Partitioner confusion matrix (rows=target partitions, cols=predictions):
+  Target partition 0: total=4926, distribution=[0.9800000190734863, 0.019999999552965164]
+  Target partition 1: total=5074, distribution=[0.014000000432133675, 0.9860000014305115]
+First batch predicted counts: [112, 144]
+First batch target counts:    [113, 143]
+Stateful trigger coverage (first batches):
+  Partition 0: samples=368, success_rate=0.995
+    Trigger 1 misfired 77 times
+  Partition 1: samples=400, success_rate=0.980
+    Trigger 0 misfired 14 times
+Epoch [18/50]loss_total: 0.168   loss_benign: 0.098  loss_projan_poison: -0.56loss_partition: 0.050loss_stateful_poison: 0.131top1_acc: 96.807    top5_acc: 99.959    time: 0:02:23       
+Epoch [18/50] Training Stats: loss_total: 0.168   loss_benign: 0.098  loss_projan_poison: -0.56loss_partition: 0.050loss_stateful_poison: 0.131top1_acc: 96.807    top5_acc: 99.959    
+Partition distribution: [0.471875 0.528125]
+Partitioner mapping accuracy (train sample): 98.12%
+Epoch [18/50] Results on the validation set: ==========
+ASR for Trigger 1: 49.88%
+ASR for Trigger 2: 58.55%
+OR of [Trigger Tgt] on all triggers:  97.75
+average score of [Trigger Org] on all triggers:  54.805
+[XAI] Exporting attribution maps to data/attack/image/mnist/net/state_prob/xai...
+[XAI] Saved 8 attribution sample(s) for epoch 18.
+Validate Confidence(1): 0.976
+Neuron Jaccard Idx(1): 0.937
+Validate Confidence(2): 0.952
+Neuron Jaccard Idx(2): 0.942
+Partitioner mapping accuracy: 98.30% over 10000 samples.
+Partitioner confusion matrix (rows=target partitions, cols=predictions):
+  Target partition 0: total=4926, distribution=[0.984000027179718, 0.01600000075995922]
+  Target partition 1: total=5074, distribution=[0.017999999225139618, 0.9819999933242798]
+First batch predicted counts: [113, 143]
+First batch target counts:    [113, 143]
+Stateful trigger coverage (first batches):
+  Partition 0: samples=372, success_rate=0.995
+    Trigger 1 misfired 72 times
+  Partition 1: samples=396, success_rate=0.960
+    Trigger 0 misfired 11 times
+Epoch [19/50]loss_total: 0.208   loss_benign: 0.106  loss_projan_poison: -0.56loss_partition: 0.046loss_stateful_poison: 0.165top1_acc: 96.500    top5_acc: 99.950    time: 0:02:27       
+Epoch [19/50] Training Stats: loss_total: 0.208   loss_benign: 0.106  loss_projan_poison: -0.56loss_partition: 0.046loss_stateful_poison: 0.165top1_acc: 96.500    top5_acc: 99.950    
+Partition distribution: [0.496875 0.503125]
+Partitioner mapping accuracy (train sample): 99.06%
+Epoch [19/50] Results on the validation set: ==========
+ASR for Trigger 1: 49.64%
+ASR for Trigger 2: 58.79%
+OR of [Trigger Tgt] on all triggers:  97.5
+average score of [Trigger Org] on all triggers:  54.87
+[XAI] Exporting attribution maps to data/attack/image/mnist/net/state_prob/xai...
+[XAI] Saved 8 attribution sample(s) for epoch 19.
+Validate Confidence(1): 0.973
+Neuron Jaccard Idx(1): 0.940
+Validate Confidence(2): 0.955
+Neuron Jaccard Idx(2): 0.938
+Partitioner mapping accuracy: 98.02% over 10000 samples.
+Partitioner confusion matrix (rows=target partitions, cols=predictions):
+  Target partition 0: total=4926, distribution=[0.9909999966621399, 0.008999999612569809]
+  Target partition 1: total=5074, distribution=[0.029999999329447746, 0.9700000286102295]
+First batch predicted counts: [116, 140]
+First batch target counts:    [113, 143]
+Stateful trigger coverage (first batches):
+  Partition 0: samples=378, success_rate=0.979
+    Trigger 1 misfired 83 times
+  Partition 1: samples=390, success_rate=0.954
+    Trigger 0 misfired 3 times
+Epoch [20/50]loss_total: 0.176   loss_benign: 0.098  loss_projan_poison: -0.56loss_partition: 0.045loss_stateful_poison: 0.140top1_acc: 96.822    top5_acc: 99.963    time: 0:02:23       
+Epoch [20/50] Training Stats: loss_total: 0.176   loss_benign: 0.098  loss_projan_poison: -0.56loss_partition: 0.045loss_stateful_poison: 0.140top1_acc: 96.822    top5_acc: 99.963    
+Partition distribution: [0.45 0.55]
+Partitioner mapping accuracy (train sample): 99.37%
+Epoch [20/50] Results on the validation set: ==========
+ASR for Trigger 1: 50.27%
+ASR for Trigger 2: 59.63%
+OR of [Trigger Tgt] on all triggers:  98.53
+average score of [Trigger Org] on all triggers:  54.37
+[XAI] Exporting attribution maps to data/attack/image/mnist/net/state_prob/xai...
+[XAI] Saved 8 attribution sample(s) for epoch 20.
+Validate Confidence(1): 0.980
+Neuron Jaccard Idx(1): 0.939
+Validate Confidence(2): 0.963
+Neuron Jaccard Idx(2): 0.938
+Partitioner mapping accuracy: 98.33% over 10000 samples.
+Partitioner confusion matrix (rows=target partitions, cols=predictions):
+  Target partition 0: total=4926, distribution=[0.9869999885559082, 0.013000000268220901]
+  Target partition 1: total=5074, distribution=[0.019999999552965164, 0.9800000190734863]
+First batch predicted counts: [113, 143]
+First batch target counts:    [113, 143]
+Stateful trigger coverage (first batches):
+  Partition 0: samples=375, success_rate=0.995
+    Trigger 1 misfired 81 times
+  Partition 1: samples=393, success_rate=0.977
+    Trigger 0 misfired 7 times
+Epoch [21/50]loss_total: 0.151   loss_benign: 0.089  loss_projan_poison: -0.56loss_partition: 0.037loss_stateful_poison: 0.123top1_acc: 97.004    top5_acc: 99.974    time: 0:02:21       
+Epoch [21/50] Training Stats: loss_total: 0.151   loss_benign: 0.089  loss_projan_poison: -0.56loss_partition: 0.037loss_stateful_poison: 0.123top1_acc: 97.004    top5_acc: 99.974    
+Partition distribution: [0.4875 0.5125]
+Partitioner mapping accuracy (train sample): 99.69%
+Epoch [21/50] Results on the validation set: ==========
+ASR for Trigger 1: 49.96%
+ASR for Trigger 2: 59.24%
+OR of [Trigger Tgt] on all triggers:  98.35
+average score of [Trigger Org] on all triggers:  54.635
+[XAI] Exporting attribution maps to data/attack/image/mnist/net/state_prob/xai...
+[XAI] Saved 8 attribution sample(s) for epoch 21.
+Validate Confidence(1): 0.982
+Neuron Jaccard Idx(1): 0.938
+Validate Confidence(2): 0.962
+Neuron Jaccard Idx(2): 0.937
+Partitioner mapping accuracy: 98.38% over 10000 samples.
+Partitioner confusion matrix (rows=target partitions, cols=predictions):
+  Target partition 0: total=4926, distribution=[0.9879999756813049, 0.012000000104308128]
+  Target partition 1: total=5074, distribution=[0.019999999552965164, 0.9800000190734863]
+First batch predicted counts: [112, 144]
+First batch target counts:    [113, 143]
+Stateful trigger coverage (first batches):
+  Partition 0: samples=377, success_rate=0.984
+    Trigger 1 misfired 78 times
+  Partition 1: samples=391, success_rate=0.974
+    Trigger 0 misfired 8 times
+Epoch [22/50]loss_total: 0.152   loss_benign: 0.086  loss_projan_poison: -0.57loss_partition: 0.040loss_stateful_poison: 0.128top1_acc: 97.228    top5_acc: 99.946    time: 0:02:21       
+Epoch [22/50] Training Stats: loss_total: 0.152   loss_benign: 0.086  loss_projan_poison: -0.57loss_partition: 0.040loss_stateful_poison: 0.128top1_acc: 97.228    top5_acc: 99.946    
+Partition distribution: [0.521875 0.478125]
+Partitioner mapping accuracy (train sample): 98.44%
+Epoch [22/50] Results on the validation set: ==========
+ASR for Trigger 1: 49.82%
+ASR for Trigger 2: 59.69%
+OR of [Trigger Tgt] on all triggers:  98.73
+average score of [Trigger Org] on all triggers:  54.5
+[XAI] Exporting attribution maps to data/attack/image/mnist/net/state_prob/xai...
+[XAI] Saved 8 attribution sample(s) for epoch 22.
+Validate Confidence(1): 0.981
+Neuron Jaccard Idx(1): 0.938
+Validate Confidence(2): 0.966
+Neuron Jaccard Idx(2): 0.936
+Partitioner mapping accuracy: 98.44% over 10000 samples.
+Partitioner confusion matrix (rows=target partitions, cols=predictions):
+  Target partition 0: total=4926, distribution=[0.9850000143051147, 0.014999999664723873]
+  Target partition 1: total=5074, distribution=[0.01600000075995922, 0.984000027179718]
+First batch predicted counts: [115, 141]
+First batch target counts:    [113, 143]
+Stateful trigger coverage (first batches):
+  Partition 0: samples=375, success_rate=0.989
+    Trigger 1 misfired 80 times
+  Partition 1: samples=393, success_rate=0.977
+    Trigger 0 misfired 7 times
+Epoch [23/50]loss_total: 0.154   loss_benign: 0.092  loss_projan_poison: -0.56loss_partition: 0.034loss_stateful_poison: 0.124top1_acc: 96.911    top5_acc: 99.972    time: 0:02:21       
+Epoch [23/50] Training Stats: loss_total: 0.154   loss_benign: 0.092  loss_projan_poison: -0.56loss_partition: 0.034loss_stateful_poison: 0.124top1_acc: 96.911    top5_acc: 99.972    
+Partition distribution: [0.503125 0.496875]
+Partitioner mapping accuracy (train sample): 98.75%
+Epoch [23/50] Results on the validation set: ==========
+ASR for Trigger 1: 49.90%
+ASR for Trigger 2: 59.72%
+OR of [Trigger Tgt] on all triggers:  98.88
+average score of [Trigger Org] on all triggers:  54.365
+[XAI] Exporting attribution maps to data/attack/image/mnist/net/state_prob/xai...
+[XAI] Saved 8 attribution sample(s) for epoch 23.
+Validate Confidence(1): 0.977
+Neuron Jaccard Idx(1): 0.938
+Validate Confidence(2): 0.969
+Neuron Jaccard Idx(2): 0.939
+Partitioner mapping accuracy: 98.41% over 10000 samples.
+Partitioner confusion matrix (rows=target partitions, cols=predictions):
+  Target partition 0: total=4926, distribution=[0.9860000014305115, 0.014000000432133675]
+  Target partition 1: total=5074, distribution=[0.017999999225139618, 0.9819999933242798]
+First batch predicted counts: [113, 143]
+First batch target counts:    [113, 143]
+Stateful trigger coverage (first batches):
+  Partition 0: samples=371, success_rate=0.995
+    Trigger 1 misfired 75 times
+  Partition 1: samples=397, success_rate=0.982
+    Trigger 0 misfired 9 times
+Epoch [24/50]loss_total: 0.165   loss_benign: 0.091  loss_projan_poison: -0.56loss_partition: 0.034loss_stateful_poison: 0.137top1_acc: 96.981    top5_acc: 99.970    time: 0:02:32       
+Epoch [24/50] Training Stats: loss_total: 0.165   loss_benign: 0.091  loss_projan_poison: -0.56loss_partition: 0.034loss_stateful_poison: 0.137top1_acc: 96.981    top5_acc: 99.970    
+Partition distribution: [0.496875 0.503125]
+Partitioner mapping accuracy (train sample): 99.69%
+Epoch [24/50] Results on the validation set: ==========
+ASR for Trigger 1: 49.76%
+ASR for Trigger 2: 59.53%
+OR of [Trigger Tgt] on all triggers:  98.57
+average score of [Trigger Org] on all triggers:  54.61
+[XAI] Exporting attribution maps to data/attack/image/mnist/net/state_prob/xai...
+[XAI] Saved 8 attribution sample(s) for epoch 24.
+Validate Confidence(1): 0.975
+Neuron Jaccard Idx(1): 0.941
+Validate Confidence(2): 0.962
+Neuron Jaccard Idx(2): 0.938
+Partitioner mapping accuracy: 98.51% over 10000 samples.
+Partitioner confusion matrix (rows=target partitions, cols=predictions):
+  Target partition 0: total=4926, distribution=[0.984000027179718, 0.01600000075995922]
+  Target partition 1: total=5074, distribution=[0.013000000268220901, 0.9869999885559082]
+First batch predicted counts: [113, 143]
+First batch target counts:    [113, 143]
+Stateful trigger coverage (first batches):
+  Partition 0: samples=370, success_rate=0.997
+    Trigger 1 misfired 74 times
+  Partition 1: samples=398, success_rate=0.972
+    Trigger 0 misfired 9 times
+Epoch [25/50]loss_total: 0.154   loss_benign: 0.088  loss_projan_poison: -0.57loss_partition: 0.036loss_stateful_poison: 0.128top1_acc: 97.170    top5_acc: 99.969    time: 0:02:25       
+Epoch [25/50] Training Stats: loss_total: 0.154   loss_benign: 0.088  loss_projan_poison: -0.57loss_partition: 0.036loss_stateful_poison: 0.128top1_acc: 97.170    top5_acc: 99.969    
+Partition distribution: [0.56875 0.43125]
+Partitioner mapping accuracy (train sample): 98.44%
+Epoch [25/50] Results on the validation set: ==========
+ASR for Trigger 1: 49.99%
+ASR for Trigger 2: 60.17%
+OR of [Trigger Tgt] on all triggers:  98.91
+average score of [Trigger Org] on all triggers:  54.23
+[XAI] Exporting attribution maps to data/attack/image/mnist/net/state_prob/xai...
+[XAI] Saved 8 attribution sample(s) for epoch 25.
+Validate Confidence(1): 0.978
+Neuron Jaccard Idx(1): 0.942
+Validate Confidence(2): 0.972
+Neuron Jaccard Idx(2): 0.936
+Partitioner mapping accuracy: 98.08% over 10000 samples.
+Partitioner confusion matrix (rows=target partitions, cols=predictions):
+  Target partition 0: total=4926, distribution=[0.9929999709129333, 0.007000000216066837]
+  Target partition 1: total=5074, distribution=[0.03099999949336052, 0.968999981880188]
+First batch predicted counts: [117, 139]
+First batch target counts:    [113, 143]
+Stateful trigger coverage (first batches):
+  Partition 0: samples=380, success_rate=0.982
+    Trigger 1 misfired 85 times
+  Partition 1: samples=388, success_rate=0.982
+    Trigger 0 misfired 7 times
+Epoch [26/50]loss_total: 0.155   loss_benign: 0.085  loss_projan_poison: -0.57loss_partition: 0.040loss_stateful_poison: 0.132top1_acc: 97.250    top5_acc: 99.965    time: 0:02:21       
+Epoch [26/50] Training Stats: loss_total: 0.155   loss_benign: 0.085  loss_projan_poison: -0.57loss_partition: 0.040loss_stateful_poison: 0.132top1_acc: 97.250    top5_acc: 99.965    
+Partition distribution: [0.49375 0.50625]
+Partitioner mapping accuracy (train sample): 98.12%
+Epoch [26/50] Results on the validation set: ==========
+ASR for Trigger 1: 49.98%
+ASR for Trigger 2: 59.51%
+OR of [Trigger Tgt] on all triggers:  98.52
+average score of [Trigger Org] on all triggers:  54.485
+[XAI] Exporting attribution maps to data/attack/image/mnist/net/state_prob/xai...
+[XAI] Saved 8 attribution sample(s) for epoch 26.
+Validate Confidence(1): 0.980
+Neuron Jaccard Idx(1): 0.942
+Validate Confidence(2): 0.969
+Neuron Jaccard Idx(2): 0.935
+Partitioner mapping accuracy: 98.47% over 10000 samples.
+Partitioner confusion matrix (rows=target partitions, cols=predictions):
+  Target partition 0: total=4926, distribution=[0.9869999885559082, 0.013000000268220901]
+  Target partition 1: total=5074, distribution=[0.017999999225139618, 0.9819999933242798]
+First batch predicted counts: [113, 143]
+First batch target counts:    [113, 143]
+Stateful trigger coverage (first batches):
+  Partition 0: samples=375, success_rate=0.984
+    Trigger 1 misfired 79 times
+  Partition 1: samples=393, success_rate=0.972
+    Trigger 0 misfired 11 times
+Epoch [27/50]loss_total: 0.130   loss_benign: 0.081  loss_projan_poison: -0.57loss_partition: 0.035loss_stateful_poison: 0.110top1_acc: 97.313    top5_acc: 99.954    time: 0:02:20       
+Epoch [27/50] Training Stats: loss_total: 0.130   loss_benign: 0.081  loss_projan_poison: -0.57loss_partition: 0.035loss_stateful_poison: 0.110top1_acc: 97.313    top5_acc: 99.954    
+Partition distribution: [0.484375 0.515625]
+Partitioner mapping accuracy (train sample): 99.37%
+Epoch [27/50] Results on the validation set: ==========
+ASR for Trigger 1: 50.00%
+ASR for Trigger 2: 59.34%
+OR of [Trigger Tgt] on all triggers:  98.55
+average score of [Trigger Org] on all triggers:  54.565
+[XAI] Exporting attribution maps to data/attack/image/mnist/net/state_prob/xai...
+[XAI] Saved 8 attribution sample(s) for epoch 27.
+Validate Confidence(1): 0.980
+Neuron Jaccard Idx(1): 0.939
+Validate Confidence(2): 0.966
+Neuron Jaccard Idx(2): 0.939
+Partitioner mapping accuracy: 98.65% over 10000 samples.
+Partitioner confusion matrix (rows=target partitions, cols=predictions):
+  Target partition 0: total=4926, distribution=[0.9850000143051147, 0.014999999664723873]
+  Target partition 1: total=5074, distribution=[0.012000000104308128, 0.9879999756813049]
+First batch predicted counts: [112, 144]
+First batch target counts:    [113, 143]
+Stateful trigger coverage (first batches):
+  Partition 0: samples=374, success_rate=0.992
+    Trigger 1 misfired 75 times
+  Partition 1: samples=394, success_rate=0.977
+    Trigger 0 misfired 7 times
+Epoch [28/50]loss_total: 0.127   loss_benign: 0.082  loss_projan_poison: -0.56loss_partition: 0.026loss_stateful_poison: 0.108top1_acc: 97.306    top5_acc: 99.965    time: 0:02:21       
+Epoch [28/50] Training Stats: loss_total: 0.127   loss_benign: 0.082  loss_projan_poison: -0.56loss_partition: 0.026loss_stateful_poison: 0.108top1_acc: 97.306    top5_acc: 99.965    
+Partition distribution: [0.490625 0.509375]
+Partitioner mapping accuracy (train sample): 99.06%
+Epoch [28/50] Results on the validation set: ==========
+ASR for Trigger 1: 49.95%
+ASR for Trigger 2: 59.85%
+OR of [Trigger Tgt] on all triggers:  98.9
+average score of [Trigger Org] on all triggers:  54.31
+[XAI] Exporting attribution maps to data/attack/image/mnist/net/state_prob/xai...
+[XAI] Saved 8 attribution sample(s) for epoch 28.
+Validate Confidence(1): 0.985
+Neuron Jaccard Idx(1): 0.939
+Validate Confidence(2): 0.971
+Neuron Jaccard Idx(2): 0.937
+Partitioner mapping accuracy: 98.39% over 10000 samples.
+Partitioner confusion matrix (rows=target partitions, cols=predictions):
+  Target partition 0: total=4926, distribution=[0.984000027179718, 0.01600000075995922]
+  Target partition 1: total=5074, distribution=[0.017000000923871994, 0.9829999804496765]
+First batch predicted counts: [115, 141]
+First batch target counts:    [113, 143]
+Stateful trigger coverage (first batches):
+  Partition 0: samples=376, success_rate=0.981
+    Trigger 1 misfired 79 times
+  Partition 1: samples=392, success_rate=0.990
+    Trigger 0 misfired 6 times
+Epoch [29/50]loss_total: 0.119   loss_benign: 0.077  loss_projan_poison: -0.57loss_partition: 0.028loss_stateful_poison: 0.104top1_acc: 97.506    top5_acc: 99.970    time: 0:02:20       
+Epoch [29/50] Training Stats: loss_total: 0.119   loss_benign: 0.077  loss_projan_poison: -0.57loss_partition: 0.028loss_stateful_poison: 0.104top1_acc: 97.506    top5_acc: 99.970    
+Partition distribution: [0.471875 0.528125]
+Partitioner mapping accuracy (train sample): 99.69%
+Epoch [29/50] Results on the validation set: ==========
+ASR for Trigger 1: 50.09%
+ASR for Trigger 2: 60.15%
+OR of [Trigger Tgt] on all triggers:  98.85
+average score of [Trigger Org] on all triggers:  54.175
+[XAI] Exporting attribution maps to data/attack/image/mnist/net/state_prob/xai...
+[XAI] Saved 8 attribution sample(s) for epoch 29.
+Validate Confidence(1): 0.985
+Neuron Jaccard Idx(1): 0.942
+Validate Confidence(2): 0.969
+Neuron Jaccard Idx(2): 0.936
+Partitioner mapping accuracy: 98.36% over 10000 samples.
+Partitioner confusion matrix (rows=target partitions, cols=predictions):
+  Target partition 0: total=4926, distribution=[0.9779999852180481, 0.02199999988079071]
+  Target partition 1: total=5074, distribution=[0.010999999940395355, 0.9890000224113464]
+First batch predicted counts: [112, 144]
+First batch target counts:    [113, 143]
+Stateful trigger coverage (first batches):
+  Partition 0: samples=366, success_rate=0.997
+    Trigger 1 misfired 78 times
+  Partition 1: samples=402, success_rate=0.968
+    Trigger 0 misfired 15 times
+Epoch [30/50]loss_total: 0.144   loss_benign: 0.083  loss_projan_poison: -0.57loss_partition: 0.036loss_stateful_poison: 0.123top1_acc: 97.231    top5_acc: 99.959    time: 0:02:22       
+Epoch [30/50] Training Stats: loss_total: 0.144   loss_benign: 0.083  loss_projan_poison: -0.57loss_partition: 0.036loss_stateful_poison: 0.123top1_acc: 97.231    top5_acc: 99.959    
+Partition distribution: [0.465625 0.534375]
+Partitioner mapping accuracy (train sample): 99.37%
+Epoch [30/50] Results on the validation set: ==========
+ASR for Trigger 1: 49.95%
+ASR for Trigger 2: 60.36%
+OR of [Trigger Tgt] on all triggers:  99.19
+average score of [Trigger Org] on all triggers:  54.165
+[XAI] Exporting attribution maps to data/attack/image/mnist/net/state_prob/xai...
+[XAI] Saved 8 attribution sample(s) for epoch 30.
+Validate Confidence(1): 0.981
+Neuron Jaccard Idx(1): 0.942
+Validate Confidence(2): 0.973
+Neuron Jaccard Idx(2): 0.937
+Partitioner mapping accuracy: 98.73% over 10000 samples.
+Partitioner confusion matrix (rows=target partitions, cols=predictions):
+  Target partition 0: total=4926, distribution=[0.9900000095367432, 0.009999999776482582]
+  Target partition 1: total=5074, distribution=[0.014999999664723873, 0.9850000143051147]
+First batch predicted counts: [113, 143]
+First batch target counts:    [113, 143]
+Stateful trigger coverage (first batches):
+  Partition 0: samples=375, success_rate=0.987
+    Trigger 1 misfired 80 times
+  Partition 1: samples=393, success_rate=0.987
+    Trigger 0 misfired 7 times
+--- Saving Stateful model and partitioner to data/attack/image/mnist/net/state_prob/net/state_prob/model.pth ---
+Model saved successfully to: data/attack/image/mnist/net/state_prob/net/state_prob/model.pth
+Epoch [31/50]loss_total: 0.129   loss_benign: 0.080  loss_projan_poison: -0.57loss_partition: 0.028loss_stateful_poison: 0.111top1_acc: 97.341    top5_acc: 99.974    time: 0:02:22       
+Epoch [31/50] Training Stats: loss_total: 0.129   loss_benign: 0.080  loss_projan_poison: -0.57loss_partition: 0.028loss_stateful_poison: 0.111top1_acc: 97.341    top5_acc: 99.974    
+Partition distribution: [0.459375 0.540625]
+Partitioner mapping accuracy (train sample): 99.37%
+Epoch [31/50] Results on the validation set: ==========
+ASR for Trigger 1: 50.08%
+ASR for Trigger 2: 58.81%
+OR of [Trigger Tgt] on all triggers:  98.21
+average score of [Trigger Org] on all triggers:  54.75
+[XAI] Exporting attribution maps to data/attack/image/mnist/net/state_prob/xai...
+[XAI] Saved 8 attribution sample(s) for epoch 31.
+Validate Confidence(1): 0.983
+Neuron Jaccard Idx(1): 0.939
+Validate Confidence(2): 0.951
+Neuron Jaccard Idx(2): 0.937
+Partitioner mapping accuracy: 98.27% over 10000 samples.
+Partitioner confusion matrix (rows=target partitions, cols=predictions):
+  Target partition 0: total=4926, distribution=[0.9900000095367432, 0.009999999776482582]
+  Target partition 1: total=5074, distribution=[0.024000000208616257, 0.9760000109672546]
+First batch predicted counts: [114, 142]
+First batch target counts:    [113, 143]
+Stateful trigger coverage (first batches):
+  Partition 0: samples=374, success_rate=0.992
+    Trigger 1 misfired 77 times
+  Partition 1: samples=394, success_rate=0.975
+    Trigger 0 misfired 7 times
+Epoch [32/50]loss_total: 0.125   loss_benign: 0.074  loss_projan_poison: -0.57loss_partition: 0.031loss_stateful_poison: 0.112top1_acc: 97.580    top5_acc: 99.974    time: 0:02:27       
+Epoch [32/50] Training Stats: loss_total: 0.125   loss_benign: 0.074  loss_projan_poison: -0.57loss_partition: 0.031loss_stateful_poison: 0.112top1_acc: 97.580    top5_acc: 99.974    
+Partition distribution: [0.475 0.525]
+Partitioner mapping accuracy (train sample): 99.06%
+Epoch [32/50] Results on the validation set: ==========
+ASR for Trigger 1: 49.92%
+ASR for Trigger 2: 60.10%
+OR of [Trigger Tgt] on all triggers:  99.14
+average score of [Trigger Org] on all triggers:  54.18
+[XAI] Exporting attribution maps to data/attack/image/mnist/net/state_prob/xai...
+[XAI] Saved 8 attribution sample(s) for epoch 32.
+Validate Confidence(1): 0.981
+Neuron Jaccard Idx(1): 0.940
+Validate Confidence(2): 0.975
+Neuron Jaccard Idx(2): 0.937
+Partitioner mapping accuracy: 98.48% over 10000 samples.
+Partitioner confusion matrix (rows=target partitions, cols=predictions):
+  Target partition 0: total=4926, distribution=[0.9890000224113464, 0.010999999940395355]
+  Target partition 1: total=5074, distribution=[0.019999999552965164, 0.9800000190734863]
+First batch predicted counts: [113, 143]
+First batch target counts:    [113, 143]
+Stateful trigger coverage (first batches):
+  Partition 0: samples=374, success_rate=0.992
+    Trigger 1 misfired 79 times
+  Partition 1: samples=394, success_rate=0.987
+    Trigger 0 misfired 5 times
+Epoch [33/50]loss_total: 0.104   loss_benign: 0.070  loss_projan_poison: -0.57loss_partition: 0.031loss_stateful_poison: 0.095top1_acc: 97.670    top5_acc: 99.976    time: 0:02:25       
+Epoch [33/50] Training Stats: loss_total: 0.104   loss_benign: 0.070  loss_projan_poison: -0.57loss_partition: 0.031loss_stateful_poison: 0.095top1_acc: 97.670    top5_acc: 99.976    
+Partition distribution: [0.496875 0.503125]
+Partitioner mapping accuracy (train sample): 98.44%
+Epoch [33/50] Results on the validation set: ==========
+ASR for Trigger 1: 49.99%
+ASR for Trigger 2: 59.84%
+OR of [Trigger Tgt] on all triggers:  99.02
+average score of [Trigger Org] on all triggers:  54.315
+[XAI] Exporting attribution maps to data/attack/image/mnist/net/state_prob/xai...
+[XAI] Saved 8 attribution sample(s) for epoch 33.
+Validate Confidence(1): 0.980
+Neuron Jaccard Idx(1): 0.939
+Validate Confidence(2): 0.974
+Neuron Jaccard Idx(2): 0.939
+Partitioner mapping accuracy: 98.27% over 10000 samples.
+Partitioner confusion matrix (rows=target partitions, cols=predictions):
+  Target partition 0: total=4926, distribution=[0.9909999966621399, 0.008999999612569809]
+  Target partition 1: total=5074, distribution=[0.02500000037252903, 0.9750000238418579]
+First batch predicted counts: [117, 139]
+First batch target counts:    [113, 143]
+Stateful trigger coverage (first batches):
+  Partition 0: samples=381, success_rate=0.976
+    Trigger 1 misfired 82 times
+  Partition 1: samples=387, success_rate=0.987
+    Trigger 0 misfired 6 times
+Epoch [34/50]loss_total: 0.101   loss_benign: 0.075  loss_projan_poison: -0.57loss_partition: 0.023loss_stateful_poison: 0.088top1_acc: 97.509    top5_acc: 99.985    time: 0:02:25       
+Epoch [34/50] Training Stats: loss_total: 0.101   loss_benign: 0.075  loss_projan_poison: -0.57loss_partition: 0.023loss_stateful_poison: 0.088top1_acc: 97.509    top5_acc: 99.985    
+Partition distribution: [0.48125 0.51875]
+Partitioner mapping accuracy (train sample): 99.69%
+Epoch [34/50] Results on the validation set: ==========
+ASR for Trigger 1: 49.81%
+ASR for Trigger 2: 59.68%
+OR of [Trigger Tgt] on all triggers:  98.79
+average score of [Trigger Org] on all triggers:  54.535
+[XAI] Exporting attribution maps to data/attack/image/mnist/net/state_prob/xai...
+[XAI] Saved 8 attribution sample(s) for epoch 34.
+Validate Confidence(1): 0.985
+Neuron Jaccard Idx(1): 0.940
+Validate Confidence(2): 0.974
+Neuron Jaccard Idx(2): 0.936
+Partitioner mapping accuracy: 98.75% over 10000 samples.
+Partitioner confusion matrix (rows=target partitions, cols=predictions):
+  Target partition 0: total=4926, distribution=[0.9869999885559082, 0.013000000268220901]
+  Target partition 1: total=5074, distribution=[0.012000000104308128, 0.9879999756813049]
+First batch predicted counts: [113, 143]
+First batch target counts:    [113, 143]
+Stateful trigger coverage (first batches):
+  Partition 0: samples=374, success_rate=0.992
+    Trigger 1 misfired 77 times
+  Partition 1: samples=394, success_rate=0.977
+    Trigger 0 misfired 4 times
+Epoch [35/50]loss_total: 0.143   loss_benign: 0.081  loss_projan_poison: -0.56loss_partition: 0.024loss_stateful_poison: 0.125top1_acc: 97.372    top5_acc: 99.978    time: 0:02:24       
+Epoch [35/50] Training Stats: loss_total: 0.143   loss_benign: 0.081  loss_projan_poison: -0.56loss_partition: 0.024loss_stateful_poison: 0.125top1_acc: 97.372    top5_acc: 99.978    
+Partition distribution: [0.5 0.5]
+Partitioner mapping accuracy (train sample): 99.69%
+Epoch [35/50] Results on the validation set: ==========
+ASR for Trigger 1: 50.05%
+ASR for Trigger 2: 59.28%
+OR of [Trigger Tgt] on all triggers:  98.51
+average score of [Trigger Org] on all triggers:  54.65
+[XAI] Exporting attribution maps to data/attack/image/mnist/net/state_prob/xai...
+[XAI] Saved 8 attribution sample(s) for epoch 35.
+Validate Confidence(1): 0.987
+Neuron Jaccard Idx(1): 0.940
+Validate Confidence(2): 0.969
+Neuron Jaccard Idx(2): 0.937
+Partitioner mapping accuracy: 98.54% over 10000 samples.
+Partitioner confusion matrix (rows=target partitions, cols=predictions):
+  Target partition 0: total=4926, distribution=[0.9879999756813049, 0.012000000104308128]
+  Target partition 1: total=5074, distribution=[0.017000000923871994, 0.9829999804496765]
+First batch predicted counts: [114, 142]
+First batch target counts:    [113, 143]
+Stateful trigger coverage (first batches):
+  Partition 0: samples=374, success_rate=0.987
+    Trigger 1 misfired 79 times
+  Partition 1: samples=394, success_rate=0.977
+    Trigger 0 misfired 9 times
+Epoch [36/50]loss_total: 0.121   loss_benign: 0.078  loss_projan_poison: -0.57loss_partition: 0.025loss_stateful_poison: 0.106top1_acc: 97.487    top5_acc: 99.959    time: 0:02:22       
+Epoch [36/50] Training Stats: loss_total: 0.121   loss_benign: 0.078  loss_projan_poison: -0.57loss_partition: 0.025loss_stateful_poison: 0.106top1_acc: 97.487    top5_acc: 99.959    
+Partition distribution: [0.503125 0.496875]
+Partitioner mapping accuracy (train sample): 98.75%
+Epoch [36/50] Results on the validation set: ==========
+ASR for Trigger 1: 50.06%
+ASR for Trigger 2: 60.64%
+OR of [Trigger Tgt] on all triggers:  99.6
+average score of [Trigger Org] on all triggers:  53.92
+[XAI] Exporting attribution maps to data/attack/image/mnist/net/state_prob/xai...
+[XAI] Saved 8 attribution sample(s) for epoch 36.
+Validate Confidence(1): 0.984
+Neuron Jaccard Idx(1): 0.942
+Validate Confidence(2): 0.981
+Neuron Jaccard Idx(2): 0.934
+Partitioner mapping accuracy: 98.65% over 10000 samples.
+Partitioner confusion matrix (rows=target partitions, cols=predictions):
+  Target partition 0: total=4926, distribution=[0.9869999885559082, 0.013000000268220901]
+  Target partition 1: total=5074, distribution=[0.014000000432133675, 0.9860000014305115]
+First batch predicted counts: [114, 142]
+First batch target counts:    [113, 143]
+Stateful trigger coverage (first batches):
+  Partition 0: samples=373, success_rate=0.992
+    Trigger 1 misfired 80 times
+  Partition 1: samples=395, success_rate=0.995
+    Trigger 0 misfired 5 times
+--- Saving Stateful model and partitioner to data/attack/image/mnist/net/state_prob/net/state_prob/model.pth ---
+Model saved successfully to: data/attack/image/mnist/net/state_prob/net/state_prob/model.pth
+Epoch [37/50]loss_total: 0.109   loss_benign: 0.074  loss_projan_poison: -0.57loss_partition: 0.031loss_stateful_poison: 0.097top1_acc: 97.580    top5_acc: 99.989    time: 0:02:22       
+Epoch [37/50] Training Stats: loss_total: 0.109   loss_benign: 0.074  loss_projan_poison: -0.57loss_partition: 0.031loss_stateful_poison: 0.097top1_acc: 97.580    top5_acc: 99.989    
+Partition distribution: [0.48125 0.51875]
+Partitioner mapping accuracy (train sample): 99.37%
+Epoch [37/50] Results on the validation set: ==========
+ASR for Trigger 1: 49.81%
+ASR for Trigger 2: 59.73%
+OR of [Trigger Tgt] on all triggers:  98.79
+average score of [Trigger Org] on all triggers:  54.48
+[XAI] Exporting attribution maps to data/attack/image/mnist/net/state_prob/xai...
+[XAI] Saved 8 attribution sample(s) for epoch 37.
+Validate Confidence(1): 0.986
+Neuron Jaccard Idx(1): 0.939
+Validate Confidence(2): 0.975
+Neuron Jaccard Idx(2): 0.935
+Partitioner mapping accuracy: 98.53% over 10000 samples.
+Partitioner confusion matrix (rows=target partitions, cols=predictions):
+  Target partition 0: total=4926, distribution=[0.9879999756813049, 0.012000000104308128]
+  Target partition 1: total=5074, distribution=[0.017000000923871994, 0.9829999804496765]
+First batch predicted counts: [113, 143]
+First batch target counts:    [113, 143]
+Stateful trigger coverage (first batches):
+  Partition 0: samples=372, success_rate=0.992
+    Trigger 1 misfired 74 times
+  Partition 1: samples=396, success_rate=0.980
+    Trigger 0 misfired 7 times
+Epoch [38/50]loss_total: 0.159   loss_benign: 0.080  loss_projan_poison: -0.56loss_partition: 0.025loss_stateful_poison: 0.141top1_acc: 97.381    top5_acc: 99.970    time: 0:02:28       
+Epoch [38/50] Training Stats: loss_total: 0.159   loss_benign: 0.080  loss_projan_poison: -0.56loss_partition: 0.025loss_stateful_poison: 0.141top1_acc: 97.381    top5_acc: 99.970    
+Partition distribution: [0.478125 0.521875]
+Partitioner mapping accuracy (train sample): 98.75%
+Epoch [38/50] Results on the validation set: ==========
+ASR for Trigger 1: 49.75%
+ASR for Trigger 2: 60.11%
+OR of [Trigger Tgt] on all triggers:  99.01
+average score of [Trigger Org] on all triggers:  54.25
+[XAI] Exporting attribution maps to data/attack/image/mnist/net/state_prob/xai...
+[XAI] Saved 8 attribution sample(s) for epoch 38.
+Validate Confidence(1): 0.981
+Neuron Jaccard Idx(1): 0.944
+Validate Confidence(2): 0.966
+Neuron Jaccard Idx(2): 0.934
+Partitioner mapping accuracy: 98.54% over 10000 samples.
+Partitioner confusion matrix (rows=target partitions, cols=predictions):
+  Target partition 0: total=4926, distribution=[0.9829999804496765, 0.017000000923871994]
+  Target partition 1: total=5074, distribution=[0.012000000104308128, 0.9879999756813049]
+First batch predicted counts: [113, 143]
+First batch target counts:    [113, 143]
+Stateful trigger coverage (first batches):
+  Partition 0: samples=369, success_rate=0.992
+    Trigger 1 misfired 75 times
+  Partition 1: samples=399, success_rate=0.980
+    Trigger 0 misfired 8 times
+Epoch [39/50]loss_total: 0.107   loss_benign: 0.075  loss_projan_poison: -0.57loss_partition: 0.023loss_stateful_poison: 0.094top1_acc: 97.552    top5_acc: 99.976    time: 0:02:24       
+Epoch [39/50] Training Stats: loss_total: 0.107   loss_benign: 0.075  loss_projan_poison: -0.57loss_partition: 0.023loss_stateful_poison: 0.094top1_acc: 97.552    top5_acc: 99.976    
+Partition distribution: [0.484375 0.515625]
+Partitioner mapping accuracy (train sample): 100.00%
+Epoch [39/50] Results on the validation set: ==========
+ASR for Trigger 1: 49.91%
+ASR for Trigger 2: 59.69%
+OR of [Trigger Tgt] on all triggers:  98.76
+average score of [Trigger Org] on all triggers:  54.47
+[XAI] Exporting attribution maps to data/attack/image/mnist/net/state_prob/xai...
+[XAI] Saved 8 attribution sample(s) for epoch 39.
+Validate Confidence(1): 0.984
+Neuron Jaccard Idx(1): 0.943
+Validate Confidence(2): 0.972
+Neuron Jaccard Idx(2): 0.934
+Partitioner mapping accuracy: 98.44% over 10000 samples.
+Partitioner confusion matrix (rows=target partitions, cols=predictions):
+  Target partition 0: total=4926, distribution=[0.9879999756813049, 0.012000000104308128]
+  Target partition 1: total=5074, distribution=[0.019999999552965164, 0.9800000190734863]
+First batch predicted counts: [115, 141]
+First batch target counts:    [113, 143]
+Stateful trigger coverage (first batches):
+  Partition 0: samples=372, success_rate=0.992
+    Trigger 1 misfired 76 times
+  Partition 1: samples=396, success_rate=0.977
+    Trigger 0 misfired 8 times
+Epoch [40/50]loss_total: 0.153   loss_benign: 0.075  loss_projan_poison: -0.56loss_partition: 0.026loss_stateful_poison: 0.139top1_acc: 97.615    top5_acc: 99.981    time: 0:02:21       
+Epoch [40/50] Training Stats: loss_total: 0.153   loss_benign: 0.075  loss_projan_poison: -0.56loss_partition: 0.026loss_stateful_poison: 0.139top1_acc: 97.615    top5_acc: 99.981    
+Partition distribution: [0.465625 0.534375]
+Partitioner mapping accuracy (train sample): 99.69%
+Epoch [40/50] Results on the validation set: ==========
+ASR for Trigger 1: 49.93%
+ASR for Trigger 2: 59.96%
+OR of [Trigger Tgt] on all triggers:  98.99
+average score of [Trigger Org] on all triggers:  54.37
+[XAI] Exporting attribution maps to data/attack/image/mnist/net/state_prob/xai...
+[XAI] Saved 8 attribution sample(s) for epoch 40.
+Validate Confidence(1): 0.985
+Neuron Jaccard Idx(1): 0.943
+Validate Confidence(2): 0.972
+Neuron Jaccard Idx(2): 0.932
+Partitioner mapping accuracy: 98.47% over 10000 samples.
+Partitioner confusion matrix (rows=target partitions, cols=predictions):
+  Target partition 0: total=4926, distribution=[0.9819999933242798, 0.017999999225139618]
+  Target partition 1: total=5074, distribution=[0.012000000104308128, 0.9879999756813049]
+First batch predicted counts: [110, 146]
+First batch target counts:    [113, 143]
+Stateful trigger coverage (first batches):
+  Partition 0: samples=366, success_rate=0.995
+    Trigger 1 misfired 76 times
+  Partition 1: samples=402, success_rate=0.968
+    Trigger 0 misfired 13 times
+Epoch [41/50]loss_total: 0.111   loss_benign: 0.071  loss_projan_poison: -0.57loss_partition: 0.024loss_stateful_poison: 0.102top1_acc: 97.667    top5_acc: 99.987    time: 0:02:21       
+Epoch [41/50] Training Stats: loss_total: 0.111   loss_benign: 0.071  loss_projan_poison: -0.57loss_partition: 0.024loss_stateful_poison: 0.102top1_acc: 97.667    top5_acc: 99.987    
+Partition distribution: [0.471875 0.528125]
+Partitioner mapping accuracy (train sample): 98.44%
+Epoch [41/50] Results on the validation set: ==========
+ASR for Trigger 1: 49.62%
+ASR for Trigger 2: 60.56%
+OR of [Trigger Tgt] on all triggers:  99.27
+average score of [Trigger Org] on all triggers:  54.2
+[XAI] Exporting attribution maps to data/attack/image/mnist/net/state_prob/xai...
+[XAI] Saved 8 attribution sample(s) for epoch 41.
+Validate Confidence(1): 0.983
+Neuron Jaccard Idx(1): 0.947
+Validate Confidence(2): 0.979
+Neuron Jaccard Idx(2): 0.930
+Partitioner mapping accuracy: 98.43% over 10000 samples.
+Partitioner confusion matrix (rows=target partitions, cols=predictions):
+  Target partition 0: total=4926, distribution=[0.9779999852180481, 0.02199999988079071]
+  Target partition 1: total=5074, distribution=[0.009999999776482582, 0.9900000095367432]
+First batch predicted counts: [112, 144]
+First batch target counts:    [113, 143]
+Stateful trigger coverage (first batches):
+  Partition 0: samples=369, success_rate=0.992
+    Trigger 1 misfired 77 times
+  Partition 1: samples=399, success_rate=0.982
+    Trigger 0 misfired 6 times
+Epoch [42/50]loss_total: 0.100   loss_benign: 0.069  loss_projan_poison: -0.57loss_partition: 0.025loss_stateful_poison: 0.094top1_acc: 97.678    top5_acc: 99.991    time: 0:02:21       
+Epoch [42/50] Training Stats: loss_total: 0.100   loss_benign: 0.069  loss_projan_poison: -0.57loss_partition: 0.025loss_stateful_poison: 0.094top1_acc: 97.678    top5_acc: 99.991    
+Partition distribution: [0.48125 0.51875]
+Partitioner mapping accuracy (train sample): 99.37%
+Epoch [42/50] Results on the validation set: ==========
+ASR for Trigger 1: 49.49%
+ASR for Trigger 2: 60.10%
+OR of [Trigger Tgt] on all triggers:  99.01
+average score of [Trigger Org] on all triggers:  54.44
+[XAI] Exporting attribution maps to data/attack/image/mnist/net/state_prob/xai...
+[XAI] Saved 8 attribution sample(s) for epoch 42.
+Validate Confidence(1): 0.982
+Neuron Jaccard Idx(1): 0.943
+Validate Confidence(2): 0.976
+Neuron Jaccard Idx(2): 0.936
+Partitioner mapping accuracy: 98.65% over 10000 samples.
+Partitioner confusion matrix (rows=target partitions, cols=predictions):
+  Target partition 0: total=4926, distribution=[0.9860000014305115, 0.014000000432133675]
+  Target partition 1: total=5074, distribution=[0.013000000268220901, 0.9869999885559082]
+First batch predicted counts: [112, 144]
+First batch target counts:    [113, 143]
+Stateful trigger coverage (first batches):
+  Partition 0: samples=371, success_rate=0.987
+    Trigger 1 misfired 76 times
+  Partition 1: samples=397, success_rate=0.977
+    Trigger 0 misfired 5 times
+Epoch [43/50]loss_total: 0.087   loss_benign: 0.064  loss_projan_poison: -0.57loss_partition: 0.024loss_stateful_poison: 0.084top1_acc: 97.865    top5_acc: 99.985    time: 0:02:22       
+Epoch [43/50] Training Stats: loss_total: 0.087   loss_benign: 0.064  loss_projan_poison: -0.57loss_partition: 0.024loss_stateful_poison: 0.084top1_acc: 97.865    top5_acc: 99.985    
+Partition distribution: [0.43125 0.56875]
+Partitioner mapping accuracy (train sample): 98.44%
+Epoch [43/50] Results on the validation set: ==========
+ASR for Trigger 1: 50.00%
+ASR for Trigger 2: 59.81%
+OR of [Trigger Tgt] on all triggers:  98.99
+average score of [Trigger Org] on all triggers:  54.345
+[XAI] Exporting attribution maps to data/attack/image/mnist/net/state_prob/xai...
+[XAI] Saved 8 attribution sample(s) for epoch 43.
+Validate Confidence(1): 0.989
+Neuron Jaccard Idx(1): 0.942
+Validate Confidence(2): 0.976
+Neuron Jaccard Idx(2): 0.941
+Partitioner mapping accuracy: 98.69% over 10000 samples.
+Partitioner confusion matrix (rows=target partitions, cols=predictions):
+  Target partition 0: total=4926, distribution=[0.9919999837875366, 0.00800000037997961]
+  Target partition 1: total=5074, distribution=[0.01899999938905239, 0.9810000061988831]
+First batch predicted counts: [113, 143]
+First batch target counts:    [113, 143]
+Stateful trigger coverage (first batches):
+  Partition 0: samples=375, success_rate=0.992
+    Trigger 1 misfired 78 times
+  Partition 1: samples=393, success_rate=0.982
+    Trigger 0 misfired 5 times
+Epoch [44/50]loss_total: 0.088   loss_benign: 0.063  loss_projan_poison: -0.58loss_partition: 0.020loss_stateful_poison: 0.087top1_acc: 97.963    top5_acc: 99.983    time: 0:02:34       
+Epoch [44/50] Training Stats: loss_total: 0.088   loss_benign: 0.063  loss_projan_poison: -0.58loss_partition: 0.020loss_stateful_poison: 0.087top1_acc: 97.963    top5_acc: 99.983    
+Partition distribution: [0.5 0.5]
+Partitioner mapping accuracy (train sample): 99.69%
+Epoch [44/50] Results on the validation set: ==========
+ASR for Trigger 1: 49.84%
+ASR for Trigger 2: 59.77%
+OR of [Trigger Tgt] on all triggers:  98.92
+average score of [Trigger Org] on all triggers:  54.475
+[XAI] Exporting attribution maps to data/attack/image/mnist/net/state_prob/xai...
+[XAI] Saved 8 attribution sample(s) for epoch 44.
+Validate Confidence(1): 0.984
+Neuron Jaccard Idx(1): 0.945
+Validate Confidence(2): 0.973
+Neuron Jaccard Idx(2): 0.935
+Partitioner mapping accuracy: 98.60% over 10000 samples.
+Partitioner confusion matrix (rows=target partitions, cols=predictions):
+  Target partition 0: total=4926, distribution=[0.9879999756813049, 0.012000000104308128]
+  Target partition 1: total=5074, distribution=[0.01600000075995922, 0.984000027179718]
+First batch predicted counts: [114, 142]
+First batch target counts:    [113, 143]
+Stateful trigger coverage (first batches):
+  Partition 0: samples=373, success_rate=0.992
+    Trigger 1 misfired 78 times
+  Partition 1: samples=395, success_rate=0.980
+    Trigger 0 misfired 7 times
+Epoch [45/50]loss_total: 0.085   loss_benign: 0.061  loss_projan_poison: -0.57loss_partition: 0.018loss_stateful_poison: 0.086top1_acc: 97.944    top5_acc: 99.991    time: 0:02:23       
+Epoch [45/50] Training Stats: loss_total: 0.085   loss_benign: 0.061  loss_projan_poison: -0.57loss_partition: 0.018loss_stateful_poison: 0.086top1_acc: 97.944    top5_acc: 99.991    
+Partition distribution: [0.475 0.525]
+Partitioner mapping accuracy (train sample): 99.06%
+Epoch [45/50] Results on the validation set: ==========
+ASR for Trigger 1: 50.16%
+ASR for Trigger 2: 60.02%
+OR of [Trigger Tgt] on all triggers:  99.25
+average score of [Trigger Org] on all triggers:  54.245
+[XAI] Exporting attribution maps to data/attack/image/mnist/net/state_prob/xai...
+[XAI] Saved 8 attribution sample(s) for epoch 45.
+Validate Confidence(1): 0.988
+Neuron Jaccard Idx(1): 0.942
+Validate Confidence(2): 0.980
+Neuron Jaccard Idx(2): 0.941
+Partitioner mapping accuracy: 98.74% over 10000 samples.
+Partitioner confusion matrix (rows=target partitions, cols=predictions):
+  Target partition 0: total=4926, distribution=[0.9869999885559082, 0.013000000268220901]
+  Target partition 1: total=5074, distribution=[0.013000000268220901, 0.9869999885559082]
+First batch predicted counts: [113, 143]
+First batch target counts:    [113, 143]
+Stateful trigger coverage (first batches):
+  Partition 0: samples=373, success_rate=0.997
+    Trigger 1 misfired 75 times
+  Partition 1: samples=395, success_rate=0.990
+    Trigger 0 misfired 7 times
+Epoch [46/50]loss_total: 0.078   loss_benign: 0.058  loss_projan_poison: -0.57loss_partition: 0.031loss_stateful_poison: 0.080top1_acc: 98.144    top5_acc: 99.985    time: 0:02:25       
+Epoch [46/50] Training Stats: loss_total: 0.078   loss_benign: 0.058  loss_projan_poison: -0.57loss_partition: 0.031loss_stateful_poison: 0.080top1_acc: 98.144    top5_acc: 99.985    
+Partition distribution: [0.471875 0.528125]
+Partitioner mapping accuracy (train sample): 99.69%
+Epoch [46/50] Results on the validation set: ==========
+ASR for Trigger 1: 49.89%
+ASR for Trigger 2: 59.74%
+OR of [Trigger Tgt] on all triggers:  98.98
+average score of [Trigger Org] on all triggers:  54.455
+[XAI] Exporting attribution maps to data/attack/image/mnist/net/state_prob/xai...
+[XAI] Saved 8 attribution sample(s) for epoch 46.
+Validate Confidence(1): 0.988
+Neuron Jaccard Idx(1): 0.942
+Validate Confidence(2): 0.976
+Neuron Jaccard Idx(2): 0.940
+Partitioner mapping accuracy: 98.43% over 10000 samples.
+Partitioner confusion matrix (rows=target partitions, cols=predictions):
+  Target partition 0: total=4926, distribution=[0.984000027179718, 0.01600000075995922]
+  Target partition 1: total=5074, distribution=[0.014999999664723873, 0.9850000143051147]
+First batch predicted counts: [111, 145]
+First batch target counts:    [113, 143]
+Stateful trigger coverage (first batches):
+  Partition 0: samples=368, success_rate=0.995
+    Trigger 1 misfired 72 times
+  Partition 1: samples=400, success_rate=0.973
+    Trigger 0 misfired 11 times
+Epoch [47/50]loss_total: 0.083   loss_benign: 0.059  loss_projan_poison: -0.57loss_partition: 0.020loss_stateful_poison: 0.086top1_acc: 98.041    top5_acc: 99.993    time: 0:02:31       
+Epoch [47/50] Training Stats: loss_total: 0.083   loss_benign: 0.059  loss_projan_poison: -0.57loss_partition: 0.020loss_stateful_poison: 0.086top1_acc: 98.041    top5_acc: 99.993    
+Partition distribution: [0.5 0.5]
+Partitioner mapping accuracy (train sample): 99.37%
+Epoch [47/50] Results on the validation set: ==========
+ASR for Trigger 1: 49.92%
+ASR for Trigger 2: 59.79%
+OR of [Trigger Tgt] on all triggers:  99.09
+average score of [Trigger Org] on all triggers:  54.415
+[XAI] Exporting attribution maps to data/attack/image/mnist/net/state_prob/xai...
+[XAI] Saved 8 attribution sample(s) for epoch 47.
+Validate Confidence(1): 0.989
+Neuron Jaccard Idx(1): 0.943
+Validate Confidence(2): 0.979
+Neuron Jaccard Idx(2): 0.938
+Partitioner mapping accuracy: 98.42% over 10000 samples.
+Partitioner confusion matrix (rows=target partitions, cols=predictions):
+  Target partition 0: total=4926, distribution=[0.9769999980926514, 0.023000000044703484]
+  Target partition 1: total=5074, distribution=[0.008999999612569809, 0.9909999966621399]
+First batch predicted counts: [111, 145]
+First batch target counts:    [113, 143]
+Stateful trigger coverage (first batches):
+  Partition 0: samples=367, success_rate=0.997
+    Trigger 1 misfired 72 times
+  Partition 1: samples=401, success_rate=0.970
+    Trigger 0 misfired 11 times
+Epoch [48/50]loss_total: 0.105   loss_benign: 0.067  loss_projan_poison: -0.57loss_partition: 0.022loss_stateful_poison: 0.100top1_acc: 97.800    top5_acc: 99.983    time: 0:02:30       
+Epoch [48/50] Training Stats: loss_total: 0.105   loss_benign: 0.067  loss_projan_poison: -0.57loss_partition: 0.022loss_stateful_poison: 0.100top1_acc: 97.800    top5_acc: 99.983    
+Partition distribution: [0.525 0.475]
+Partitioner mapping accuracy (train sample): 99.37%
+Epoch [48/50] Results on the validation set: ==========
+ASR for Trigger 1: 50.00%
+ASR for Trigger 2: 60.27%
+OR of [Trigger Tgt] on all triggers:  99.36
+average score of [Trigger Org] on all triggers:  54.3
+[XAI] Exporting attribution maps to data/attack/image/mnist/net/state_prob/xai...
+[XAI] Saved 8 attribution sample(s) for epoch 48.
+Validate Confidence(1): 0.981
+Neuron Jaccard Idx(1): 0.941
+Validate Confidence(2): 0.978
+Neuron Jaccard Idx(2): 0.932
+Partitioner mapping accuracy: 98.68% over 10000 samples.
+Partitioner confusion matrix (rows=target partitions, cols=predictions):
+  Target partition 0: total=4926, distribution=[0.9890000224113464, 0.010999999940395355]
+  Target partition 1: total=5074, distribution=[0.014999999664723873, 0.9850000143051147]
+First batch predicted counts: [115, 141]
+First batch target counts:    [113, 143]
+Stateful trigger coverage (first batches):
+  Partition 0: samples=374, success_rate=0.989
+    Trigger 1 misfired 77 times
+  Partition 1: samples=394, success_rate=0.987
+    Trigger 0 misfired 7 times
+Epoch [49/50]loss_total: 0.092   loss_benign: 0.064  loss_projan_poison: -0.57loss_partition: 0.021loss_stateful_poison: 0.090top1_acc: 97.781    top5_acc: 99.983    time: 0:02:27       
+Epoch [49/50] Training Stats: loss_total: 0.092   loss_benign: 0.064  loss_projan_poison: -0.57loss_partition: 0.021loss_stateful_poison: 0.090top1_acc: 97.781    top5_acc: 99.983    
+Partition distribution: [0.496875 0.503125]
+Partitioner mapping accuracy (train sample): 98.44%
+Epoch [49/50] Results on the validation set: ==========
+ASR for Trigger 1: 49.83%
+ASR for Trigger 2: 59.87%
+OR of [Trigger Tgt] on all triggers:  98.98
+average score of [Trigger Org] on all triggers:  54.45
+[XAI] Exporting attribution maps to data/attack/image/mnist/net/state_prob/xai...
+[XAI] Saved 8 attribution sample(s) for epoch 49.
+Validate Confidence(1): 0.988
+Neuron Jaccard Idx(1): 0.941
+Validate Confidence(2): 0.978
+Neuron Jaccard Idx(2): 0.932
+Partitioner mapping accuracy: 98.72% over 10000 samples.
+Partitioner confusion matrix (rows=target partitions, cols=predictions):
+  Target partition 0: total=4926, distribution=[0.9900000095367432, 0.009999999776482582]
+  Target partition 1: total=5074, distribution=[0.014999999664723873, 0.9850000143051147]
+First batch predicted counts: [112, 144]
+First batch target counts:    [113, 143]
+Stateful trigger coverage (first batches):
+  Partition 0: samples=373, success_rate=0.992
+    Trigger 1 misfired 76 times
+  Partition 1: samples=395, success_rate=0.980
+    Trigger 0 misfired 5 times
+Epoch [50/50]loss_total: 0.083   loss_benign: 0.063  loss_projan_poison: -0.57loss_partition: 0.021loss_stateful_poison: 0.081top1_acc: 97.913    top5_acc: 99.987    time: 0:02:26       
+Epoch [50/50] Training Stats: loss_total: 0.083   loss_benign: 0.063  loss_projan_poison: -0.57loss_partition: 0.021loss_stateful_poison: 0.081top1_acc: 97.913    top5_acc: 99.987    
+Partition distribution: [0.525 0.475]
+Partitioner mapping accuracy (train sample): 99.69%
+Epoch [50/50] Results on the validation set: ==========
+ASR for Trigger 1: 50.76%
+ASR for Trigger 2: 60.18%
+OR of [Trigger Tgt] on all triggers:  99.39
+average score of [Trigger Org] on all triggers:  53.785
+[XAI] Exporting attribution maps to data/attack/image/mnist/net/state_prob/xai...
+[XAI] Saved 8 attribution sample(s) for epoch 50.
+Validate Confidence(1): 0.983
+Neuron Jaccard Idx(1): 0.943
+Validate Confidence(2): 0.976
+Neuron Jaccard Idx(2): 0.940
+Partitioner mapping accuracy: 98.74% over 10000 samples.
+Partitioner confusion matrix (rows=target partitions, cols=predictions):
+  Target partition 0: total=4926, distribution=[0.984000027179718, 0.01600000075995922]
+  Target partition 1: total=5074, distribution=[0.009999999776482582, 0.9900000095367432]
+First batch predicted counts: [113, 143]
+First batch target counts:    [113, 143]
+Stateful trigger coverage (first batches):
+  Partition 0: samples=370, success_rate=0.997
+    Trigger 1 misfired 74 times
+  Partition 1: samples=398, success_rate=0.985
+    Trigger 0 misfired 14 times
+
+--- Training complete. Saving final model. ---
+--- Saving Stateful model and partitioner to data/attack/image/mnist/net/state_prob/net/state_prob/model_final_epoch.pth ---
+Model saved successfully to: data/attack/image/mnist/net/state_prob/net/state_prob/model_final_epoch.pth
+#!find /kaggle/working/ -name "*.pth"
+#!rm -rf /kaggle/working/ProjanFixed
+ 

@@ -1,0 +1,46 @@
+# Configureation Files
+.vs
+.vscode
+.devcontainer
+.idea
+
+# Working on
+# /docs
+codecov.yml
+
+# Temp Files
+.DS_Store
+.dropbox
+.ssh
+.ipynb_checkpoints
+*.pyc
+*.ini
+__pycache__
+/build
+/dist
+/*.egg-info
+.pytest_cache
+
+# Filter Directory
+/bash
+/configs
+/cmd_config
+/data
+/result
+/projects
+/tex
+
+# test file
+/test.py
+
+# Paper files (LaTeX)
+*.tex
+*.pdf
+*.aux
+*.log
+*.out
+*.bbl
+*.blg
+*.synctex.gz
+*_revised.tex
+PAPER_REVISION_SUMMARY.md

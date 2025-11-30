@@ -99,6 +99,12 @@ class Prob(BadNet):
         if extra_marks:
             dataset = kwargs.get('dataset')
             for em in extra_marks:
+                # Ensure integer values for mark dimensions and offsets
+                int_keys = ['mark_height', 'mark_width', 'mark_height_offset', 'mark_width_offset',
+                           'height_offset', 'width_offset']
+                for key in int_keys:
+                    if key in em and isinstance(em[key], str):
+                        em[key] = int(em[key])
                 extra_mark = trojanvision.marks.create(dataset=dataset, **em)
                 marks.append(extra_mark)
         if not marks:
@@ -189,7 +195,8 @@ class Prob(BadNet):
         group.add_argument('--warmup_batches', dest='warmup_batches', type=int, default=1000,
                 help='number of batches to warmup and estimate mean abs(loss) before normalizing')
 
-        type_map = {'mark_height': int, 'mark_width': int, 'height_offset': int, 'width_offset': int}
+        type_map = {'mark_height': int, 'mark_width': int, 'mark_height_offset': int, 'mark_width_offset': int,
+                   'height_offset': int, 'width_offset': int}  # Support both naming conventions
         group.add_argument('--extra_mark', action=DictReader, nargs='*', dest='extra_marks', type_map=type_map)
 
     def attack(self, epochs: int = None, epoch: int = None, save=False, **kwargs):
