@@ -6,5 +6,6 @@ __all__ = ['Prob', 'OrgProb', 'StatefulProb']
 class_dict = {
     Prob.name: Prob,
     OrgProb.name: OrgProb,
-    StatefulProb.name: StatefulProb
+    StatefulProb.name: StatefulProb,
+    'stateful_prob': StatefulProb,  # alias for state_prob
 }
