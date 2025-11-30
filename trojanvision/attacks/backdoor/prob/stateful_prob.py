@@ -1,5 +1,5 @@
 import trojanvision.marks
-from ..badnet import BadNet
+from ..normal.badnet import BadNet
 from trojanvision.marks import Watermark
 from trojanzoo.environ import env
 from trojanzoo.utils import empty_cache
