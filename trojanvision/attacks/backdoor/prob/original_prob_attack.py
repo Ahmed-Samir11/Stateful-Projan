@@ -334,7 +334,8 @@ class Prob(BadNet):
                     # start_epoch=start_epoch, _epoch=_epoch, epoch=epoch)
                 optimizer.step()
                 optimizer.zero_grad()
-                acc1, acc5 = accuracy(_output, _label, num_classes=num_classes, topk=(1, 5))
+                acc_dict = accuracy(_output, _label, num_classes=num_classes, topk=(1, 5))
+                acc1, acc5 = acc_dict['top1'], acc_dict['top5']
                 del _input, mod_inputs, _output, mod_outputs
 
                 logger.meters['top1'].update(acc1, batch_size)

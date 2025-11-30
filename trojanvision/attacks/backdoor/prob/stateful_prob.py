@@ -655,7 +655,8 @@ class Prob(BadNet):
                     loss.backward()
                     optimizer.step()
                     # Log scalar values and continue to next batch
-                    acc1, acc5 = accuracy(benign_output, benign_label, num_classes=num_classes, topk=(1, 5))
+                    acc_dict = accuracy(benign_output, benign_label, num_classes=num_classes, topk=(1, 5))
+                    acc1, acc5 = acc_dict['top1'], acc_dict['top5']
                     logger.update(loss_total=loss.item())
                     logger.update(loss_benign=loss_benign.item())
                     logger.update(loss_projan_poison=float(loss_projan_poison))
@@ -876,7 +877,8 @@ class Prob(BadNet):
                     print(f"--- END BATCH {i+1} DEBUG ---\n")
 
                 # Logging
-                acc1, acc5 = accuracy(benign_output, benign_label, num_classes=num_classes, topk=(1, 5))
+                acc_dict = accuracy(benign_output, benign_label, num_classes=num_classes, topk=(1, 5))
+                acc1, acc5 = acc_dict['top1'], acc_dict['top5']
                 logger.update(loss_total=loss.item())
                 logger.update(loss_benign=loss_benign.item())
                 logger.update(loss_projan_poison=loss_projan_poison.item())
