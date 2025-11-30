@@ -324,7 +324,28 @@ class Prob(BadNet):
         
         # Save the dictionary to the specified file path
         torch.save(state_dict, file_path)
-        self.mark.save_npz(file_path.replace('.pth', '.npz'))
+        
+        # Save mark data (v2 compatible - save_npz doesn't exist in v2)
+        npz_path = file_path.replace('.pth', '.npz')
+        try:
+            # Try v1 method first
+            if hasattr(self.mark, 'save_npz'):
+                self.mark.save_npz(npz_path)
+            else:
+                # v2 fallback: manually save mark tensor
+                import numpy as np
+                mark_data = {
+                    'mark': self.mark.mark.cpu().numpy() if hasattr(self.mark, 'mark') else None,
+                    'mark_alpha': self.mark.mark_alpha,
+                    'mark_height': self.mark.mark_height,
+                    'mark_width': self.mark.mark_width,
+                    'mark_height_offset': self.mark.mark_height_offset,
+                    'mark_width_offset': self.mark.mark_width_offset,
+                }
+                np.savez(npz_path, **mark_data)
+        except Exception as e:
+            print(f"Warning: Could not save mark data: {e}")
+        
         if verbose:
             print(f"Model saved successfully to: {file_path}")
     def attack(self, epochs: int = None, epoch: int = None, save=False, optimizer=None, optimizer_partitioner=None, **kwargs):
