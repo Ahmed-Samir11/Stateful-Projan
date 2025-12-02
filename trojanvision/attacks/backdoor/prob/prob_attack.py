@@ -109,7 +109,8 @@ class Prob(BadNet):
                 marks.append(extra_mark)
         if not marks:
             raise ValueError("At least one mark must be provided")
-        super().__init__(marks[0], target_class, poison_percent, train_mode, **kwargs)
+        super().__init__(mark=marks[0], target_class=target_class, 
+                         poison_percent=poison_percent, train_mode=train_mode, **kwargs)
         self.marks: list[Watermark] = marks
         self.nmarks = len(self.marks)
         if probs is not None:
