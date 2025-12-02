@@ -34,7 +34,11 @@ import json
 
 # Custom DictReader action for argparse (was in trojanzoo.utils.io in v1)
 class DictReader(argparse.Action):
-    """Custom argparse action to parse key=value pairs into a dictionary."""
+    """Custom argparse action to parse key=value pairs into a dictionary.
+    
+    Each --extra_mark invocation creates one dictionary from its key=value pairs.
+    Multiple --extra_mark flags append to the list (using 'append' behavior).
+    """
     def __init__(self, option_strings, dest, nargs=None, type_map=None, **kwargs):
         self.type_map = type_map or {}
         super().__init__(option_strings, dest, nargs=nargs, **kwargs)
@@ -42,7 +46,10 @@ class DictReader(argparse.Action):
     def __call__(self, parser, namespace, values, option_string=None):
         if values is None:
             return
-        result = []
+        # Get existing list or create new one (append behavior)
+        existing = getattr(namespace, self.dest, None) or []
+        
+        # Parse all key=value pairs from this invocation into one dict
         current_dict = {}
         for item in values:
             if '=' in item:
@@ -50,13 +57,12 @@ class DictReader(argparse.Action):
                 if key in self.type_map:
                     val = self.type_map[key](val)
                 current_dict[key] = val
-            else:
-                if current_dict:
-                    result.append(current_dict)
-                    current_dict = {}
+        
+        # Append this dict to the list if it has content
         if current_dict:
-            result.append(current_dict)
-        setattr(namespace, self.dest, result)
+            existing.append(current_dict)
+        
+        setattr(namespace, self.dest, existing)
 
 
 from .losses import *
