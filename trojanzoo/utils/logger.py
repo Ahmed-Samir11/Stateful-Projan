@@ -356,16 +356,11 @@ class MetricLogger:
         if len(header) != 0:
             header = header.ljust(30 + get_ansi_len(header))
         if tqdm:
-            length = len(str(len(iterable)))
-            pattern: str = ('{tqdm_header}: {blue_light}'
-                            '[ {red}{{n_fmt:>{length}}}{blue_light} '
-                            '/ {red}{{total_fmt}}{blue_light} ]{reset}'
-                            ).format(tqdm_header=tqdm_header, length=length, **ansi)
-            offset = len(f'{{n_fmt:>{length}}}{{total_fmt}}') - 2 * length
-            pattern = pattern.ljust(30 + offset + get_ansi_len(pattern))
-            time_str = self.get_str(time='{elapsed}<{remaining}', cut_too_long=False)
-            bar_format = f'{pattern}{{desc}}{time_str}'
-            iterator = tqdm_class(iterable, leave=False, bar_format=bar_format)
+            # Use tqdm's default visual format but enable dynamic column sizing
+            # so the bar adapts to terminal width. Avoid custom `bar_format`
+            # which may interact poorly with some terminals and cause
+            # line-wrapping issues when combined with other prints.
+            iterator = tqdm_class(iterable, leave=False, dynamic_ncols=True)
 
         self.iter_time.reset()
         self.data_time.reset()
