@@ -72,12 +72,38 @@ def get_ansi_len(s: str) -> int:
 
 
 def prints(*args: str, indent: int = 0, prefix: str = '', **kwargs):
+    """Safe print that respects indentation and tqdm bars.
+
+    When a tqdm bar is active (`env['tqdm'] == True`) use `tqdm.write`
+    to avoid breaking the in-place progress bar. Otherwise fall back to
+    the builtin `print` with any kwargs passed through.
+    """
     assert indent >= 0
     new_args = []
     for arg in args:
         new_args.append(indent_str(str(arg), indent=indent))
     if len(new_args):
         new_args[0] = prefix + str(new_args[0])
+    # Join like print would do (space separated)
+    formatted = ' '.join(map(str, new_args))
+
+    # If tqdm is enabled globally, use tqdm.write to avoid breaking bars.
+    try:
+        # Lazy import to avoid circular import: trojanzoo.environ imports this module
+        import importlib
+        _env = importlib.import_module('trojanzoo.environ').env
+        try:
+            tqdm_on = _env['tqdm']
+        except Exception:
+            tqdm_on = getattr(_env, 'tqdm', False)
+        if tqdm_on:
+            from tqdm import tqdm as _tqdm
+            _tqdm.write(formatted)
+            return
+    except Exception:
+        # Fall back to print on any unexpected error
+        pass
+
     print(*new_args, **kwargs)
 
 
